@@ -12,7 +12,7 @@ import { io as socketIO } from 'socket.io-client';
 import useAuthStore from '../../store/useAuthStore';
 import axios from 'axios';
 
-const SOCKET_URL = 'http://localhost:5000';
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
 
 const getNotifEmoji = (type) => {
   if (type === 'order') return '🛒';

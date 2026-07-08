@@ -106,7 +106,7 @@ const useCartStore = create(
         if (get().socketConnected) return;
 
         try {
-          const socket = io('http://localhost:5000');
+          const socket = io(import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000');
 
           socket.on('product_update', (updatedProd) => {
             console.log('[Socket.io Client] Received product update:', updatedProd);

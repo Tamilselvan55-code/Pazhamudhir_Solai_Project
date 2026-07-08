@@ -3,6 +3,18 @@ import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import App from './App.jsx'
 import './index.css'
+import axios from 'axios'
+
+// Add a global Axios request interceptor to rewrite hardcoded localhost backend URLs in production
+axios.interceptors.request.use((config) => {
+  const targetBackend = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
+  if (config.url && config.url.startsWith('http://localhost:5000')) {
+    config.url = config.url.replace('http://localhost:5000', targetBackend);
+  }
+  return config;
+}, (error) => {
+  return Promise.reject(error);
+});
 
 console.log('%c🌿 Tiruchendur Murugan Pazhamudhir Solai 🌿', 'color: #16a34a; font-size: 16px; font-weight: bold;');
 console.log('%cWelcome to www.tiruchendurmuruganpazhamudhirsolai.com', 'color: #4b5563; font-size: 12px;');

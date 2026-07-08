@@ -12,8 +12,8 @@ import useAuthStore from '../../store/useAuthStore';
 import useModal from '../../hooks/useModal';
 import { formatCurrency } from '../../utils/currency';
 
-const API_BASE = 'http://localhost:5000/api/admin';
-const SOCKET_URL = 'http://localhost:5000';
+const API_BASE = `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/admin`;
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 

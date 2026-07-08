@@ -285,7 +285,7 @@ const AdminDashboard = () => {
     loadAll();
 
     // Configure WebSockets for live notifications
-    const socket = io('http://localhost:5000');
+    const socket = io(import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000');
     socket.on('connect', () => {
       console.log('✓ Socket connected');
     });

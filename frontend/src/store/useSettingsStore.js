@@ -77,7 +77,7 @@ export const useSettingsStore = create((set, get) => ({
     if (get().socketConnected) return;
 
     try {
-      const socket = io('http://localhost:5000');
+      const socket = io(import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000');
       socket.on('settings_update', (updatedSettings) => {
         console.log('[Socket.io Client] Received settings update:', updatedSettings);
         get().updateSettingsState(updatedSettings);
