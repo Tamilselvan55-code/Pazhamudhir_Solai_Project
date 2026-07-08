@@ -1,0 +1,29 @@
+# Ignore dependency directories
+node_modules/
+**/node_modules/
+
+# Ignore build outputs
+dist/
+**/dist/
+build/
+**/build/
+
+# Ignore local environment variables and secrets
+.env
+.env.local
+.env.production
+.env.development
+**/.env
+**/.env.local
+**/.env.production
+
+# Ignore local uploads and logs
+uploads/
+**/uploads/
+*.log
+logs/
+**/logs/
+
+# System files
+.DS_Store
+Thumbs.db
