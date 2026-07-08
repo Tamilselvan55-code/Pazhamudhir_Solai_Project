@@ -23,7 +23,7 @@ const productSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 // Sync nameTamil and tamilName before save
-productSchema.pre('save', function (next) {
+productSchema.pre('save', function () {
   if (this.nameTamil && !this.tamilName) {
     this.tamilName = this.nameTamil;
   } else if (this.tamilName && !this.nameTamil) {
@@ -33,7 +33,6 @@ productSchema.pre('save', function (next) {
   } else if (this.isModified('tamilName')) {
     this.nameTamil = this.tamilName;
   }
-  next();
 });
 
 productSchema.pre('findOneAndUpdate', function () {

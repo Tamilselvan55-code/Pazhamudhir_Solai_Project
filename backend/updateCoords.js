@@ -12,13 +12,13 @@ const updateCoords = async () => {
     console.log('Connected to DB to update coords');
     
     let settings = await StoreSettings.findOne();
-    if (settings) {
-      settings.location = { lat: 13.0606941, lon: 80.2270751 };
-      await settings.save();
-      console.log('Coordinates updated in DB successfully');
-    } else {
-      console.log('No settings document found yet');
+    if (!settings) {
+      settings = new StoreSettings({});
     }
+    settings.location = { lat: 13.0606941, lon: 80.2270751 };
+    settings.deliveryRadiusKm = Number(process.env.DELIVERY_RADIUS_KM) || 35;
+    await settings.save();
+    console.log('Coordinates and Delivery Radius (35 km) updated in DB successfully');
   } catch (err) {
     console.error(err);
   } finally {
