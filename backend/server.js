@@ -40,20 +40,21 @@ mongoose.connect(MONGO_URI)
     }
     try {
       // Auto-update/seed admin with user's requested credentials
+      const adminPassword = process.env.ADMIN_PASSWORD || 'Admin@123';
       let admin = await Admin.findOne({ role: 'Super Admin' });
       if (!admin) {
         admin = await Admin.findOne({ email: 'thiruchendurmurugan192@gmail.com' });
       }
       if (admin) {
         admin.email = 'thiruchendurmurugan192@gmail.com';
-        admin.password = 'Admin@123';
+        admin.password = adminPassword;
         await admin.save();
         console.log('[Seed] Super Admin credentials updated successfully.');
       } else {
         await Admin.create({
           name: 'Super Admin',
           email: 'thiruchendurmurugan192@gmail.com',
-          password: 'Admin@123',
+          password: adminPassword,
           role: 'Super Admin'
         });
         console.log('[Seed] Super Admin created successfully.');

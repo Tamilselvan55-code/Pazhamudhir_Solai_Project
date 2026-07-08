@@ -50,13 +50,14 @@ router.get('/profile', protectAdmin, async (req, res) => {
 // @access  Public (Should be disabled or protected in production!)
 router.post('/seed', async (req, res) => {
   try {
+    const adminPassword = process.env.ADMIN_PASSWORD || 'Admin@123';
     let admin = await Admin.findOne({ role: 'Super Admin' });
     if (!admin) {
       admin = await Admin.findOne({ email: 'thiruchendurmurugan192@gmail.com' });
     }
     if (admin) {
       admin.email = 'thiruchendurmurugan192@gmail.com';
-      admin.password = 'Admin@123';
+      admin.password = adminPassword;
       await admin.save();
       return res.status(200).json({ message: 'Super Admin credentials updated successfully', email: admin.email });
     }
@@ -64,7 +65,7 @@ router.post('/seed', async (req, res) => {
     admin = await Admin.create({
       name: 'Super Admin',
       email: 'thiruchendurmurugan192@gmail.com',
-      password: 'Admin@123',
+      password: adminPassword,
       role: 'Super Admin',
     });
 
