@@ -232,7 +232,9 @@ router.post('/upload', protectAdmin, upload.array('images', 10), (req, res) => {
     if (!req.files || req.files.length === 0) {
       return res.status(400).json({ message: 'No files uploaded' });
     }
-    const urls = req.files.map(file => `http://localhost:5000/uploads/${file.filename}`);
+    const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+    const host = req.headers['x-forwarded-host'] || req.get('host');
+    const urls = req.files.map(file => `${protocol}://${host}/uploads/${file.filename}`);
     res.json({ urls });
   } catch (error) {
     console.error('File upload error:', error);
@@ -517,6 +519,10 @@ router.put('/products/:id', protectAdmin, productUpdateUpload, async (req, res) 
       return res.status(404).json({ message: 'Product not found' });
     }
 
+    const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+    const host = req.headers['x-forwarded-host'] || req.get('host');
+    const backendUrl = `${protocol}://${host}`;
+
     let hasUploadedFile = false;
     let newImageUrl = null;
     let newImagesUrls = [];
@@ -524,24 +530,24 @@ router.put('/products/:id', protectAdmin, productUpdateUpload, async (req, res) 
     if (req.files) {
       if (req.files.image && req.files.image.length > 0) {
         hasUploadedFile = true;
-        newImageUrl = `http://localhost:5000/uploads/${req.files.image[0].filename}`;
+        newImageUrl = `${backendUrl}/uploads/${req.files.image[0].filename}`;
       }
       if (req.files.file && req.files.file.length > 0) {
         hasUploadedFile = true;
-        newImageUrl = `http://localhost:5000/uploads/${req.files.file[0].filename}`;
+        newImageUrl = `${backendUrl}/uploads/${req.files.file[0].filename}`;
       }
       if (req.files.thumbnail && req.files.thumbnail.length > 0) {
         hasUploadedFile = true;
-        newImageUrl = `http://localhost:5000/uploads/${req.files.thumbnail[0].filename}`;
+        newImageUrl = `${backendUrl}/uploads/${req.files.thumbnail[0].filename}`;
       }
       if (req.files.images && req.files.images.length > 0) {
         hasUploadedFile = true;
-        newImagesUrls = req.files.images.map(file => `http://localhost:5000/uploads/${file.filename}`);
+        newImagesUrls = req.files.images.map(file => `${backendUrl}/uploads/${file.filename}`);
       }
     }
     if (req.file) {
       hasUploadedFile = true;
-      newImageUrl = `http://localhost:5000/uploads/${req.file.filename}`;
+      newImageUrl = `${backendUrl}/uploads/${req.file.filename}`;
     }
 
     if (hasUploadedFile) {
@@ -1868,68 +1874,74 @@ router.get('/reports/analytics', protectAdmin, async (req, res) => {
     const { filter = 'Today', startDate, endDate, reportType = 'Sales Report' } = req.query;
 
     // ── 1. Build date range in Asia/Kolkata timezone ────────────────────────
-    const getKolkataNow = () => {
-      const s = new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' });
-      return new Date(s);
-    };
+    const now = new Date();
+    const kNow = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
 
-    const nowK = getKolkataNow();
-    let startK = new Date(nowK);
-    let endK = new Date(nowK);
+    let kStart = new Date(kNow);
+    let kEnd = new Date(kNow);
 
     if (filter === 'Today') {
-      startK.setHours(0, 0, 0, 0);
-      endK.setHours(23, 59, 59, 999);
+      kStart.setUTCHours(0, 0, 0, 0);
+      kEnd.setUTCHours(23, 59, 59, 999);
     } else if (filter === 'Yesterday') {
-      startK.setDate(startK.getDate() - 1);
-      startK.setHours(0, 0, 0, 0);
-      endK.setDate(endK.getDate() - 1);
-      endK.setHours(23, 59, 59, 999);
+      kStart.setUTCDate(kStart.getUTCDate() - 1);
+      kStart.setUTCHours(0, 0, 0, 0);
+      kEnd.setUTCDate(kEnd.getUTCDate() - 1);
+      kEnd.setUTCHours(23, 59, 59, 999);
     } else if (filter === 'This Week') {
-      const day = nowK.getDay();
+      const day = kNow.getUTCDay();
       const diff = day === 0 ? 6 : day - 1; // Monday start
-      startK.setDate(nowK.getDate() - diff);
-      startK.setHours(0, 0, 0, 0);
-      endK.setHours(23, 59, 59, 999);
+      kStart.setUTCDate(kNow.getUTCDate() - diff);
+      kStart.setUTCHours(0, 0, 0, 0);
+      kEnd.setUTCDate(kStart.getUTCDate() + 6);
+      kEnd.setUTCHours(23, 59, 59, 999);
     } else if (filter === 'Last Week') {
-      const day = nowK.getDay();
+      const day = kNow.getUTCDay();
       const diff = day === 0 ? 6 : day - 1;
-      startK.setDate(nowK.getDate() - diff - 7);
-      startK.setHours(0, 0, 0, 0);
-      endK.setDate(nowK.getDate() - diff - 1);
-      endK.setHours(23, 59, 59, 999);
+      kStart.setUTCDate(kNow.getUTCDate() - diff - 7);
+      kStart.setUTCHours(0, 0, 0, 0);
+      kEnd.setUTCDate(kStart.getUTCDate() + 6);
+      kEnd.setUTCHours(23, 59, 59, 999);
     } else if (filter === 'This Month') {
-      startK = new Date(nowK.getFullYear(), nowK.getMonth(), 1, 0, 0, 0, 0);
-      endK = new Date(nowK.getFullYear(), nowK.getMonth() + 1, 0, 23, 59, 59, 999);
+      kStart.setUTCDate(1);
+      kStart.setUTCHours(0, 0, 0, 0);
+      kEnd.setUTCMonth(kStart.getUTCMonth() + 1);
+      kEnd.setUTCDate(0);
+      kEnd.setUTCHours(23, 59, 59, 999);
     } else if (filter === 'Last Month') {
-      startK = new Date(nowK.getFullYear(), nowK.getMonth() - 1, 1, 0, 0, 0, 0);
-      endK = new Date(nowK.getFullYear(), nowK.getMonth(), 0, 23, 59, 59, 999);
+      kStart.setUTCMonth(kStart.getUTCMonth() - 1);
+      kStart.setUTCDate(1);
+      kStart.setUTCHours(0, 0, 0, 0);
+      kEnd.setUTCMonth(kStart.getUTCMonth() + 1);
+      kEnd.setUTCDate(0);
+      kEnd.setUTCHours(23, 59, 59, 999);
     } else if (filter === 'This Year') {
-      startK = new Date(nowK.getFullYear(), 0, 1, 0, 0, 0, 0);
-      endK = new Date(nowK.getFullYear(), 11, 31, 23, 59, 59, 999);
+      kStart.setUTCMonth(0);
+      kStart.setUTCDate(1);
+      kStart.setUTCHours(0, 0, 0, 0);
+      kEnd.setUTCMonth(11);
+      kEnd.setUTCDate(31);
+      kEnd.setUTCHours(23, 59, 59, 999);
     } else if (filter === 'Custom Date Range' || filter === 'Custom Range') {
       if (startDate && endDate) {
-        const s = new Date(startDate);
-        const e = new Date(endDate);
-        if (!isNaN(s.getTime()) && !isNaN(e.getTime())) {
-          startK = new Date(s.getFullYear(), s.getMonth(), s.getDate(), 0, 0, 0, 0);
-          endK = new Date(e.getFullYear(), e.getMonth(), e.getDate(), 23, 59, 59, 999);
-        }
+        const parseCustomDate = (dateStr, isEnd) => {
+          const parts = dateStr.split('-');
+          const y = parseInt(parts[0], 10);
+          const m = parseInt(parts[1], 10) - 1;
+          const d = parseInt(parts[2], 10);
+          return new Date(Date.UTC(y, m, d, isEnd ? 23 : 0, isEnd ? 59 : 0, isEnd ? 59 : 0, isEnd ? 999 : 0) - (5.5 * 60 * 60 * 1000));
+        };
+        kStart = parseCustomDate(startDate, false);
+        kEnd = parseCustomDate(endDate, true);
       }
     }
 
-    const toUtc = (d) => {
-      const utcMs = Date.UTC(d.getFullYear(), d.getMonth(), d.getDate(), d.getHours(), d.getMinutes(), d.getSeconds(), d.getMilliseconds());
-      return new Date(utcMs - 330 * 60 * 1000);
-    };
-
-    const filterStart = toUtc(startK);
-    const filterEnd   = toUtc(endK);
+    const filterStart = (filter === 'Custom Date Range' || filter === 'Custom Range') ? kStart : new Date(kStart.getTime() - (5.5 * 60 * 60 * 1000));
+    const filterEnd   = (filter === 'Custom Date Range' || filter === 'Custom Range') ? kEnd : new Date(kEnd.getTime() - (5.5 * 60 * 60 * 1000));
 
     const dateMatch = { createdAt: { $gte: filterStart, $lte: filterEnd } };
 
     // ── 2. Revenue match: only Paid orders or COD-Delivered ─────────────────
-    // NEVER count: Cancelled, Refunded, Pending orders
     const revenueMatch = {
       status: { $in: ['Accepted', 'Out for Delivery', 'Delivered'] },
       $or: [
@@ -1939,9 +1951,34 @@ router.get('/reports/analytics', protectAdmin, async (req, res) => {
     };
     const completedMatch = { status: { $ne: 'Cancelled' } };
 
-    const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    const currentMonthEnd   = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
-    const todayStart        = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+    // Current month boundaries (in Kolkata time, then shifted to UTC)
+    const currentMonthStartK = new Date(kNow);
+    currentMonthStartK.setUTCDate(1);
+    currentMonthStartK.setUTCHours(0, 0, 0, 0);
+    const currentMonthStart = new Date(currentMonthStartK.getTime() - (5.5 * 60 * 60 * 1000));
+
+    const currentMonthEndK = new Date(kNow);
+    currentMonthEndK.setUTCMonth(currentMonthEndK.getUTCMonth() + 1);
+    currentMonthEndK.setUTCDate(0);
+    currentMonthEndK.setUTCHours(23, 59, 59, 999);
+    const currentMonthEnd = new Date(currentMonthEndK.getTime() - (5.5 * 60 * 60 * 1000));
+
+    // Today start (in Kolkata time, then shifted to UTC)
+    const todayStartK = new Date(kNow);
+    todayStartK.setUTCHours(0, 0, 0, 0);
+    const todayStart = new Date(todayStartK.getTime() - (5.5 * 60 * 60 * 1000));
+
+    // 7 days ago and 12 months ago in Kolkata time
+    const sevenDaysAgoK = new Date(kNow);
+    sevenDaysAgoK.setUTCDate(sevenDaysAgoK.getUTCDate() - 6);
+    sevenDaysAgoK.setUTCHours(0, 0, 0, 0);
+    const sevenDaysAgo = new Date(sevenDaysAgoK.getTime() - (5.5 * 60 * 60 * 1000));
+
+    const twelveMonthsAgoK = new Date(kNow);
+    twelveMonthsAgoK.setUTCMonth(twelveMonthsAgoK.getUTCMonth() - 11);
+    twelveMonthsAgoK.setUTCDate(1);
+    twelveMonthsAgoK.setUTCHours(0, 0, 0, 0);
+    const twelveMonthsAgo = new Date(twelveMonthsAgoK.getTime() - (5.5 * 60 * 60 * 1000));
 
     // ── 3. Run all aggregations in parallel ─────────────────────────────────
     const [
@@ -1949,7 +1986,7 @@ router.get('/reports/analytics', protectAdmin, async (req, res) => {
       filteredOrderCount,
       monthlyRevenueAgg,
       pendingPaymentsCount,
-      totalCustomers,
+      totalCustomersArray,
       totalProducts,
       orderStatusAgg,
       newTodayCount,
@@ -1963,7 +2000,7 @@ router.get('/reports/analytics', protectAdmin, async (req, res) => {
       recentOrders,
       filteredOrdersForTable,
       allActiveProducts,
-      allCustomers,
+      customerSpentAgg,
       paymentAnalyticsAgg,
     ] = await Promise.all([
 
@@ -1973,8 +2010,8 @@ router.get('/reports/analytics', protectAdmin, async (req, res) => {
         { $group: { _id: null, total: { $sum: '$totalPrice' } } },
       ]),
 
-      // [1] Filtered order count (non-cancelled)
-      Order.countDocuments({ ...completedMatch, ...dateMatch }),
+      // [1] Filtered order count (ALL orders in date range)
+      Order.countDocuments(dateMatch),
 
       // [2] Monthly revenue (current calendar month, always)
       Order.aggregate([
@@ -1982,48 +2019,49 @@ router.get('/reports/analytics', protectAdmin, async (req, res) => {
         { $group: { _id: null, total: { $sum: '$totalPrice' } } },
       ]),
 
-      // [3] Pending payments (global, filter-independent)
-      Order.countDocuments({ paymentStatus: 'Pending', status: { $ne: 'Cancelled' } }),
+      // [3] Pending payments within selected date range
+      Order.countDocuments({ paymentStatus: 'Pending', status: { $ne: 'Cancelled' }, ...dateMatch }),
 
-      // [4] Total active customers (global)
-      User.countDocuments({ isAdmin: { $ne: true }, role: { $nin: ['Admin', 'SuperAdmin', 'Super Admin'] } }),
+      // [4] Total active customers (placed at least one order in selected period)
+      Order.distinct('user', dateMatch),
 
       // [5] Total active products (global)
       Product.countDocuments({ isActive: true }),
 
-      // [6] Order status breakdown (global)
+      // [6] Order status breakdown within selected date range
       Order.aggregate([
+        { $match: dateMatch },
         { $group: { _id: '$status', count: { $sum: 1 } } },
       ]),
 
-      // [7] New customers today (global)
+      // [7] New customers today (registered today)
       User.countDocuments({
         isAdmin: { $ne: true },
         role: { $nin: ['Admin', 'SuperAdmin', 'Super Admin'] },
         createdAt: { $gte: todayStart },
       }),
 
-      // [8] New customers this month (global)
+      // [8] New customers this month (registered this month)
       User.countDocuments({
         isAdmin: { $ne: true },
         role: { $nin: ['Admin', 'SuperAdmin', 'Super Admin'] },
-        createdAt: { $gte: currentMonthStart },
+        createdAt: { $gte: currentMonthStart, $lte: currentMonthEnd },
       }),
 
-      // [9] Daily sales — last 7 days real aggregation
+      // [9] Daily sales — last 7 days real aggregation in Asia/Kolkata timezone
       Order.aggregate([
         {
           $match: {
             ...completedMatch,
-            createdAt: { $gte: new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6, 0, 0, 0, 0) },
+            createdAt: { $gte: sevenDaysAgo },
           },
         },
         {
           $group: {
             _id: {
-              year:  { $year:  '$createdAt' },
-              month: { $month: '$createdAt' },
-              day:   { $dayOfMonth: '$createdAt' },
+              year:  { $year:  { date: '$createdAt', timezone: 'Asia/Kolkata' } },
+              month: { $month: { date: '$createdAt', timezone: 'Asia/Kolkata' } },
+              day:   { $dayOfMonth: { date: '$createdAt', timezone: 'Asia/Kolkata' } },
             },
             orders:  { $sum: 1 },
             revenue: { $sum: '$totalPrice' },
@@ -2032,17 +2070,20 @@ router.get('/reports/analytics', protectAdmin, async (req, res) => {
         { $sort: { '_id.year': 1, '_id.month': 1, '_id.day': 1 } },
       ]),
 
-      // [10] Monthly timeline — last 12 months real aggregation
+      // [10] Monthly timeline — last 12 months real aggregation in Asia/Kolkata timezone
       Order.aggregate([
         {
           $match: {
             ...completedMatch,
-            createdAt: { $gte: new Date(now.getFullYear(), now.getMonth() - 11, 1) },
+            createdAt: { $gte: twelveMonthsAgo },
           },
         },
         {
           $group: {
-            _id:     { year: { $year: '$createdAt' }, month: { $month: '$createdAt' } },
+            _id:     {
+              year:  { $year:  { date: '$createdAt', timezone: 'Asia/Kolkata' } },
+              month: { $month: { date: '$createdAt', timezone: 'Asia/Kolkata' } }
+            },
             orders:  { $sum: 1 },
             revenue: { $sum: '$totalPrice' },
           },
@@ -2050,9 +2091,9 @@ router.get('/reports/analytics', protectAdmin, async (req, res) => {
         { $sort: { '_id.year': 1, '_id.month': 1 } },
       ]),
 
-      // [11] Top 10 products by quantity sold (all non-cancelled orders)
+      // [11] Top 10 products by quantity sold within selected date range
       Order.aggregate([
-        { $match: completedMatch },
+        { $match: { ...completedMatch, ...dateMatch } },
         { $unwind: '$orderItems' },
         {
           $group: {
@@ -2079,9 +2120,9 @@ router.get('/reports/analytics', protectAdmin, async (req, res) => {
         },
       ]),
 
-      // [12] Category revenue from order items (all non-cancelled)
+      // [12] Category revenue from order items within selected date range
       Order.aggregate([
-        { $match: completedMatch },
+        { $match: { ...completedMatch, ...dateMatch } },
         { $unwind: '$orderItems' },
         {
           $lookup: {
@@ -2106,13 +2147,13 @@ router.get('/reports/analytics', protectAdmin, async (req, res) => {
       Product.find({ isActive: true, stock: 0 })
         .select('name nameTamil category unit').sort({ name: 1 }).lean(),
 
-      // [15] Recent 10 orders
+      // [15] Recent 10 orders (global latest)
       Order.find({})
         .populate('user', 'fullName phoneNumber')
         .sort({ createdAt: -1 }).limit(10)
         .select('invoiceNumber totalPrice paymentMethod paymentStatus status createdAt user recipient').lean(),
 
-      // [16] Filtered orders for export table
+      // [16] Filtered orders for export table within selected date range
       Order.find({ ...completedMatch, ...dateMatch })
         .populate('user', 'fullName phoneNumber email')
         .sort({ createdAt: -1 }).lean(),
@@ -2120,13 +2161,39 @@ router.get('/reports/analytics', protectAdmin, async (req, res) => {
       // [17] All active products for inventory report
       Product.find({ isActive: true }).sort({ name: 1 }).lean(),
 
-      // [18] All non-admin users for customer report
-      User.find({ isAdmin: { $ne: true }, role: { $nin: ['Admin', 'SuperAdmin', 'Super Admin'] } })
-        .select('fullName email phoneNumber createdAt isBlocked').sort({ createdAt: -1 }).lean(),
-
-      // [19] COD payment breakdown (global)
+      // [18] Customer spend breakdown within selected date range
       Order.aggregate([
-        { $match: { paymentMethod: 'COD' } },
+        { $match: { ...completedMatch, ...dateMatch } },
+        {
+          $group: {
+            _id: '$user',
+            ordersCount: { $sum: 1 },
+            totalSpent: { $sum: '$totalPrice' }
+          }
+        },
+        { $sort: { totalSpent: -1 } },
+        {
+          $lookup: {
+            from: 'users',
+            localField: '_id',
+            foreignField: '_id',
+            as: 'customerInfo'
+          }
+        },
+        { $unwind: { path: '$customerInfo', preserveNullAndEmptyArrays: true } },
+        {
+          $project: {
+            name: { $ifNull: ['$customerInfo.fullName', 'Guest'] },
+            phone: { $ifNull: ['$customerInfo.phoneNumber', 'N/A'] },
+            orders: '$ordersCount',
+            totalSpent: '$totalSpent'
+          }
+        }
+      ]),
+
+      // [19] COD payment breakdown within selected date range
+      Order.aggregate([
+        { $match: { paymentMethod: 'COD', ...dateMatch } },
         { $group: { _id: '$status', count: { $sum: 1 }, revenue: { $sum: '$totalPrice' } } },
       ]),
     ]);
@@ -2135,15 +2202,25 @@ router.get('/reports/analytics', protectAdmin, async (req, res) => {
 
     const totalRevenue   = Math.round(((filteredRevenueAgg[0]?.total) || 0) * 100) / 100;
     const totalOrders    = filteredOrderCount || 0;
+    const totalCustomers = totalCustomersArray ? totalCustomersArray.length : 0;
     const monthlyRevenue = Math.round(((monthlyRevenueAgg[0]?.total) || 0) * 100) / 100;
-    const avgOrderValue  = totalOrders > 0 ? Math.round((totalRevenue / totalOrders) * 100) / 100 : 0;
 
     // Order status breakdown
     const statusMap = { Pending: 0, Accepted: 0, 'Out for Delivery': 0, Delivered: 0, Cancelled: 0 };
     orderStatusAgg.forEach(s => { if (s._id && statusMap[s._id] !== undefined) statusMap[s._id] = s.count || 0; });
 
-    // Customer analytics
-    const returningCustomers = Math.max(0, (totalCustomers || 0) - (newThisMonthCount || 0));
+    // Completed orders count for Average Order Value
+    const completedOrdersCount = statusMap['Accepted'] + statusMap['Out for Delivery'] + statusMap['Delivered'];
+    const avgOrderValue  = completedOrdersCount > 0 ? Math.round((totalRevenue / completedOrdersCount) * 100) / 100 : 0;
+
+    // Returning Customers Calculation
+    const periodUsers = totalCustomersArray || [];
+    const returningUsersAgg = periodUsers.length > 0 ? await Order.aggregate([
+      { $match: { user: { $in: periodUsers } } },
+      { $group: { _id: '$user', count: { $sum: 1 } } },
+      { $match: { count: { $gt: 1 } } }
+    ]) : [];
+    const returningCustomers = returningUsersAgg.length;
 
     // Payment analytics
     const payMap = {};
@@ -2161,9 +2238,9 @@ router.get('/reports/analytics', protectAdmin, async (req, res) => {
     const monthShort = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     const dailyMap   = {};
     for (let i = 6; i >= 0; i--) {
-      const d   = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
-      const key = `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
-      dailyMap[key] = { name: `${dayNames[d.getDay()]} ${d.getDate()} ${monthShort[d.getMonth()]}`, orders: 0, revenue: 0 };
+      const d = new Date(kNow.getTime() - i * 24 * 60 * 60 * 1000);
+      const key = `${d.getUTCFullYear()}-${d.getUTCMonth()+1}-${d.getUTCDate()}`;
+      dailyMap[key] = { name: `${dayNames[d.getUTCDay()]} ${d.getUTCDate()} ${monthShort[d.getUTCMonth()]}`, orders: 0, revenue: 0 };
     }
     dailySalesAgg.forEach(d => {
       const key = `${d._id.year}-${d._id.month}-${d._id.day}`;
@@ -2173,12 +2250,17 @@ router.get('/reports/analytics', protectAdmin, async (req, res) => {
       ...d, avgOrderValue: d.orders > 0 ? Math.round((d.revenue / d.orders) * 100) / 100 : 0,
     }));
 
-    // Monthly Timeline — fill all 12 months
+    // Monthly Timeline — fill all 12 months using UTC kNow indicators
     const monthlyMap = {};
     for (let i = 11; i >= 0; i--) {
-      const d   = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const key = `${d.getFullYear()}-${d.getMonth()+1}`;
-      monthlyMap[key] = { name: `${monthShort[d.getMonth()]} ${d.getFullYear()}`, short: monthShort[d.getMonth()], orders: 0, revenue: 0 };
+      let targetMonth = kNow.getUTCMonth() - i;
+      let targetYear = kNow.getUTCFullYear();
+      while (targetMonth < 0) {
+        targetMonth += 12;
+        targetYear -= 1;
+      }
+      const key = `${targetYear}-${targetMonth + 1}`;
+      monthlyMap[key] = { name: `${monthShort[targetMonth]} ${targetYear}`, short: monthShort[targetMonth], orders: 0, revenue: 0 };
     }
     monthlySalesAgg.forEach(m => {
       const key = `${m._id.year}-${m._id.month}`;
@@ -2259,12 +2341,10 @@ router.get('/reports/analytics', protectAdmin, async (req, res) => {
         'Status':       p.stock === 0 ? 'Out of Stock' : p.stock <= 5 ? 'Low Stock' : 'In Stock',
       }));
     } else if (reportType === 'Customer Report') {
-      tableData = allCustomers.map(u => ({
-        'Name':            u.fullName || 'Anonymous',
-        'Email':           u.email || 'N/A',
-        'Phone':           u.phoneNumber || 'N/A',
-        'Registered Date': u.createdAt ? new Date(u.createdAt).toLocaleDateString('en-IN') : 'N/A',
-        'Status':          u.isBlocked ? 'Blocked' : 'Active',
+      tableData = customerSpentAgg.map(c => ({
+        'Customer Name': c.name || 'Guest',
+        'Orders':        c.orders || 0,
+        'Total Spent':   Math.round((c.totalSpent || 0) * 100) / 100,
       }));
     } else if (reportType === 'Payment Report') {
       tableData = filteredOrdersForTable.map(o => ({

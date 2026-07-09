@@ -25,6 +25,27 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+
+// Global response interceptor to dynamically replace hardcoded localhost backend URLs for images
+app.use((req, res, next) => {
+  const originalJson = res.json;
+  res.json = function (body) {
+    if (body) {
+      const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+      const host = req.headers['x-forwarded-host'] || req.get('host');
+      const dynamicBackendUrl = `${protocol}://${host}`;
+      
+      let str = JSON.stringify(body);
+      if (str.includes('http://localhost:5000')) {
+        str = str.replace(/http:\/\/localhost:5000/g, dynamicBackendUrl);
+        body = JSON.parse(str);
+      }
+    }
+    return originalJson.call(this, body);
+  };
+  next();
+});
+
 app.use('/uploads', express.static('uploads')); // For any uploaded images
 
 // Database connection
