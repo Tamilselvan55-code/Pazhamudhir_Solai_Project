@@ -1,5 +1,5 @@
 import React from 'react';
-import useLocationStore from '../../store/useLocationStore';
+import useLocationStore, { getDeliveryRadius } from '../../store/useLocationStore';
 import { MapPin, AlertTriangle } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -32,21 +32,24 @@ const LocationBanner = () => {
     );
   }
 
+  const radius = getDeliveryRadius();
+  const distNumber = typeof distanceKm === 'number' && !isNaN(distanceKm) ? distanceKm : parseFloat(distanceKm || 0);
+  const deliveryAvailable = distNumber <= radius;
+
   return (
     <div className={clsx(
       "px-4 py-2 text-sm flex items-center justify-center font-medium",
-      isEligible ? "bg-green-50 text-green-800" : "bg-red-50 text-red-800"
+      deliveryAvailable ? "bg-green-50 text-green-800" : "bg-red-50 text-red-800"
     )}>
-      {isEligible ? (
+      {deliveryAvailable ? (
         <>
           <MapPin className="w-4 h-4 mr-2" />
-          Delivery Available • {distanceKm}km away
+          Delivery Available • {distNumber.toFixed(2)} km away
         </>
       ) : (
         <>
           <AlertTriangle className="w-4 h-4 mr-2" />
-          {/* Temporary testing value. Change back to 5 KM before production. */}
-          Out of delivery zone • {distanceKm}km away (Max {Number(import.meta.env.VITE_DELIVERY_RADIUS_KM) || 5}km)
+          Out of delivery zone • {distNumber.toFixed(2)} km away (Max {radius} km)
         </>
       )}
     </div>

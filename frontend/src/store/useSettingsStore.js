@@ -47,6 +47,13 @@ const applySettings = (settings) => {
     root.style.setProperty('--color-secondary', settings.secondaryThemeColor);
     root.style.setProperty('--color-secondary-rgb', hexToRgb(settings.secondaryThemeColor));
   }
+
+  // Automatically recalculate delivery eligibility whenever settings change
+  import('./useLocationStore').then((mod) => {
+    if (mod && mod.default && typeof mod.default.getState === 'function') {
+      mod.default.getState().recalculateEligibility?.();
+    }
+  }).catch(() => {});
 };
 
 export const useSettingsStore = create((set, get) => ({

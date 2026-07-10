@@ -8,15 +8,14 @@ import {
   Banknote, Package, ArrowLeft, Loader2, Info,
 } from 'lucide-react';
 import useCartStore from '../store/useCartStore';
-import useLocationStore, { haversineDistance, STORE_LOCATION } from '../store/useLocationStore';
+import useLocationStore, { haversineDistance, STORE_LOCATION, getDeliveryRadius } from '../store/useLocationStore';
 import useAuthStore from '../store/useAuthStore';
 import LiveLocationPanel from '../components/Location/LiveLocationPanel';
 import useModal from '../hooks/useModal';
 import { formatCurrency } from '../utils/currency';
 import useSettingsStore from '../store/useSettingsStore';
 
-// Temporary testing value. Change back to 5 KM before production.
-const MAX_KM = Number(import.meta.env.VITE_DELIVERY_RADIUS_KM) || 5;
+// Remove hardcoded MAX_KM fallback
 const API_BASE = config_API_BASE;
 
 /* ── Haversine wrapper for recipient location ──────────────────────────────── */
@@ -102,7 +101,9 @@ const Checkout = () => {
   const isMaxOrderSatisfied = itemTotal <= maxOrderValue;
 
   const hasLocation = !!userLocation;
-  const isDeliveryAvailable = isEligible && hasLocation;
+  const radius = getDeliveryRadius();
+  const distNumber = typeof distanceKm === 'number' && !isNaN(distanceKm) ? distanceKm : parseFloat(distanceKm || 0);
+  const isDeliveryAvailable = hasLocation && distNumber <= radius;
   const isCartNotEmpty = sanitizedItems.length > 0;
   const isNameEntered = fullName.trim() !== '';
   const isPhoneEntered = phoneNumber.trim() !== '';
@@ -279,7 +280,7 @@ const Checkout = () => {
           lat:               userLocation?.lat,
           lon:               userLocation?.lon,
           distanceFromStore: distanceKm,
-          deliveryAvailable: isEligible,
+          deliveryAvailable: isDeliveryAvailable,
         },
         recipient: {
           isForAnotherPerson: false,
@@ -424,7 +425,7 @@ const Checkout = () => {
             style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.05)' }}>
             <div className="flex items-center justify-between">
               <p className="text-sm font-bold text-gray-800">Payment Method</p>
-              {!isEligible && hasLocation && (
+              {!isDeliveryAvailable && hasLocation && (
                 <span className="text-[10px] font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded-full">
                   Disabled
                 </span>
@@ -434,13 +435,13 @@ const Checkout = () => {
             {/* COD — only option, always selected */}
             <div
               className={`flex items-center gap-3.5 p-4 rounded-xl border-2 transition-all ${
-                isEligible
+                isDeliveryAvailable
                   ? 'border-green-400 bg-green-50'
                   : 'border-gray-200 bg-gray-50 opacity-50'
               }`}
             >
               <div className="w-4 h-4 rounded-full border-2 border-green-500 flex items-center justify-center shrink-0">
-                {isEligible && (
+                {isDeliveryAvailable && (
                   <div className="w-2 h-2 rounded-full bg-green-500" />
                 )}
               </div>
@@ -454,7 +455,7 @@ const Checkout = () => {
               </span>
             </div>
 
-            {!isEligible && hasLocation && (
+            {!isDeliveryAvailable && hasLocation && (
               <p className="text-xs text-red-400 flex items-center gap-1.5">
                 <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
                 Payment disabled — delivery not available at this location

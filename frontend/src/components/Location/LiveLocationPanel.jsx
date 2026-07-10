@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Loader2, RefreshCw, Map } from 'lucide-react';
-import useLocationStore from '../../store/useLocationStore';
+import useLocationStore, { getDeliveryRadius } from '../../store/useLocationStore';
 import MapLocationPicker from './MapLocationPicker';
 
 const LiveLocationPanel = () => {
@@ -31,6 +31,9 @@ const LiveLocationPanel = () => {
 
   const hasLocation = !!userLocation;
   const isLoading   = loading || rechecking;
+  const radius      = getDeliveryRadius();
+  const distNumber  = typeof distanceKm === 'number' && !isNaN(distanceKm) ? distanceKm : parseFloat(distanceKm || 0);
+  const deliveryAvailable = hasLocation && distNumber <= radius;
 
   const displayAddress =
     isLoading && !userLocation
@@ -57,7 +60,7 @@ const LiveLocationPanel = () => {
         <p className="text-gray-700">
           <span className="font-semibold text-gray-500">Distance from Store:</span>{' '}
           <span className="font-bold text-gray-900">
-            {hasLocation && !isLoading ? `${distanceKm} km` : '--'}
+            {hasLocation && !isLoading ? `${distNumber.toFixed(2)} km` : '--'}
           </span>
         </p>
 
@@ -69,11 +72,11 @@ const LiveLocationPanel = () => {
                 <Loader2 className="w-3.5 h-3.5 animate-spin" /> Checking...
               </span>
             ) : !hasLocation ? (
-              <span className="text-red-600">❌ Out of Delivery Zone</span>
-            ) : isEligible ? (
-              <span className="text-green-600">✅ Delivery Available</span>
+              <span className="text-red-600">❌ Out of delivery zone</span>
+            ) : deliveryAvailable ? (
+              <span className="text-green-600">✅ Delivery Available • {distNumber.toFixed(2)} km away</span>
             ) : (
-              <span className="text-red-600">❌ Out of Delivery Zone</span>
+              <span className="text-red-600">❌ Out of delivery zone • {distNumber.toFixed(2)} km away (Max {radius} km)</span>
             )}
           </span>
         </p>

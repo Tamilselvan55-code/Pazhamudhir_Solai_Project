@@ -258,7 +258,7 @@ const Home = () => {
           }}
         >
           <span className="text-white text-[10px] md:text-xs font-bold uppercase tracking-widest mb-1 bg-black/25 px-2 py-0.5 rounded-full w-fit">
-            Hyperlocal · {settings?.deliveryRadiusKm ?? 5} KM Delivery ({settings?.deliveryTiming || 'Same Day'})
+            Hyperlocal · {Number(settings?.deliveryRadiusKm || import.meta.env.VITE_DELIVERY_RADIUS_KM || 30)} KM Delivery ({settings?.deliveryTiming || 'Same Day'})
           </span>
           <h1 className="text-xl md:text-3xl font-extrabold text-white leading-tight mb-1 mt-2">
             {settings?.storeName || 'Fresh Groceries'} 🛒<br />

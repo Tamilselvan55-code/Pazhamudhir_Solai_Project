@@ -3,12 +3,9 @@ import {
   X, MapPin, Search, Navigation, Check, AlertTriangle,
   Loader2, Info,
 } from 'lucide-react';
-import { STORE_LOCATION } from '../../store/useLocationStore';
+import { STORE_LOCATION, getDeliveryRadius } from '../../store/useLocationStore';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-
-/* ── Constants ────────────────────────────────────────────────────────────── */
-const DELIVERY_RADIUS_M = (Number(import.meta.env.VITE_DELIVERY_RADIUS_KM) || 30) * 1000;
 
 /* ── Custom Marker Icons ──────────────────────────────────────────────────── */
 const storeIcon = L.divIcon({
@@ -182,8 +179,9 @@ const MapLocationPicker = ({ isOpen, onClose, onLocationSelect, initialLocation 
       L.marker(centerPos, { icon: storeIcon }).addTo(map);
 
       // Add Delivery zone circle
+      const radiusKm = getDeliveryRadius();
       L.circle(centerPos, {
-        radius: DELIVERY_RADIUS_M,
+        radius: radiusKm * 1000,
         color: '#16a34a',
         weight: 1.5,
         fillColor: '#16a34a',
@@ -447,7 +445,7 @@ const MapLocationPicker = ({ isOpen, onClose, onLocationSelect, initialLocation 
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-3.5 h-3.5 rounded-full border-2 border-green-500 bg-green-50 shrink-0" />
-                {`${DELIVERY_RADIUS_M / 1000} km Delivery Zone`}
+                {`${getDeliveryRadius()} km Delivery Zone`}
               </div>
             </div>
           )}

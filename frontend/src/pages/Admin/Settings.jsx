@@ -25,7 +25,7 @@ const Settings = () => {
     email: '',
     supportWhatsApp: '',
     workingHours: '',
-    deliveryRadiusKm: 5,
+    deliveryRadiusKm: Number(import.meta.env.VITE_DELIVERY_RADIUS_KM) || 30,
     currency: '₹',
     gstPercentage: 0,
     invoicePrefix: 'INV-',

@@ -12,7 +12,7 @@ router.get('/settings', async (req, res) => {
         data: {
           storeName: 'Tiruchendur Murugan Pazhamudhir Solai',
           location: { lat: 12.9666144, lon: 79.9458077 },
-          deliveryRadiusKm: Number(process.env.DELIVERY_RADIUS_KM) || 40
+          deliveryRadiusKm: Number(process.env.DELIVERY_RADIUS_KM) || 30
         }
       });
     } else if (settingsRaw.storeName && settingsRaw.storeName.includes('Palumanicholai')) {

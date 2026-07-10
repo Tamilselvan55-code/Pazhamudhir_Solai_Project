@@ -5,8 +5,13 @@ import { API_BASE } from '../config/api';
 
 // ── Store coordinates (Tiruchendur Murugan Pazhamudhir Solai) ────────────────────
 export const STORE_LOCATION = { lat: 13.005865, lon: 79.995026 };
-// Temporary testing value. Change back to 5 KM before production.
-const MAX_RADIUS_KM = Number(import.meta.env.VITE_DELIVERY_RADIUS_KM) || 30;
+import useSettingsStore from './useSettingsStore';
+
+export const getDeliveryRadius = () => {
+  const storeSettings = useSettingsStore.getState()?.settings || {};
+  return Number(storeSettings.deliveryRadiusKm || import.meta.env.VITE_DELIVERY_RADIUS_KM || 30);
+};
+
 const API_AUTH_BASE = `${API_BASE}/auth`;
 
 // ── Haversine formula ─────────────────────────────────────────────────────────
@@ -90,6 +95,7 @@ const useLocationStore = create(
       setManualLocation: ({ lat, lon, fullAddress = '', city = '', state = '', pincode = '' }) => {
         const distance  = haversineDistance(lat, lon, STORE_LOCATION.lat, STORE_LOCATION.lon);
         const distanceKm = parseFloat(distance.toFixed(2));
+        const radius = getDeliveryRadius();
         set({
           userLocation: { lat, lon },
           fullAddress,
@@ -97,7 +103,7 @@ const useLocationStore = create(
           state,
           pincode,
           distanceKm,
-          isEligible:     distance <= MAX_RADIUS_KM,
+          isEligible:     distanceKm <= radius,
           locationSource: 'map',
           error:          null,
           loading:        false,
@@ -136,9 +142,10 @@ const useLocationStore = create(
               const distanceKm     = serverResult
                 ? serverResult.distanceKm
                 : parseFloat(clientDistance.toFixed(2));
+              const radius         = getDeliveryRadius();
               const isEligible     = serverResult
                 ? serverResult.deliveryAvailable
-                : clientDistance <= MAX_RADIUS_KM;
+                : distanceKm <= radius;
 
               set({
                 userLocation:    { lat: latitude, lon: longitude },
@@ -185,10 +192,12 @@ const useLocationStore = create(
         navigator.geolocation.getCurrentPosition(
           ({ coords: { latitude, longitude } }) => {
             const distance = haversineDistance(latitude, longitude, STORE_LOCATION.lat, STORE_LOCATION.lon);
+            const distanceKm = parseFloat(distance.toFixed(2));
+            const radius = getDeliveryRadius();
             set({
               userLocation:  { lat: latitude, lon: longitude },
-              distanceKm:    parseFloat(distance.toFixed(2)),
-              isEligible:    distance <= MAX_RADIUS_KM,
+              distanceKm,
+              isEligible:    distanceKm <= radius,
               locationSource: 'gps',
               loading:       false,
               error:         null,
@@ -236,6 +245,17 @@ const useLocationStore = create(
 
       // ── Reset live check flag (call on checkout mount) ────────────────────
       resetLiveCheck: () => set({ liveChecked: false }),
+
+      recalculateEligibility: () => {
+        const { distanceKm, userLocation } = get();
+        if (userLocation && typeof distanceKm === 'number' && !isNaN(distanceKm)) {
+          const radius = getDeliveryRadius();
+          const isEligible = distanceKm <= radius;
+          if (get().isEligible !== isEligible) {
+            set({ isEligible });
+          }
+        }
+      },
     }),
 
     {
@@ -250,6 +270,11 @@ const useLocationStore = create(
         isEligible:     s.isEligible,
         locationSource: s.locationSource,
       }),
+      onRehydrateStorage: () => (state) => {
+        if (state && typeof state.recalculateEligibility === 'function') {
+          state.recalculateEligibility();
+        }
+      },
     }
   )
 );

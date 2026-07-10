@@ -227,7 +227,7 @@ model StoreSettings {
   email                    String?  @default("thiruchendurmurugan192@gmail.com")
   supportWhatsApp          String?  @default("+91 94443 62453")
   workingHours             String?  @default("06:00 AM - 09:00 PM")
-  deliveryRadiusKm         Float    @default(40)
+  deliveryRadiusKm         Float    @default(30)
   currency                 String?  @default("₹")
   gstPercentage            Float?   @default(0)
   invoicePrefix            String?  @default("INV-")

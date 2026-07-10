@@ -84,7 +84,7 @@ router.post('/', protect, checkMaintenanceAndFeature('disableOrderPlacement'), c
     const settingsRaw = await prisma.storeSettings.findFirst();
     const settings = formatMongoCompat(settingsRaw) || {
       location:         { lat: 12.9666144, lon: 79.9458077 },
-      deliveryRadiusKm: Number(process.env.DELIVERY_RADIUS_KM) || 40,
+      deliveryRadiusKm: Number(process.env.DELIVERY_RADIUS_KM) || 30,
     };
 
     if (settings.disableCheckout || settings.disableOrderPlacement) {
@@ -99,13 +99,13 @@ router.post('/', protect, checkMaintenanceAndFeature('disableOrderPlacement'), c
       shippingAddress.lon,
       settings.location?.lat ?? 12.9666144,
       settings.location?.lon ?? 79.9458077,
-      settings.deliveryRadiusKm ?? 40
+      settings.deliveryRadiusKm ?? 30
     );
 
     if (!locationCheck.isEligible) {
       return res.status(400).json({
         success: false,
-        message: `Delivery not available. You are ${locationCheck.distance} km away. Limit is ${settings.deliveryRadiusKm} km.`,
+        message: `Delivery not available. You are ${locationCheck.distance} km away. Limit is ${settings.deliveryRadiusKm ?? 30} km.`,
       });
     }
 
