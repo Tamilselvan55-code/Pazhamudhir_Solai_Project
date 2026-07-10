@@ -29,9 +29,13 @@ const MyOrdersTab = ({ orders, loading, onRefresh, onViewDetails, onDownloadInvo
   // Filter & Search
   const filteredOrders = orders.filter((order) => {
     const matchesStatus = statusFilter === 'All' || order.status === statusFilter;
-    const searchLow = searchTerm.toLowerCase();
-    const inv = (order.invoiceNumber || order._id || '').toLowerCase();
-    const prodNames = (order.orderItems || []).map((i) => (i.name || '').toLowerCase()).join(' ');
+    const searchLow = (typeof searchTerm === 'string' ? searchTerm : String(searchTerm || '')).toLowerCase();
+    const invStr = typeof (order.invoiceNumber || order._id) === 'string' ? (order.invoiceNumber || order._id) : String(order.invoiceNumber || order._id || '');
+    const inv = invStr.toLowerCase();
+    const prodNames = (order.orderItems || []).map((i) => {
+      const nameStr = typeof i.name === 'string' ? i.name : String(i.name || '');
+      return nameStr.toLowerCase();
+    }).join(' ');
     const matchesSearch = inv.includes(searchLow) || prodNames.includes(searchLow);
     return matchesStatus && matchesSearch;
   });

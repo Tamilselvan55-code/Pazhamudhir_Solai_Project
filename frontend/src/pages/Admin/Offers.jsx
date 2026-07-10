@@ -219,9 +219,11 @@ const Offers = () => {
                 </thead>
                 <tbody className="divide-y divide-white/6 text-xs">
                   {(() => {
-                    const filteredOffers = offers.filter(off => 
-                      (off.title || '').toLowerCase().includes(searchQuery.trim().toLowerCase())
-                    );
+                    const query = (typeof searchQuery === 'string' ? searchQuery : String(searchQuery || '')).trim().toLowerCase();
+                    const filteredOffers = offers.filter(off => {
+                      const titleStr = typeof off.title === 'string' ? off.title : String(off.title || '');
+                      return titleStr.toLowerCase().includes(query);
+                    });
                     if (filteredOffers.length === 0) {
                       return (
                         <tr>

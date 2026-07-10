@@ -77,11 +77,14 @@ const Users = () => {
 
   // Filter users based on search and verification status
   const filteredUsers = users.filter(user => {
-    const query = searchQuery.trim().toLowerCase();
+    const query = typeof searchQuery === 'string' ? searchQuery.trim().toLowerCase() : String(searchQuery || '').trim().toLowerCase();
+    const fullNameStr = typeof user.fullName === 'string' ? user.fullName : String(user.fullName || '');
+    const emailStr = typeof user.email === 'string' ? user.email : String(user.email || '');
+    const phoneStr = typeof user.phoneNumber === 'string' ? user.phoneNumber : String(user.phoneNumber || '');
     const matchesSearch = (
-      (user.fullName || '').toLowerCase().includes(query) ||
-      (user.phoneNumber || '').includes(query) ||
-      (user.email || '').toLowerCase().includes(query)
+      fullNameStr.toLowerCase().includes(query) ||
+      phoneStr.includes(query) ||
+      emailStr.toLowerCase().includes(query)
     );
     const matchesVerification =
       verificationFilter === 'all' ||

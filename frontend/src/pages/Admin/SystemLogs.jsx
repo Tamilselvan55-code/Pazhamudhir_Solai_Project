@@ -53,7 +53,8 @@ const SystemLogs = () => {
   };
 
   const getActionStyle = (action) => {
-    const act = action?.toLowerCase() || '';
+    const actStr = typeof action === 'string' ? action : String(action || '');
+    const act = actStr.toLowerCase();
     if (act.includes('login')) return 'text-[#10B981] bg-[#10B981]/10 border-[#10B981]/20';
     if (act.includes('error') || act.includes('fail')) return 'text-[#EF4444] bg-[#EF4444]/10 border-[#EF4444]/20';
     if (act.includes('delete') || act.includes('remove')) return 'text-[#EF4444] bg-[#EF4444]/10 border-[#EF4444]/20';

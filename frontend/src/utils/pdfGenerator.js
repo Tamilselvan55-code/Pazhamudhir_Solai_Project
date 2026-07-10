@@ -650,7 +650,10 @@ export const generateReportPDF = (reportType, summary, dateFilter, tableData, ad
             const cleanedVal = Number(value.replace(/[^0-9.-]/g, ''));
             return formatCurrencyPdf(cleanedVal);
           }
-          return value;
+          if (typeof value === 'object' && value !== null) {
+            return value.name || value.slug || value.title || JSON.stringify(value);
+          }
+          return value ?? '';
         });
       })
     : [[{ content: 'No records available for the selected filter range.', colSpan: headers.length, styles: { halign: 'center', fontStyle: 'italic' } }]];

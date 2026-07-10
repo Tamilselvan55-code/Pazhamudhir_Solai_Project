@@ -79,9 +79,10 @@ const Reports = () => {
   const filteredTableData = tableData.filter(row => {
     if (!searchQuery) return true;
     const query = searchQuery.toLowerCase();
-    return Object.values(row).some(val => 
-      String(val ?? '').toLowerCase().includes(query)
-    );
+    return Object.values(row).some(val => {
+      const valStr = typeof val === 'object' && val !== null ? (val.name || val.slug || val.title || JSON.stringify(val)) : String(val ?? '');
+      return valStr.toLowerCase().includes(query);
+    });
   });
 
   // ── Fetch analytics ───────────────────────────────────────────────────────
@@ -537,7 +538,7 @@ const Reports = () => {
                           </div>
                         </td>
                         <td className="py-3 pr-4">
-                          <span className="px-2 py-0.5 bg-white/6 border border-white/8 rounded-md text-[10px] text-[#94A3B8] font-bold capitalize">{p.category || '–'}</span>
+                          <span className="px-2 py-0.5 bg-white/6 border border-white/8 rounded-md text-[10px] text-[#94A3B8] font-bold capitalize">{typeof p.category === 'string' ? p.category : p.category?.name || p.categorySlug || '–'}</span>
                         </td>
                         <td className="py-3 pr-4 text-right font-black text-white">
                           {(p.sold || 0).toLocaleString()}
@@ -569,7 +570,7 @@ const Reports = () => {
                     return (
                       <div key={i} className="space-y-1.5">
                         <div className="flex justify-between text-xs">
-                          <span className="font-bold capitalize" style={{ color }}>{c.category}</span>
+                          <span className="font-bold capitalize" style={{ color }}>{typeof c.category === 'string' ? c.category : c.category?.name || c.categorySlug || '–'}</span>
                           <div className="flex items-center gap-3">
                             <span className="text-[#94A3B8]">{(c.sold || 0).toLocaleString()} units</span>
                             <span className="font-black text-white">{formatCurrency(c.revenue)}</span>
@@ -672,7 +673,7 @@ const Reports = () => {
                           <div className="min-w-0">
                             <p className="font-bold text-white text-xs truncate">{p.name}</p>
                             {p.tamilName && <p className="text-[10px] text-[#64748B] truncate">{p.tamilName}</p>}
-                            <p className="text-[10px] text-[#94A3B8] capitalize">{p.category}</p>
+                            <p className="text-[10px] text-[#94A3B8] capitalize">{typeof p.category === 'string' ? p.category : p.category?.name || p.categorySlug || '–'}</p>
                           </div>
                           <div className="text-right shrink-0 ml-3">
                             <p className={`text-sm font-black ${cfg.text}`}>{p.stock} {p.unit}</p>
@@ -708,7 +709,7 @@ const Reports = () => {
                         <div className="min-w-0">
                           <p className="font-bold text-white text-xs truncate">{p.name}</p>
                           {p.tamilName && <p className="text-[10px] text-[#64748B] truncate">{p.tamilName}</p>}
-                          <p className="text-[10px] text-[#94A3B8] capitalize">{p.category}</p>
+                          <p className="text-[10px] text-[#94A3B8] capitalize">{typeof p.category === 'string' ? p.category : p.category?.name || p.categorySlug || '–'}</p>
                         </div>
                         <span className="text-[10px] font-black text-[#EF4444] bg-[#EF4444]/15 border border-[#EF4444]/30 px-2 py-0.5 rounded-md shrink-0 ml-3">
                           OUT

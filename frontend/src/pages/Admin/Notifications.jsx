@@ -555,12 +555,12 @@ const Notifications = () => {
 
     // Search
     if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase().trim();
-      const name = (n.customerName || '').toLowerCase();
-      const phone = (n.phone || '').toLowerCase();
-      const invoice = (n.invoiceNumber || '').toLowerCase();
-      const title = (n.title || '').toLowerCase();
-      const type = (n.type || '').toLowerCase();
+      const q = (typeof searchQuery === 'string' ? searchQuery : String(searchQuery || '')).toLowerCase().trim();
+      const name = (typeof n.customerName === 'string' ? n.customerName : String(n.customerName || '')).toLowerCase();
+      const phone = (typeof n.phone === 'string' ? n.phone : String(n.phone || '')).toLowerCase();
+      const invoice = (typeof n.invoiceNumber === 'string' ? n.invoiceNumber : String(n.invoiceNumber || '')).toLowerCase();
+      const title = (typeof n.title === 'string' ? n.title : String(n.title || '')).toLowerCase();
+      const type = (typeof n.type === 'string' ? n.type : String(n.type || '')).toLowerCase();
       if (!name.includes(q) && !phone.includes(q) && !invoice.includes(q) && !title.includes(q) && !type.includes(q)) {
         return false;
       }

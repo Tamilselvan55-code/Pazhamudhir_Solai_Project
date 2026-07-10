@@ -359,7 +359,7 @@ const Products = () => {
         p._id,
         `"${p.name}"`,
         `"${p.nameTamil || p.tamilName || ''}"`,
-        p.category,
+        typeof p.category === 'string' ? p.category : p.category?.name || p.categorySlug || '',
         p.price,
         p.stock,
         p.discount || 0,
@@ -475,7 +475,7 @@ const Products = () => {
         englishName: prod.englishName || '',
         sku: prod.sku || '',
         price: prod.price,
-        category: prod.category,
+        category: typeof prod.category === 'string' ? prod.category : prod.category?.slug || prod.categorySlug || prod.category?.name || 'vegetables',
         unit: prod.unit || '1 kg',
         stock: prod.stock || 0,
         description: prod.description || '',
@@ -803,7 +803,7 @@ const Products = () => {
                         <td className="py-3.5 px-4 text-gray-300 font-semibold">{p.nameTamil || p.tamilName || '--'}</td>
                         <td className="py-3.5 px-4">
                           <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-white/6 text-gray-200 border border-white/8 capitalize">
-                            {p.category}
+                            {typeof p.category === 'string' ? p.category : p.category?.name || p.categorySlug || '--'}
                           </span>
                         </td>
                         <td className="py-3.5 px-4 text-right font-black text-white text-sm">
@@ -987,7 +987,7 @@ const Products = () => {
                     <label className="block text-xs font-bold text-[#94A3B8] mb-1.5 uppercase tracking-wide">Category *</label>
                     <select
                       disabled={modalType === 'view'}
-                      value={formData.category}
+                      value={typeof formData.category === 'string' ? formData.category : formData.category?.slug || formData.categorySlug || (formData.category?.name || '').toLowerCase() || ''}
                       onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                       className="admin-form-input text-xs h-[40px] px-3 font-bold bg-[#020B24]"
                     >

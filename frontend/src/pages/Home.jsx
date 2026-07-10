@@ -48,7 +48,8 @@ const BASE_SECTION_META = {
 };
 
 const getCategorySlug = (name) => {
-  const n = (name || '').toLowerCase().trim();
+  const categoryName = typeof name === 'string' ? name : name?.name || name?.slug || '';
+  const n = categoryName.toLowerCase().trim();
   if (n === 'vegetables' || n.includes('veg')) return 'vegetables';
   if (n === 'fruits' || n.includes('fruit')) return 'fruits';
   if (n.includes('dairy') || n.includes('milk')) return 'dairy';
@@ -64,9 +65,16 @@ const getCategorySlug = (name) => {
 
 const matchesCategory = (product, catObj) => {
   if (catObj.id === 'all') return true;
-  const pCat = (product.category || '').toLowerCase().trim();
+  const categoryName = typeof product.category === 'string'
+    ? product.category
+    : product.category?.name || product.category?.slug || product.categorySlug || '';
+  const pCat = categoryName.toLowerCase().trim();
+  const catObjName = typeof catObj.name === 'string'
+    ? catObj.name
+    : catObj.name?.name || catObj.slug || catObj.id || '';
+  const catObjSlug = catObjName.toLowerCase().trim();
   if (pCat === catObj.id) return true;
-  if (pCat === (catObj.name || '').toLowerCase().trim()) return true;
+  if (pCat === catObjSlug) return true;
   if (catObj.id === 'dairy' && pCat.includes('dairy')) return true;
   if (catObj.id === 'masala' && pCat.includes('masala')) return true;
   if (catObj.id === 'oils' && pCat.includes('oil')) return true;
@@ -178,7 +186,8 @@ const Home = () => {
       list = list.filter(p => matchesCategory(p, activeCatObj));
     }
     if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase().trim();
+      const queryStr = typeof searchQuery === 'string' ? searchQuery : String(searchQuery || '');
+      const q = queryStr.toLowerCase().trim();
       const tanglishMap = {
         'vengayam': ['onion', 'வெங்காயம்'],
         'kathirikai': ['brinjal', 'கத்திரிக்காய்'],
@@ -195,9 +204,12 @@ const Home = () => {
       };
       const synonyms = tanglishMap[q] || [];
       list = list.filter(p => {
-        const eng = (p.name || '').toLowerCase();
-        const tam = (p.nameTamil || p.tamilName || '').toLowerCase();
-        const engAlt = (p.englishName || '').toLowerCase();
+        const engVal = typeof p.name === 'string' ? p.name : p.name?.name || String(p.name || '');
+        const tamVal = typeof (p.nameTamil || p.tamilName) === 'string' ? (p.nameTamil || p.tamilName) : String(p.nameTamil || p.tamilName || '');
+        const engAltVal = typeof p.englishName === 'string' ? p.englishName : String(p.englishName || '');
+        const eng = engVal.toLowerCase();
+        const tam = tamVal.toLowerCase();
+        const engAlt = engAltVal.toLowerCase();
         if (eng.includes(q) || tam.includes(q) || engAlt.includes(q)) return true;
         return synonyms.some(syn => eng.includes(syn) || tam.includes(syn));
       });
