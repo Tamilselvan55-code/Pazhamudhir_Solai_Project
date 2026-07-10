@@ -1,7 +1,7 @@
-import mongoose from 'mongoose';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import prisma from './prismaClient.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -429,8 +429,7 @@ export async function migrateTamilNames() {
   try {
     await ensureTamilFontDownloaded();
     console.log('[Migration] Checking products for Tanglish -> Tamil Unicode conversion...');
-    const productsColl = mongoose.connection.db.collection('products');
-    const allProducts = await productsColl.find({}).toArray();
+    const allProducts = await prisma.product.findMany();
     let updatedCount = 0;
 
     for (const prod of allProducts) {
@@ -439,15 +438,13 @@ export async function migrateTamilNames() {
       
       const needsUpdate = (prod.nameTamil !== converted) || (prod.tamilName !== converted) || (!prod.tamilName);
       if (needsUpdate && converted) {
-        await productsColl.updateOne(
-          { _id: prod._id },
-          {
-            $set: {
-              nameTamil: converted,
-              tamilName: converted
-            }
+        await prisma.product.update({
+          where: { id: prod.id },
+          data: {
+            nameTamil: converted,
+            tamilName: converted
           }
-        );
+        });
         updatedCount++;
       }
     }

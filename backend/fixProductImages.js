@@ -6,13 +6,10 @@
  * Run: node fixProductImages.js
  */
 
-import mongoose from 'mongoose';
+import prisma from './utils/prismaClient.js';
 import dotenv from 'dotenv';
-import Product from './models/Product.js';
 
 dotenv.config();
-
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/tiruchendur_grocery';
 
 // All images: 600x600 friendly, clear product photo, white/natural bg
 const CORRECT_IMAGES = {
@@ -316,12 +313,12 @@ function getCorrectImage(name) {
 }
 
 async function fixImages() {
-  await mongoose.connect(MONGO_URI);
-  console.log('\n✅ Connected to MongoDB:', MONGO_URI);
+  await prisma.$connect();
+  console.log('\n✅ Connected to PostgreSQL via Prisma');
   console.log('🔍 Scanning all products for incorrect images...\n');
   console.log('='.repeat(64));
 
-  const allProducts = await Product.find({});
+  const allProducts = await prisma.product.findMany({});
   console.log('📦 Total products found: ' + allProducts.length + '\n');
 
   let updated = 0;
@@ -343,10 +340,10 @@ async function fixImages() {
       continue;
     }
 
-    await Product.collection.updateOne(
-      { _id: product._id },
-      { $set: { image: correctUrl } }
-    );
+    await prisma.product.update({
+      where: { id: product.id },
+      data: { image: correctUrl }
+    });
     console.log('🖼️  [FIXED]   "' + product.name + '"');
     console.log('    Old: ' + product.image);
     console.log('    New: ' + correctUrl + '\n');
@@ -362,7 +359,7 @@ async function fixImages() {
   console.log('='.repeat(64));
   console.log('\n🎉 Image correction complete! Refresh the app to see changes.\n');
 
-  await mongoose.disconnect();
+  await prisma.$disconnect();
   process.exit(0);
 }
 

@@ -1,11 +1,8 @@
-import mongoose from 'mongoose';
 import dotenv from 'dotenv';
-import Product from './models/Product.js';
+import prisma from './utils/prismaClient.js';
 import { cleanAndConvertTamilName } from './utils/migrateTamilNames.js';
 
 dotenv.config();
-
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/tiruchendur_grocery';
 
 const PRODUCTS = [
   // ─── 1. VEGETABLES (Approx 30 products) ───────────────────────────────────────
@@ -1572,8 +1569,8 @@ const PRODUCTS = [
 
 async function seed() {
   try {
-    await mongoose.connect(MONGO_URI);
-    console.log('Connected to MongoDB for seeding products...');
+    await prisma.$connect();
+    console.log('Connected to PostgreSQL via Prisma for seeding products...');
 
     let insertedCount = 0;
     let skippedCount = 0;
@@ -1583,18 +1580,52 @@ async function seed() {
       item.tamilName = item.nameTamil;
 
       // Check duplicate by Product Name, Tamil Name, or Category combination
-      const existing = await Product.findOne({
-        $or: [
-          { name: { $regex: new RegExp(`^${item.name.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}$`, 'i') } },
-          { nameTamil: item.nameTamil }
-        ]
+      const existing = await prisma.product.findFirst({
+        where: {
+          OR: [
+            { name: { equals: item.name, mode: 'insensitive' } },
+            { nameTamil: item.nameTamil }
+          ]
+        }
       });
 
       if (existing) {
         console.log(`[SKIP] Duplicate already exists: "${item.name}" (${item.nameTamil}) in [${item.category}]`);
         skippedCount++;
       } else {
-        await Product.create(item);
+        // Find or create Category ID
+        let categoryId = null;
+        if (item.category) {
+          const categoryName = item.category === 'others' ? 'Others' : 
+                               item.category === 'coffee & tea' ? 'Coffee & Tea' :
+                               item.category.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+          
+          let categoryObj = await prisma.category.findFirst({
+            where: { name: { equals: categoryName, mode: 'insensitive' } }
+          });
+          
+          if (!categoryObj) {
+            categoryObj = await prisma.category.create({
+              data: {
+                name: categoryName,
+                isActive: true
+              }
+            });
+          }
+          categoryId = categoryObj.id;
+        }
+
+        const { category, ...rest } = item;
+        await prisma.product.create({
+          data: {
+            ...rest,
+            nameTamil: item.nameTamil,
+            tamilName: item.nameTamil,
+            categorySlug: category,
+            categoryId: categoryId
+          }
+        });
+
         console.log(`[INSERT] Added new product: "${item.name}" (${item.nameTamil})`);
         insertedCount++;
       }

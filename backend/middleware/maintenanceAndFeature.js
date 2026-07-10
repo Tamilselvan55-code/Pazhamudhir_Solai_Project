@@ -1,9 +1,11 @@
-import StoreSettings from '../models/StoreSettings.js';
+import prisma from '../utils/prismaClient.js';
+import { formatMongoCompat } from '../utils/formatMongoCompat.js';
 
 export const checkMaintenanceAndFeature = (featureName) => {
   return async (req, res, next) => {
     try {
-      const settings = await StoreSettings.findOne();
+      const settingsRaw = await prisma.storeSettings.findFirst();
+      const settings = formatMongoCompat(settingsRaw);
       if (!settings) {
         return next();
       }

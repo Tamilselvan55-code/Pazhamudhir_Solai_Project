@@ -1,22 +1,18 @@
 import express from 'express';
-import mongoose from 'mongoose';
-import Order from '../models/Order.js';
-import Product from '../models/Product.js';
-import StoreSettings from '../models/StoreSettings.js';
+import prisma from '../utils/prismaClient.js';
+import { formatMongoCompat } from '../utils/formatMongoCompat.js';
 import { isWithinDeliveryRadius } from '../utils/distance.js';
 import { createAndEmitNotification } from '../utils/notificationHelper.js';
-import User from '../models/User.js';
 import { protect } from '../middleware/auth.js';
 import { checkMaintenanceAndFeature } from '../middleware/maintenanceAndFeature.js';
 
 const router = express.Router();
 
+const isValidUuid = (id) => /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(id);
+
 // ─── POST /api/orders — Create a new order ────────────────────────────────────
-// STEP 4: protect middleware ensures req.user._id exists (401 if not)
 router.post('/', protect, checkMaintenanceAndFeature('disableOrderPlacement'), checkMaintenanceAndFeature('disableCheckout'), async (req, res) => {
-  // STEP 1: Wrap entire handler — always return real errors, never crash
   try {
-    // ── STEP 4: Verify authenticated user ────────────────────────────────────
     if (!req.user || !req.user._id) {
       return res.status(401).json({
         success: false,
@@ -24,9 +20,8 @@ router.post('/', protect, checkMaintenanceAndFeature('disableOrderPlacement'), c
       });
     }
 
-    const userId = req.user._id;
+    const userId = req.user._id.toString();
 
-    // ── STEP 2: Log incoming request for debugging ─────────────────────────
     console.log('[ORDER] ── Incoming Order Request ──');
     console.log('[ORDER] req.user._id:', userId);
     console.log('[ORDER] req.body:', JSON.stringify(req.body, null, 2));
@@ -42,7 +37,6 @@ router.post('/', protect, checkMaintenanceAndFeature('disableOrderPlacement'), c
       couponDiscount = 0,
     } = req.body;
 
-    // ── STEP 2: Validate every required field ────────────────────────────────
     const missingFields = [];
 
     if (!orderItems || !Array.isArray(orderItems) || orderItems.length === 0) {
@@ -66,9 +60,6 @@ router.post('/', protect, checkMaintenanceAndFeature('disableOrderPlacement'), c
       });
     }
 
-    // ── STEP 5: Validate address fields ──────────────────────────────────────
-    // lat and lon are hard required (needed for delivery radius check)
-    // city/state/pincode are optional — GPS reverse geocode may return empty
     const addressErrors = [];
     if (!shippingAddress.lat && shippingAddress.lat !== 0) addressErrors.push('lat (latitude)');
     if (!shippingAddress.lon && shippingAddress.lon !== 0) addressErrors.push('lon (longitude)');
@@ -81,7 +72,6 @@ router.post('/', protect, checkMaintenanceAndFeature('disableOrderPlacement'), c
       });
     }
 
-    // Log address warnings (non-blocking — these fields are optional)
     const addressWarnings = [];
     if (!shippingAddress.street && !shippingAddress.fullAddress) addressWarnings.push('street/fullAddress');
     if (!shippingAddress.city) addressWarnings.push('city');
@@ -91,10 +81,10 @@ router.post('/', protect, checkMaintenanceAndFeature('disableOrderPlacement'), c
       console.warn('[ORDER] Address missing optional fields:', addressWarnings.join(', '));
     }
 
-    // ── Geolocation check against store settings ─────────────────────────────
-    const settings = await StoreSettings.findOne() || {
-      location:         { lat: 13.0606941, lon: 80.2270751 },
-      deliveryRadiusKm: Number(process.env.DELIVERY_RADIUS_KM) || 5,
+    const settingsRaw = await prisma.storeSettings.findFirst();
+    const settings = formatMongoCompat(settingsRaw) || {
+      location:         { lat: 12.9666144, lon: 79.9458077 },
+      deliveryRadiusKm: Number(process.env.DELIVERY_RADIUS_KM) || 40,
     };
 
     if (settings.disableCheckout || settings.disableOrderPlacement) {
@@ -107,9 +97,9 @@ router.post('/', protect, checkMaintenanceAndFeature('disableOrderPlacement'), c
     const locationCheck = isWithinDeliveryRadius(
       shippingAddress.lat,
       shippingAddress.lon,
-      settings.location.lat,
-      settings.location.lon,
-      settings.deliveryRadiusKm
+      settings.location?.lat ?? 12.9666144,
+      settings.location?.lon ?? 79.9458077,
+      settings.deliveryRadiusKm ?? 40
     );
 
     if (!locationCheck.isEligible) {
@@ -119,7 +109,6 @@ router.post('/', protect, checkMaintenanceAndFeature('disableOrderPlacement'), c
       });
     }
 
-    // ── STEP 3: Validate product IDs — verify every product exists ───────────
     const processedItems = [];
     const validCartItems = [];
     const invalidProducts = [];
@@ -132,20 +121,21 @@ router.post('/', protect, checkMaintenanceAndFeature('disableOrderPlacement'), c
         continue;
       }
 
-      const prodIdStr = prodId.toString();
-      if (!mongoose.Types.ObjectId.isValid(prodIdStr)) {
-        invalidProducts.push({ id: prodIdStr, reason: 'Invalid ObjectId format' });
+      const prodIdStr = typeof prodId === 'object' ? (prodId._id || prodId.id || '').toString() : prodId.toString();
+      if (!isValidUuid(prodIdStr)) {
+        invalidProducts.push({ id: prodIdStr, reason: 'Invalid UUID format' });
         continue;
       }
 
-      const productDoc = await Product.findById(prodIdStr);
+      const productDocRaw = await prisma.product.findUnique({ where: { id: prodIdStr } });
 
-      // STEP 3: If product is deleted or invalid, return 400 with specific ID
-      if (!productDoc) {
+      if (!productDocRaw) {
         invalidProducts.push({ id: prodIdStr, reason: 'Product not found' });
         continue;
       }
-      if (productDoc.isActive === false || productDoc.isDeleted === true) {
+      const productDoc = formatMongoCompat(productDocRaw);
+
+      if (productDoc.isActive === false) {
         invalidProducts.push({ id: prodIdStr, name: productDoc.name, reason: 'Product is no longer available' });
         continue;
       }
@@ -219,10 +209,8 @@ router.post('/', protect, checkMaintenanceAndFeature('disableOrderPlacement'), c
       });
     }
 
-    // Calculate subtotal
     const itemsSubtotal = processedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
-    // Validate min/max order value (items total)
     if (itemsSubtotal < (settings.minOrderValue ?? 0)) {
       return res.status(400).json({
         success: false,
@@ -236,94 +224,97 @@ router.post('/', protect, checkMaintenanceAndFeature('disableOrderPlacement'), c
       });
     }
 
-    // Calculate GST
     const gstPercentage = settings.gstPercentage || 0;
     const gstAmount = Math.round((itemsSubtotal * (gstPercentage / 100)) * 100) / 100;
 
-    // Calculate delivery fee
     let deliveryFee = settings.deliveryCharges || 0;
     if (itemsSubtotal >= (settings.freeDeliveryThreshold || 500)) {
       deliveryFee = 0;
     }
 
-    // Calculate final total price
     const discount = Number(couponDiscount) || 0;
     const computedTotalPrice = Math.max(0, Math.round((itemsSubtotal + gstAmount + deliveryFee - discount) * 100) / 100);
 
-    // ── Create order (STEP 6: ObjectId refs verified above) ──────────────────
-    const order = new Order({
-      orderItems: processedItems,
-      user: userId, // STEP 4: from authenticated req.user, not req.body
-      shippingAddress: {
-        street:            shippingAddress.street || shippingAddress.fullAddress || '',
-        fullAddress:       shippingAddress.fullAddress || '',
-        city:              shippingAddress.city || '',
-        state:             shippingAddress.state || '',
-        pincode:           shippingAddress.pincode || '',
-        lat:               shippingAddress.lat,
-        lon:               shippingAddress.lon,
-        distanceFromStore: shippingAddress.distanceFromStore,
-        deliveryAvailable: shippingAddress.deliveryAvailable,
-      },
-      recipient: recipient || { isForAnotherPerson: false, name: '', phone: '' },
-      totalPrice: computedTotalPrice,
-      deliveryFee,
-      gstAmount,
-      paymentMethod: 'COD',
-      paymentStatus: 'Pending',
-      notes,
-      couponCode,
-      couponDiscount: discount,
-      statusHistory: [{ status: 'Pending', note: 'Order placed by customer' }],
-    });
+    const year = new Date().getFullYear();
+    const ts = Date.now().toString().slice(-6);
+    const randomDigits = Math.floor(100 + Math.random() * 900);
+    const invoiceNo = `${settings.invoicePrefix || 'INV-'}${year}-${ts}${randomDigits}`;
 
-    // STEP 8: Invoice number is generated in pre-save hook (collision-safe)
-    let createdOrder;
+    let createdOrderRaw;
     try {
-      createdOrder = await order.save();
+      createdOrderRaw = await prisma.order.create({
+        data: {
+          userId,
+          invoiceNumber: invoiceNo,
+          shippingAddress: {
+            street:            shippingAddress.street || shippingAddress.fullAddress || '',
+            fullAddress:       shippingAddress.fullAddress || '',
+            city:              shippingAddress.city || '',
+            state:             shippingAddress.state || '',
+            pincode:           shippingAddress.pincode || '',
+            lat:               shippingAddress.lat,
+            lon:               shippingAddress.lon,
+            distanceFromStore: shippingAddress.distanceFromStore,
+            deliveryAvailable: shippingAddress.deliveryAvailable,
+          },
+          recipient: recipient || { isForAnotherPerson: false, name: '', phone: '' },
+          totalPrice: computedTotalPrice,
+          deliveryFee,
+          gstAmount,
+          paymentMethod: paymentMethod || 'COD',
+          paymentStatus: 'Pending',
+          notes,
+          couponCode,
+          couponDiscount: discount,
+          statusHistory: [{ status: 'Pending', note: 'Order placed by customer', timestamp: new Date().toISOString() }],
+          orderItems: {
+            create: processedItems.map(item => ({
+              productId: item.product.toString(),
+              name: item.name,
+              quantity: item.quantity,
+              price: item.price,
+              image: item.image
+            }))
+          }
+        },
+        include: { orderItems: { include: { product: true } }, user: true }
+      });
     } catch (saveError) {
-      // STEP 10: If save fails (e.g. duplicate invoice), retry once with timestamp suffix
-      if (saveError.code === 11000 && saveError.keyPattern?.invoiceNumber) {
-        const year = new Date().getFullYear();
-        const ts = Date.now().toString().slice(-6);
-        order.invoiceNumber = `INV-${year}-${ts}`;
-        createdOrder = await order.save();
-      } else {
-        // Return the actual Mongoose validation or DB error
-        console.error('[ORDER] Save failed:', saveError);
-        return res.status(400).json({
-          success: false,
-          message: `Order save failed: ${saveError.message}`,
-          errors: saveError.errors
-            ? Object.entries(saveError.errors).map(([field, err]) => ({ field, message: err.message }))
-            : undefined,
-        });
-      }
+      console.error('[ORDER] Save failed:', saveError);
+      return res.status(400).json({
+        success: false,
+        message: `Order save failed: ${saveError.message}`
+      });
     }
 
-    // ── STEP 7: Deduct stock safely — skip products that fail ────────────────
+    const createdOrder = formatMongoCompat(createdOrderRaw);
+
     const io = req.app.get('io');
     const stockErrors = [];
 
     for (const item of createdOrder.orderItems) {
       try {
-        const prod = await Product.findById(item.product);
-        if (!prod) {
-          stockErrors.push({ productId: item.product, reason: 'Product not found during stock update' });
-          continue; // STEP 7: skip, don't crash
+        const prodRaw = await prisma.product.findUnique({ where: { id: item.productId } });
+        if (!prodRaw) {
+          stockErrors.push({ productId: item.productId, reason: 'Product not found during stock update' });
+          continue;
         }
 
-        const originalStock = prod.stock || 0;
+        const originalStock = prodRaw.stock || 0;
         const newStock = Math.max(0, originalStock - item.quantity);
-        prod.stock = newStock;
-        if (newStock === 0) {
-          prod.inStock = false;
-        }
-        await prod.save();
+        const updatedProdRaw = await prisma.product.update({
+          where: { id: prodRaw.id },
+          data: {
+            stock: newStock,
+            inStock: newStock > 0
+          }
+        });
+        const prod = formatMongoCompat(updatedProdRaw);
 
         if (io) {
           io.emit('product_update', {
             _id: prod._id,
+            id: prod.id,
             price: prod.price,
             stock: prod.stock,
             inStock: prod.inStock,
@@ -350,9 +341,8 @@ router.post('/', protect, checkMaintenanceAndFeature('disableOrderPlacement'), c
           });
         }
       } catch (stockErr) {
-        // STEP 7: Log but don't crash the order
-        console.warn(`[ORDER] Stock update failed for product ${item.product}:`, stockErr.message);
-        stockErrors.push({ productId: item.product, reason: stockErr.message });
+        console.warn(`[ORDER] Stock update failed for product ${item.productId}:`, stockErr.message);
+        stockErrors.push({ productId: item.productId, reason: stockErr.message });
       }
     }
 
@@ -360,22 +350,21 @@ router.post('/', protect, checkMaintenanceAndFeature('disableOrderPlacement'), c
       console.warn('[ORDER] Some stock updates failed:', stockErrors);
     }
 
-    // ── Notifications (wrapped safely — never crash the order) ───────────────
     try {
-      const orderUser = await User.findById(createdOrder.user);
-      const userName = orderUser ? (orderUser.fullName || orderUser.name) : 'Customer';
-      const userPhone = orderUser ? (orderUser.phoneNumber || '') : '';
+      const orderUser = createdOrder.user || {};
+      const userName = orderUser.fullName || 'Customer';
+      const userPhone = orderUser.phoneNumber || '';
       const totalItemsCount = createdOrder.orderItems.reduce((sum, item) => sum + (item.quantity || 1), 0);
 
       await createAndEmitNotification(io, {
         title: 'New Order Received',
-        message: `New order ${createdOrder.invoiceNumber || ('#ORD-' + createdOrder._id.toString().slice(-5).toUpperCase())} placed by ${userName}.`,
+        message: `New order ${createdOrder.invoiceNumber || ('#ORD-' + createdOrder.id.slice(-5).toUpperCase())} placed by ${userName}.`,
         type: 'order',
         role: 'admin',
         link: '/admin/orders',
         customerName: userName,
         phone: userPhone,
-        orderId: createdOrder._id,
+        orderId: createdOrder.id,
         invoiceNumber: createdOrder.invoiceNumber || '',
         orderTotal: createdOrder.totalPrice || 0,
         totalItems: totalItemsCount,
@@ -384,18 +373,18 @@ router.post('/', protect, checkMaintenanceAndFeature('disableOrderPlacement'), c
       });
 
       await createAndEmitNotification(io, {
-        userId: createdOrder.user,
+        userId: createdOrder.userId,
         title: 'Order Placed',
-        message: `Your order ${createdOrder.invoiceNumber || ('#ORD-' + createdOrder._id.toString().slice(-5).toUpperCase())} has been placed.`,
+        message: `Your order ${createdOrder.invoiceNumber || ('#ORD-' + createdOrder.id.slice(-5).toUpperCase())} has been placed.`,
         type: 'order',
         role: 'customer',
         link: '/profile',
       });
 
       await createAndEmitNotification(io, {
-        userId: createdOrder.user,
+        userId: createdOrder.userId,
         title: 'Order Confirmed',
-        message: `Your order ${createdOrder.invoiceNumber || ('#ORD-' + createdOrder._id.toString().slice(-5).toUpperCase())} has been confirmed.`,
+        message: `Your order ${createdOrder.invoiceNumber || ('#ORD-' + createdOrder.id.slice(-5).toUpperCase())} has been confirmed.`,
         type: 'order',
         role: 'customer',
         link: '/profile',
@@ -403,34 +392,28 @@ router.post('/', protect, checkMaintenanceAndFeature('disableOrderPlacement'), c
 
       if (createdOrder.paymentStatus === 'Paid' || createdOrder.paymentMethod === 'Card' || createdOrder.paymentMethod === 'UPI' || createdOrder.paymentMethod === 'Razorpay') {
         await createAndEmitNotification(io, {
-          userId: createdOrder.user,
+          userId: createdOrder.userId,
           title: 'Payment Received',
-          message: `Payment of Rs. ${createdOrder.totalPrice} for order ${createdOrder.invoiceNumber || ('#ORD-' + createdOrder._id.toString().slice(-5).toUpperCase())} has been received.`,
+          message: `Payment of Rs. ${createdOrder.totalPrice} for order ${createdOrder.invoiceNumber || ('#ORD-' + createdOrder.id.slice(-5).toUpperCase())} has been received.`,
           type: 'payment',
           role: 'customer',
           link: '/profile',
         });
       }
     } catch (notifErr) {
-      // Notifications should never block order creation
       console.warn('[ORDER] Notification failed (order still created):', notifErr.message);
     }
 
-    // ── STEP 9: Return 201 Created with orderId, invoiceNo, success ──────────
-    // Spread full order object at top level for frontend backward compatibility
-    // (frontend reads data.invoiceNumber, data.totalPrice, data.orderItems directly)
-    const orderObj = createdOrder.toObject ? createdOrder.toObject() : createdOrder;
     res.status(201).json({
-      ...orderObj,
+      ...createdOrder,
       success: true,
       message: 'Order placed successfully!',
-      orderId: createdOrder._id,
+      orderId: createdOrder.id,
       invoiceNo: createdOrder.invoiceNumber,
       ...(stockErrors.length > 0 && { stockWarnings: stockErrors }),
     });
 
   } catch (error) {
-    // STEP 1 & 11: Never return generic errors — always return the real error
     console.error('[ORDER] Unhandled error:', error);
     return res.status(500).json({
       success: false,
@@ -443,10 +426,13 @@ router.post('/', protect, checkMaintenanceAndFeature('disableOrderPlacement'), c
 // ─── GET /api/orders/myorders/:userId — Customer's order history (by userId) ──
 router.get('/myorders/:userId', async (req, res) => {
   try {
-    const orders = await Order.find({ user: req.params.userId })
-      .sort('-createdAt')
-      .populate('orderItems.product', 'name nameTamil tamilName englishName image price stock inStock');
-    res.json(orders);
+    if (!isValidUuid(req.params.userId)) return res.json([]);
+    const ordersRaw = await prisma.order.findMany({
+      where: { userId: req.params.userId },
+      orderBy: { createdAt: 'desc' },
+      include: { orderItems: { include: { product: true } } }
+    });
+    res.json(formatMongoCompat(ordersRaw));
   } catch (error) {
     console.error('[ORDER] Fetch orders error:', error);
     res.status(500).json({ success: false, message: error.message || 'Failed to fetch orders' });
@@ -456,10 +442,13 @@ router.get('/myorders/:userId', async (req, res) => {
 // ─── GET /api/orders/user/myorders — Protected order history ─────────────────
 router.get('/user/myorders', protect, async (req, res) => {
   try {
-    const orders = await Order.find({ user: req.user._id })
-      .sort('-createdAt')
-      .populate('orderItems.product', 'name nameTamil tamilName englishName image price stock inStock');
-    res.json(orders);
+    const userId = req.user._id || req.user.id;
+    const ordersRaw = await prisma.order.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+      include: { orderItems: { include: { product: true } } }
+    });
+    res.json(formatMongoCompat(ordersRaw));
   } catch (error) {
     console.error('[ORDER] Fetch user orders error:', error);
     res.status(500).json({ success: false, message: error.message || 'Failed to fetch user orders' });
@@ -469,10 +458,13 @@ router.get('/user/myorders', protect, async (req, res) => {
 // ─── GET /api/orders/detail/:id — Single order detail ────────────────────────
 router.get('/detail/:id', async (req, res) => {
   try {
-    const order = await Order.findById(req.params.id)
-      .populate('orderItems.product', 'name nameTamil tamilName englishName image price stock inStock');
-    if (!order) return res.status(404).json({ message: 'Order not found' });
-    res.json(order);
+    if (!isValidUuid(req.params.id)) return res.status(404).json({ message: 'Order not found' });
+    const orderRaw = await prisma.order.findUnique({
+      where: { id: req.params.id },
+      include: { orderItems: { include: { product: true } }, user: true }
+    });
+    if (!orderRaw) return res.status(404).json({ message: 'Order not found' });
+    res.json(formatMongoCompat(orderRaw));
   } catch (error) {
     console.error('[ORDER] Fetch order detail error:', error);
     res.status(500).json({ success: false, message: error.message || 'Failed to fetch order detail' });
@@ -482,12 +474,17 @@ router.get('/detail/:id', async (req, res) => {
 // ─── PATCH /api/orders/:id/cancel — Cancel pending order ─────────────────────
 router.patch('/:id/cancel', async (req, res) => {
   try {
-    const order = await Order.findById(req.params.id);
-    if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+    if (!isValidUuid(req.params.id)) return res.status(404).json({ success: false, message: 'Order not found' });
+    const orderRaw = await prisma.order.findUnique({
+      where: { id: req.params.id },
+      include: { orderItems: true }
+    });
+    if (!orderRaw) return res.status(404).json({ success: false, message: 'Order not found' });
+    let order = formatMongoCompat(orderRaw);
 
-    // Enforce cancellation limit from settings
-    const settings = await StoreSettings.findOne();
-    const timeLimitMinutes = settings?.cancellationTimeLimit ?? 30; // default 30 mins
+    const settingsRaw = await prisma.storeSettings.findFirst();
+    const settings = formatMongoCompat(settingsRaw);
+    const timeLimitMinutes = settings?.cancellationTimeLimit ?? 30;
     const createdAtTime = new Date(order.createdAt).getTime();
     const currentTime = Date.now();
     const minutesElapsed = (currentTime - createdAtTime) / (1000 * 60);
@@ -517,49 +514,61 @@ router.patch('/:id/cancel', async (req, res) => {
       });
     }
 
-    order.status = 'Cancelled';
-    order.statusHistory.push({
+    const updatedHistory = Array.isArray(order.statusHistory) ? [...order.statusHistory] : [];
+    updatedHistory.push({
       status: 'Cancelled',
-      note: "Your order has been cancelled."
+      note: "Your order has been cancelled.",
+      timestamp: new Date().toISOString()
     });
 
-    // Restock items
+    const updatedOrderRaw = await prisma.order.update({
+      where: { id: order.id },
+      data: {
+        status: 'Cancelled',
+        statusHistory: updatedHistory
+      },
+      include: { orderItems: { include: { product: true } } }
+    });
+    order = formatMongoCompat(updatedOrderRaw);
+
     const io = req.app.get('io');
     for (const item of order.orderItems) {
-      if (item.product) {
-        const prod = await Product.findById(item.product);
-        if (prod) {
-          prod.stock = (prod.stock || 0) + item.quantity;
-          if (prod.stock > 0) prod.inStock = true;
-          await prod.save();
+      if (item.productId) {
+        const prodRaw = await prisma.product.findUnique({ where: { id: item.productId } });
+        if (prodRaw) {
+          const updatedStock = (prodRaw.stock || 0) + item.quantity;
+          const updatedProdRaw = await prisma.product.update({
+            where: { id: prodRaw.id },
+            data: {
+              stock: updatedStock,
+              inStock: updatedStock > 0
+            }
+          });
+          const prod = formatMongoCompat(updatedProdRaw);
           if (io) io.emit('product_update', prod);
         }
       }
     }
-
-    await order.save();
 
     if (io) {
       io.emit('order_status_updated', { orderId: order._id, status: 'Cancelled', invoiceNumber: order.invoiceNumber });
       io.emit('order_update', { orderId: order._id, status: 'Cancelled' });
     }
 
-    // Trigger customer notification for cancellation
-    if (order.user) {
+    if (order.userId) {
       await createAndEmitNotification(io, {
-        userId: order.user,
+        userId: order.userId,
         title: 'Order Cancelled',
-        message: `Your order ${order.invoiceNumber || ('#ORD-' + order._id.toString().slice(-5).toUpperCase())} has been cancelled.`,
+        message: `Your order ${order.invoiceNumber || ('#ORD-' + order.id.slice(-5).toUpperCase())} has been cancelled.`,
         type: 'order',
         role: 'customer',
         link: '/profile'
       });
     }
 
-    // Trigger admin notification for cancellation
     await createAndEmitNotification(io, {
       title: 'Order Cancelled',
-      message: `Order ${order.invoiceNumber || ('#ORD-' + order._id.toString().slice(-5).toUpperCase())} has been cancelled.`,
+      message: `Order ${order.invoiceNumber || ('#ORD-' + order.id.slice(-5).toUpperCase())} has been cancelled.`,
       type: 'order',
       role: 'admin',
       link: '/admin/orders'

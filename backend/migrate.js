@@ -1,17 +1,13 @@
-import mongoose from 'mongoose';
+import prisma from './utils/prismaClient.js';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/tiruchendur_grocery';
-
 async function migrate() {
   try {
-    await mongoose.connect(MONGO_URI);
-    console.log('Connected to MongoDB for migration');
-    const usersColl = mongoose.connection.db.collection('users');
-    
-    const allUsers = await usersColl.find({}).toArray();
+    await prisma.$connect();
+    console.log('Connected to PostgreSQL via Prisma for migration check');
+    const allUsers = await prisma.user.findMany();
     console.log(`Found ${allUsers.length} users to inspect`);
 
     for (let u of allUsers) {
@@ -24,17 +20,11 @@ async function migrate() {
             defaultName = cleaned.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
           }
         }
-        await usersColl.updateOne(
-          { _id: u._id },
-          { 
-            $set: { fullName: defaultName },
-            $unset: { name: "" } 
-          }
-        );
+        await prisma.user.update({
+          where: { id: u.id },
+          data: { fullName: defaultName }
+        });
         console.log(`Migrated user ${u.email || u.phoneNumber} -> fullName: ${defaultName}`);
-      } else {
-        // Just remove legacy name if exists
-        await usersColl.updateOne({ _id: u._id }, { $unset: { name: "" } });
       }
     }
 

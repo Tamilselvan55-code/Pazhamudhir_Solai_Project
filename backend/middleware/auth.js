@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
-import User from '../models/User.js';
+import prisma from '../utils/prismaClient.js';
+import { formatMongoCompat } from '../utils/formatMongoCompat.js';
 
 export const protect = async (req, res, next) => {
   let token;
@@ -7,10 +8,12 @@ export const protect = async (req, res, next) => {
     try {
       token = req.headers.authorization.split(' ')[1];
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      req.user = await User.findById(decoded.id).select('-password');
-      if (!req.user) {
+      const user = await prisma.user.findUnique({ where: { id: decoded.id } });
+      if (!user) {
         return res.status(401).json({ message: 'Not authorized, user not found' });
       }
+      const { password, ...userWithoutPassword } = user;
+      req.user = formatMongoCompat(userWithoutPassword);
       if (req.user.isBlocked) {
         return res.status(403).json({ message: 'Your account has been blocked.' });
       }

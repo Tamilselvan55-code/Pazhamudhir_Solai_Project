@@ -6,13 +6,10 @@
  * Run: node updateSpecificImages.js
  */
 
-import mongoose from 'mongoose';
+import prisma from './utils/prismaClient.js';
 import dotenv from 'dotenv';
-import Product from './models/Product.js';
 
 dotenv.config();
-
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/tiruchendur_grocery';
 
 // ─── Targeted image corrections ──────────────────────────────────────────────
 // Each entry: { name: <exact DB product name>, image: <correct Unsplash URL> }
@@ -184,8 +181,8 @@ const TARGET_IMAGES = [
 
 // ─── Main ────────────────────────────────────────────────────────────────────
 async function updateImages() {
-  await mongoose.connect(MONGO_URI);
-  console.log('\n✅ Connected to MongoDB');
+  await prisma.$connect();
+  console.log('\n✅ Connected to PostgreSQL via Prisma');
   console.log('🎯 Updating ' + TARGET_IMAGES.length + ' targeted product images...\n');
   console.log('='.repeat(68));
 
@@ -194,7 +191,7 @@ async function updateImages() {
   let notFound = 0;
 
   for (const target of TARGET_IMAGES) {
-    const product = await Product.findOne({ name: target.name });
+    const product = await prisma.product.findFirst({ where: { name: target.name } });
 
     if (!product) {
       console.log('❓ [NOT FOUND]  "' + target.name + '"');
@@ -208,11 +205,10 @@ async function updateImages() {
       continue;
     }
 
-    // Direct collection update — bypasses model hooks to avoid side effects
-    await Product.collection.updateOne(
-      { _id: product._id },
-      { $set: { image: target.image } }
-    );
+    await prisma.product.update({
+      where: { id: product.id },
+      data: { image: target.image }
+    });
 
     console.log('🖼️  [UPDATED]    "' + target.name + '"');
     console.log('    ▸ ' + target.image.substring(0, 72) + '...\n');
@@ -227,7 +223,7 @@ async function updateImages() {
   console.log('='.repeat(68));
   console.log('\n🎉 Done! Images updated instantly in Admin & User Panels.\n');
 
-  await mongoose.disconnect();
+  await prisma.$disconnect();
   process.exit(0);
 }
 

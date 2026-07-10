@@ -1,4 +1,4 @@
-import Category from '../models/Category.js';
+import prisma from './prismaClient.js';
 
 const DEFAULT_CATEGORIES = [
   { name: 'Vegetables', tamilName: 'காய்கறிகள்', displayOrder: 1, isActive: true },
@@ -15,15 +15,15 @@ const DEFAULT_CATEGORIES = [
 
 export async function ensureDefaultCategories() {
   try {
-    const veg = await Category.findOne({ name: 'Vegetables' });
+    const veg = await prisma.category.findUnique({ where: { name: 'Vegetables' } });
     if (!veg) {
-      console.log('[Seed] Seeding default categories into MongoDB...');
+      console.log('[Seed] Seeding default categories into PostgreSQL via Prisma...');
       for (const def of DEFAULT_CATEGORIES) {
-        await Category.updateOne(
-          { name: def.name },
-          { $setOnInsert: def },
-          { upsert: true }
-        );
+        await prisma.category.upsert({
+          where: { name: def.name },
+          create: def,
+          update: {}
+        });
       }
       console.log('[Seed] Default categories seeded successfully.');
     }

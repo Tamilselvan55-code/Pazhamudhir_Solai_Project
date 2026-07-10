@@ -1,5 +1,5 @@
-import Notification from '../models/Notification.js';
-import NotificationSettings from '../models/NotificationSettings.js';
+import prisma from './prismaClient.js';
+import { formatMongoCompat } from './formatMongoCompat.js';
 
 // Auto-determine icon based on type
 const getIconForType = (type) => {
@@ -57,9 +57,9 @@ export const createAndEmitNotification = async (io, {
 
     // Verify preferences if user-scoped customer notification
     if (role === 'customer' && userId) {
-      let settings = await NotificationSettings.findOne({ userId });
+      let settings = await prisma.notificationSettings.findUnique({ where: { userId } });
       if (!settings) {
-        settings = await NotificationSettings.create({ userId });
+        settings = await prisma.notificationSettings.create({ data: { userId } });
       }
 
       let isEnabled = true;
@@ -81,28 +81,30 @@ export const createAndEmitNotification = async (io, {
       }
     }
 
-    const notif = new Notification({
-      userId,
-      title,
-      message,
-      type,
-      role,
-      link: resolvedLink,
-      isRead: false,
-      icon: resolvedIcon,
-      priority,
-      actionUrl: resolvedActionUrl,
-      customerName,
-      phone,
-      orderId,
-      invoiceNumber,
-      orderTotal,
-      totalItems,
-      paymentMethod,
-      orderStatus
+    const notifRaw = await prisma.notification.create({
+      data: {
+        userId,
+        title,
+        message,
+        type,
+        role,
+        link: resolvedLink,
+        isRead: false,
+        icon: resolvedIcon,
+        priority,
+        actionUrl: resolvedActionUrl,
+        customerName,
+        phone,
+        orderId: orderId ? orderId.toString() : null,
+        invoiceNumber,
+        orderTotal: Number(orderTotal) || 0,
+        totalItems: Number(totalItems) || 0,
+        paymentMethod,
+        orderStatus
+      }
     });
 
-    await notif.save();
+    const notif = formatMongoCompat(notifRaw);
 
     if (io) {
       if (role === 'admin') {
@@ -111,7 +113,7 @@ export const createAndEmitNotification = async (io, {
         io.emit('admin_notification', notif);
 
         // Emit unread count update trigger
-        const unreadCount = await Notification.countDocuments({ role: 'admin', isRead: false });
+        const unreadCount = await prisma.notification.count({ where: { role: 'admin', isRead: false } });
         io.to('admin').emit('admin:notification:unreadCount', { count: unreadCount });
         io.emit('admin:notification:unreadCount', { count: unreadCount });
       } else if (role === 'customer' && userId) {
@@ -119,7 +121,7 @@ export const createAndEmitNotification = async (io, {
         const roomName = `user:${userId.toString()}`;
         io.to(roomName).emit('customer_notification', notif);
 
-        const unreadCount = await Notification.countDocuments({ userId, role: 'customer', isRead: false });
+        const unreadCount = await prisma.notification.count({ where: { userId: userId.toString(), role: 'customer', isRead: false } });
         io.to(roomName).emit('customer:notification:unreadCount', { count: unreadCount });
       }
     }

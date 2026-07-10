@@ -1,6 +1,8 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
-import Admin from '../models/Admin.js';
+import bcrypt from 'bcryptjs';
+import prisma from '../utils/prismaClient.js';
+import { formatMongoCompat } from '../utils/formatMongoCompat.js';
 import { protectAdmin, requireSuperAdmin } from '../middleware/adminAuth.js';
 
 const router = express.Router();
@@ -14,15 +16,21 @@ router.post('/login', async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    const admin = await Admin.findOne({ email: email.toLowerCase().trim() });
+    const adminRaw = await prisma.admin.findUnique({ where: { email: email.toLowerCase().trim() } });
+    if (!adminRaw) {
+      return res.status(401).json({ message: 'Invalid email or password' });
+    }
+    const admin = formatMongoCompat(adminRaw);
 
-    if (admin && (await admin.matchPassword(password))) {
+    const isMatch = await bcrypt.compare(password, admin.password);
+    if (isMatch) {
       res.json({
         _id: admin._id,
+        id: admin.id,
         name: admin.name,
         email: admin.email,
         role: admin.role,
-        token: generateToken(admin._id),
+        token: generateToken(admin.id),
       });
     } else {
       res.status(401).json({ message: 'Invalid email or password' });
@@ -38,7 +46,8 @@ router.post('/login', async (req, res) => {
 // @access  Private (Admin)
 router.get('/profile', protectAdmin, async (req, res) => {
   res.json({
-    _id: req.admin._id,
+    _id: req.admin._id || req.admin.id,
+    id: req.admin.id || req.admin._id,
     name: req.admin.name,
     email: req.admin.email,
     role: req.admin.role,
@@ -52,25 +61,36 @@ router.post('/seed', async (req, res) => {
   try {
     const adminEmail = process.env.ADMIN_EMAIL || 'thiruchendurmurugan192@gmail.com';
     const adminPassword = process.env.ADMIN_PASSWORD || 'Admin@123';
-    let admin = await Admin.findOne({ role: 'Super Admin' });
-    if (!admin) {
-      admin = await Admin.findOne({ email: adminEmail });
-    }
-    if (admin) {
-      admin.email = adminEmail;
-      admin.password = adminPassword;
-      await admin.save();
-      return res.status(200).json({ message: 'Super Admin credentials updated successfully', email: admin.email });
+    
+    let adminRaw = await prisma.admin.findFirst({ where: { role: 'Super Admin' } });
+    if (!adminRaw) {
+      adminRaw = await prisma.admin.findUnique({ where: { email: adminEmail } });
     }
 
-    admin = await Admin.create({
-      name: 'Super Admin',
-      email: adminEmail,
-      password: adminPassword,
-      role: 'Super Admin',
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(adminPassword, salt);
+
+    if (adminRaw) {
+      const updatedAdminRaw = await prisma.admin.update({
+        where: { id: adminRaw.id },
+        data: {
+          email: adminEmail,
+          password: hashedPassword
+        }
+      });
+      return res.status(200).json({ message: 'Super Admin credentials updated successfully', email: updatedAdminRaw.email });
+    }
+
+    const newAdminRaw = await prisma.admin.create({
+      data: {
+        name: 'Super Admin',
+        email: adminEmail,
+        password: hashedPassword,
+        role: 'Super Admin',
+      }
     });
 
-    res.status(201).json({ message: 'Super Admin created successfully', email: admin.email });
+    res.status(201).json({ message: 'Super Admin created successfully', email: newAdminRaw.email });
   } catch (error) {
     console.error('Seed error:', error);
     res.status(500).json({ message: 'Failed to seed Super Admin' });

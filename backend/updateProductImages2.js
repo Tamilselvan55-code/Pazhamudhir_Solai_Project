@@ -7,13 +7,10 @@
  * Run: node updateProductImages2.js
  */
 
-import mongoose from 'mongoose';
+import prisma from './utils/prismaClient.js';
 import dotenv from 'dotenv';
-import Product from './models/Product.js';
 
 dotenv.config();
-
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/tiruchendur_grocery';
 
 // ─── Each entry: exact DB product name → single-product Unsplash URL ─────────
 const TARGET_IMAGES = [
@@ -247,15 +244,15 @@ const TARGET_IMAGES = [
 
 // ─── Runner ──────────────────────────────────────────────────────────────────
 async function run() {
-  await mongoose.connect(MONGO_URI);
-  console.log('\n✅ MongoDB connected');
+  await prisma.$connect();
+  console.log('\n✅ Connected to PostgreSQL via Prisma');
   console.log('🎯 Processing ' + TARGET_IMAGES.length + ' products...\n');
   console.log('═'.repeat(70));
 
   let updated = 0, correct = 0, missing = 0;
 
   for (const t of TARGET_IMAGES) {
-    const prod = await Product.findOne({ name: t.name });
+    const prod = await prisma.product.findFirst({ where: { name: t.name } });
     if (!prod) {
       console.log('❓ NOT FOUND  → "' + t.name + '"');
       missing++;
@@ -266,7 +263,10 @@ async function run() {
       correct++;
       continue;
     }
-    await Product.collection.updateOne({ _id: prod._id }, { $set: { image: t.image } });
+    await prisma.product.update({
+      where: { id: prod.id },
+      data: { image: t.image }
+    });
     console.log('🖼  UPDATED   → "' + t.name + '"');
     updated++;
   }
@@ -278,7 +278,7 @@ async function run() {
   console.log('═'.repeat(70));
   console.log('\n🎉 All done — images live in Admin & User panels immediately.\n');
 
-  await mongoose.disconnect();
+  await prisma.$disconnect();
   process.exit(0);
 }
 

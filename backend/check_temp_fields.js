@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import prisma from './utils/prismaClient.js';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -8,16 +8,13 @@ const __dirname = path.dirname(__filename);
 
 dotenv.config({ path: path.join(__dirname, '.env') });
 
-const mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017/grocery_store';
-
-import User from './models/User.js';
-import PendingUser from './models/PendingUser.js';
-
 async function run() {
-  await mongoose.connect(mongoUri);
-  console.log('Connected to MongoDB');
+  await prisma.$connect();
+  console.log('Connected to PostgreSQL via Prisma');
 
-  const pending = await PendingUser.findOne({ email: 'temp_test@example.com' });
+  const pending = await prisma.pendingUser.findFirst({
+    where: { email: 'temp_test@example.com' }
+  });
   console.log('PENDING USER IN DB:');
   if (pending) {
     console.log('Found:', pending.fullName, pending.phoneNumber);
@@ -28,7 +25,9 @@ async function run() {
     console.log('Not found in PendingUser');
   }
 
-  const user = await User.findOne({ email: 'temp_test@example.com' });
+  const user = await prisma.user.findFirst({
+    where: { email: 'temp_test@example.com' }
+  });
   console.log('USER IN DB:');
   if (user) {
     console.log('Found in User collection! (This is an ERROR!)', user.fullName);
@@ -36,7 +35,7 @@ async function run() {
     console.log('Not found in User collection (CORRECT!)');
   }
 
-  await mongoose.disconnect();
+  await prisma.$disconnect();
 }
 
 run().catch(console.error);

@@ -2,13 +2,10 @@
  * fixRemainingImages.js
  * Fixes the 18 products that weren't matched in fixProductImages.js
  */
-import mongoose from 'mongoose';
+import prisma from './utils/prismaClient.js';
 import dotenv from 'dotenv';
-import Product from './models/Product.js';
 
 dotenv.config();
-
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/tiruchendur_grocery';
 
 const EXTRA_FIXES = [
   // Smart-quote variant of Lays India's Magic Masala
@@ -34,15 +31,15 @@ const EXTRA_FIXES = [
 ];
 
 async function fixRemaining() {
-  await mongoose.connect(MONGO_URI);
-  console.log('\n✅ Connected to MongoDB for remaining image fixes...\n');
+  await prisma.$connect();
+  console.log('\n✅ Connected to PostgreSQL for remaining image fixes...\n');
 
   let updated = 0;
   let skipped = 0;
   let notFound = 0;
 
   for (const fix of EXTRA_FIXES) {
-    const product = await Product.findOne({ name: fix.name });
+    const product = await prisma.product.findFirst({ where: { name: fix.name } });
 
     if (!product) {
       console.log('❓ [NOT FOUND] "' + fix.name + '"');
@@ -56,22 +53,22 @@ async function fixRemaining() {
       continue;
     }
 
-    await Product.collection.updateOne(
-      { _id: product._id },
-      { $set: { image: fix.image } }
-    );
+    await prisma.product.update({
+      where: { id: product.id },
+      data: { image: fix.image }
+    });
     console.log('🖼️  [FIXED]    "' + fix.name + '"');
     updated++;
   }
 
-  console.log('\n='.repeat(50));
+  console.log('\n' + '='.repeat(50));
   console.log('✅ Fixed   : ' + updated);
   console.log('⏭️  Skipped : ' + skipped);
   console.log('❓ Missing  : ' + notFound);
   console.log('='.repeat(50));
   console.log('\n🎉 Done!\n');
 
-  await mongoose.disconnect();
+  await prisma.$disconnect();
   process.exit(0);
 }
 

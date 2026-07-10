@@ -1,28 +1,35 @@
-import mongoose from 'mongoose';
-import StoreSettings from './models/StoreSettings.js';
+import prisma from './utils/prismaClient.js';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/tiruchendur_grocery';
-
 const updateCoords = async () => {
   try {
-    await mongoose.connect(MONGO_URI);
-    console.log('Connected to DB to update coords');
+    await prisma.$connect();
+    console.log('Connected to PostgreSQL via Prisma to update coords');
     
-    let settings = await StoreSettings.findOne();
+    let settings = await prisma.storeSettings.findFirst();
     if (!settings) {
-      settings = new StoreSettings({});
+      await prisma.storeSettings.create({
+        data: {
+          location: { lat: 12.9666144, lon: 79.9458077 },
+          deliveryRadiusKm: Number(process.env.DELIVERY_RADIUS_KM) || 40
+        }
+      });
+    } else {
+      await prisma.storeSettings.update({
+        where: { id: settings.id },
+        data: {
+          location: { lat: 12.9666144, lon: 79.9458077 },
+          deliveryRadiusKm: Number(process.env.DELIVERY_RADIUS_KM) || 40
+        }
+      });
     }
-    settings.location = { lat: 13.0606941, lon: 80.2270751 };
-    settings.deliveryRadiusKm = Number(process.env.DELIVERY_RADIUS_KM) || 35;
-    await settings.save();
-    console.log('Coordinates and Delivery Radius (35 km) updated in DB successfully');
+    console.log('Coordinates and Delivery Radius (40 km) updated in DB successfully');
   } catch (err) {
     console.error(err);
   } finally {
-    await mongoose.disconnect();
+    await prisma.$disconnect();
     process.exit(0);
   }
 };

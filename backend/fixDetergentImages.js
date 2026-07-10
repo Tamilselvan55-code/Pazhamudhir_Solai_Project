@@ -1,10 +1,7 @@
-import mongoose from 'mongoose';
+import prisma from './utils/prismaClient.js';
 import dotenv from 'dotenv';
-import Product from './models/Product.js';
 
 dotenv.config();
-
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/tiruchendur_grocery';
 
 const DETERGENT_IMAGES = {
   'Surf Excel Easy Wash Powder': 'https://images.unsplash.com/photo-1583947581924-860bda6a26df?auto=format&fit=crop&w=600&q=80',
@@ -19,16 +16,17 @@ const DETERGENT_IMAGES = {
 };
 
 async function updateImages() {
-  await mongoose.connect(MONGO_URI);
-  console.log('✅ Connected to MongoDB for detergent updates...');
+  await prisma.$connect();
+  console.log('✅ Connected to PostgreSQL via Prisma for detergent updates...');
   
   let count = 0;
   for (const [name, url] of Object.entries(DETERGENT_IMAGES)) {
-    const res = await Product.collection.updateOne(
-      { name: name },
-      { $set: { image: url } }
-    );
-    if (res.matchedCount > 0) {
+    const product = await prisma.product.findFirst({ where: { name } });
+    if (product) {
+      await prisma.product.update({
+        where: { id: product.id },
+        data: { image: url }
+      });
       console.log(`🖼️  Updated "${name}" to: ${url}`);
       count++;
     } else {
@@ -37,7 +35,7 @@ async function updateImages() {
   }
   
   console.log(`📊 Done! Updated ${count} products.`);
-  await mongoose.disconnect();
+  await prisma.$disconnect();
   process.exit(0);
 }
 

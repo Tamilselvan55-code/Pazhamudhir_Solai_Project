@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
-import Admin from '../models/Admin.js';
+import prisma from '../utils/prismaClient.js';
+import { formatMongoCompat } from '../utils/formatMongoCompat.js';
 
 export const protectAdmin = async (req, res, next) => {
   let token;
@@ -8,10 +9,12 @@ export const protectAdmin = async (req, res, next) => {
       token = req.headers.authorization.split(' ')[1];
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       
-      req.admin = await Admin.findById(decoded.id).select('-password');
-      if (!req.admin) {
+      const admin = await prisma.admin.findUnique({ where: { id: decoded.id } });
+      if (!admin) {
         return res.status(401).json({ message: 'Not authorized, user not found' });
       }
+      const { password, ...adminWithoutPassword } = admin;
+      req.admin = formatMongoCompat(adminWithoutPassword);
       next();
     } catch (error) {
       console.error('Token verification error:', error.message);
@@ -53,4 +56,3 @@ export const requirePermission = (permissionName) => {
     return res.status(403).json({ message: `Access Denied: Requires ${permissionName} permission` });
   };
 };
-

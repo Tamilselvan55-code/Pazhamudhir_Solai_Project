@@ -1,20 +1,14 @@
 import express from 'express';
-import StoreSettings from '../models/StoreSettings.js';
-import User from '../models/User.js';
+import prisma from '../utils/prismaClient.js';
+import { formatMongoCompat } from '../utils/formatMongoCompat.js';
 import { isWithinDeliveryRadius } from '../utils/distance.js';
 import { protect } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// ── POST /api/location/verify — Server-side coordinate verification ───────────
-// Used by the frontend to get a trusted delivery eligibility check.
-// The frontend cannot fake this because coordinates come directly from the GPS
-// request, and any tampered values would still fail the 5 km server check on
-// order creation.
 router.post('/verify', async (req, res) => {
   const { lat, lon } = req.body;
 
-  // Basic validation
   if (typeof lat !== 'number' || typeof lon !== 'number') {
     return res.status(400).json({ message: 'lat and lon must be numbers.' });
   }
@@ -23,21 +17,17 @@ router.post('/verify', async (req, res) => {
   }
 
   try {
-    // Load store settings (fallback to hardcoded if not in DB yet)
-    let settings = await StoreSettings.findOne();
-    if (!settings) {
-      // Temporary testing value. Change back to 5 KM before production.
-      settings = {
-        location:         { lat: 13.0606941, lon: 80.2270751 },
-        deliveryRadiusKm: Number(process.env.DELIVERY_RADIUS_KM) || 5,
-      };
-    }
+    const settingsRaw = await prisma.storeSettings.findFirst();
+    const settings = formatMongoCompat(settingsRaw) || {
+      location:         { lat: 12.9666144, lon: 79.9458077 },
+      deliveryRadiusKm: Number(process.env.DELIVERY_RADIUS_KM) || 40,
+    };
 
     const result = isWithinDeliveryRadius(
       lat, lon,
-      settings.location.lat,
-      settings.location.lon,
-      settings.deliveryRadiusKm
+      settings.location?.lat ?? 12.9666144,
+      settings.location?.lon ?? 79.9458077,
+      settings.deliveryRadiusKm ?? 40
     );
 
     return res.json({
@@ -45,12 +35,12 @@ router.post('/verify', async (req, res) => {
       lon,
       distanceKm:        result.distance,
       deliveryAvailable: result.isEligible,
-      radiusKm:          settings.deliveryRadiusKm,
-      storeLat:          settings.location.lat,
-      storeLon:          settings.location.lon,
+      radiusKm:          settings.deliveryRadiusKm ?? 40,
+      storeLat:          settings.location?.lat ?? 12.9666144,
+      storeLon:          settings.location?.lon ?? 79.9458077,
       message:           result.isEligible
         ? 'Delivery available at your location.'
-        : `Sorry, delivery is available only within ${settings.deliveryRadiusKm} km of the store.`,
+        : `Sorry, delivery is available only within ${settings.deliveryRadiusKm ?? 40} km of the store.`,
     });
   } catch (error) {
     console.error('Location verify error:', error.message);
@@ -58,7 +48,6 @@ router.post('/verify', async (req, res) => {
   }
 });
 
-// ── POST /api/location/save — Save verified location to user profile ──────────
 router.post('/save', protect, async (req, res) => {
   const { lat, lon, fullAddress, city, state, pincode } = req.body;
 
@@ -67,33 +56,34 @@ router.post('/save', protect, async (req, res) => {
   }
 
   try {
-    let settings = await StoreSettings.findOne();
-    if (!settings) {
-      // Temporary testing value. Change back to 5 KM before production.
-      settings = {
-        location:         { lat: 13.0606941, lon: 80.2270751 },
-        deliveryRadiusKm: Number(process.env.DELIVERY_RADIUS_KM) || 5,
-      };
-    }
+    const settingsRaw = await prisma.storeSettings.findFirst();
+    const settings = formatMongoCompat(settingsRaw) || {
+      location:         { lat: 12.9666144, lon: 79.9458077 },
+      deliveryRadiusKm: Number(process.env.DELIVERY_RADIUS_KM) || 40,
+    };
 
     const result = isWithinDeliveryRadius(
       lat, lon,
-      settings.location.lat,
-      settings.location.lon,
-      settings.deliveryRadiusKm
+      settings.location?.lat ?? 12.9666144,
+      settings.location?.lon ?? 79.9458077,
+      settings.deliveryRadiusKm ?? 40
     );
 
-    await User.findByIdAndUpdate(req.user._id, {
-      deliveryAddress: {
-        lat,
-        lon,
-        fullAddress:       fullAddress || '',
-        city:              city        || '',
-        state:             state       || '',
-        pincode:           pincode     || '',
-        distanceFromStore: result.distance,
-        deliveryAvailable: result.isEligible,
-        updatedAt:         new Date(),
+    const userId = req.user._id || req.user.id;
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        deliveryAddress: {
+          lat,
+          lon,
+          fullAddress:       fullAddress || '',
+          city:              city        || '',
+          state:             state       || '',
+          pincode:           pincode     || '',
+          distanceFromStore: result.distance,
+          deliveryAvailable: result.isEligible,
+          updatedAt:         new Date(),
+        },
       },
     });
 

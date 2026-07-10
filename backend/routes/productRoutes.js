@@ -1,8 +1,10 @@
 import express from 'express';
-import mongoose from 'mongoose';
-import Product from '../models/Product.js';
+import prisma from '../utils/prismaClient.js';
+import { formatMongoCompat } from '../utils/formatMongoCompat.js';
 
 const router = express.Router();
+
+const isValidUuid = (id) => /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(id);
 
 router.post('/validate-cart', async (req, res) => {
   try {
@@ -19,16 +21,17 @@ router.post('/validate-cart', async (req, res) => {
         hasChanges = true;
         continue;
       }
-      const prodIdStr = item.product.toString();
-      if (!mongoose.Types.ObjectId.isValid(prodIdStr)) {
+      const prodIdStr = typeof item.product === 'object' ? (item.product._id || item.product.id || '').toString() : item.product.toString();
+      if (!isValidUuid(prodIdStr)) {
         hasChanges = true;
         continue;
       }
-      const productDoc = await Product.findById(prodIdStr);
-      if (!productDoc || productDoc.isActive === false || productDoc.isDeleted === true || !productDoc.inStock || productDoc.stock <= 0) {
+      const productDocRaw = await prisma.product.findUnique({ where: { id: prodIdStr } });
+      if (!productDocRaw || productDocRaw.isActive === false || !productDocRaw.inStock || productDocRaw.stock <= 0) {
         hasChanges = true;
         continue;
       }
+      const productDoc = formatMongoCompat(productDocRaw);
 
       const qty = Number(item.quantity) || 1;
       if (qty > productDoc.stock) {
@@ -67,22 +70,33 @@ router.post('/validate-cart', async (req, res) => {
 
 router.get('/', async (req, res) => {
   try {
-    const products = await Product.find({}).populate('category', 'name');
-    res.json(products);
+    const productsRaw = await prisma.product.findMany({
+      include: { category: { select: { name: true } } }
+    });
+    res.json(formatMongoCompat(productsRaw));
   } catch (error) {
+    console.error('Fetch products error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
 
 router.get('/:id', async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id).populate('category', 'name');
-    if (product) {
-      res.json(product);
+    const prodId = req.params.id;
+    if (!isValidUuid(prodId)) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+    const productRaw = await prisma.product.findUnique({
+      where: { id: prodId },
+      include: { category: { select: { name: true } } }
+    });
+    if (productRaw) {
+      res.json(formatMongoCompat(productRaw));
     } else {
       res.status(404).json({ message: 'Product not found' });
     }
   } catch (error) {
+    console.error('Fetch single product error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });

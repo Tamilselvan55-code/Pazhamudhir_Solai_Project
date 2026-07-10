@@ -1,5 +1,4 @@
 import express from 'express';
-import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import nodemailer from 'nodemailer';
@@ -12,8 +11,9 @@ import adminRoutes from './routes/adminRoutes.js';
 import adminAuthRoutes from './routes/adminAuthRoutes.js';
 import storeRoutes from './routes/storeRoutes.js';
 import locationRoutes from './routes/locationRoutes.js';
-import Admin from './models/Admin.js';
-import Category from './models/Category.js';
+import prisma from './utils/prismaClient.js';
+import bcrypt from 'bcryptjs';
+import { formatMongoCompat } from './utils/formatMongoCompat.js';
 import jwt from 'jsonwebtoken';
 import { migrateTamilNames } from './utils/migrateTamilNames.js';
 import { ensureDefaultCategories } from './utils/seedDefaultCategories.js';
@@ -48,11 +48,10 @@ app.use((req, res, next) => {
 
 app.use('/uploads', express.static('uploads')); // For any uploaded images
 
-// Database connection
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/tiruchendur_grocery';
-mongoose.connect(MONGO_URI)
+// Database connection via Prisma
+prisma.$connect()
   .then(async () => {
-    console.log('Connected to MongoDB');
+    console.log('Connected to PostgreSQL via Prisma');
     try {
       await migrateTamilNames();
       await ensureDefaultCategories();
@@ -62,21 +61,21 @@ mongoose.connect(MONGO_URI)
     try {
       const adminEmail = process.env.ADMIN_EMAIL || 'thiruchendurmurugan192@gmail.com';
       const adminPassword = process.env.ADMIN_PASSWORD || 'Admin@123';
-      let admin = await Admin.findOne({ role: 'Super Admin' });
+      let admin = await prisma.admin.findFirst({ where: { role: 'Super Admin' } });
       if (!admin) {
-        admin = await Admin.findOne({ email: adminEmail });
+        admin = await prisma.admin.findUnique({ where: { email: adminEmail } });
       }
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(adminPassword, salt);
       if (admin) {
-        admin.email = adminEmail;
-        admin.password = adminPassword;
-        await admin.save();
+        await prisma.admin.update({
+          where: { id: admin.id },
+          data: { email: adminEmail, password: hashedPassword }
+        });
         console.log('[Seed] Super Admin credentials updated successfully.');
       } else {
-        await Admin.create({
-          name: 'Super Admin',
-          email: adminEmail,
-          password: adminPassword,
-          role: 'Super Admin'
+        await prisma.admin.create({
+          data: { name: 'Super Admin', email: adminEmail, password: hashedPassword, role: 'Super Admin' }
         });
         console.log('[Seed] Super Admin created successfully.');
       }
@@ -84,7 +83,7 @@ mongoose.connect(MONGO_URI)
       console.error('[Seed Error] Failed to update Super Admin:', err);
     }
   })
-  .catch((err) => console.error('MongoDB connection error:', err));
+  .catch((err) => console.error('Prisma connection error:', err));
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -100,8 +99,11 @@ app.use('/api', userNotificationRoutes);
 app.get('/api/categories', async (req, res) => {
   try {
     await ensureDefaultCategories();
-    const categories = await Category.find({ isActive: { $ne: false } }).sort({ displayOrder: 1, createdAt: -1 });
-    res.json(categories);
+    const categoriesRaw = await prisma.category.findMany({
+      where: { isActive: true },
+      orderBy: [{ displayOrder: 'asc' }, { createdAt: 'desc' }]
+    });
+    res.json(formatMongoCompat(categoriesRaw));
   } catch (err) {
     console.error('Fetch public categories error:', err);
     res.status(500).json({ message: 'Server error' });
@@ -119,7 +121,7 @@ app.get('/api/invoice/download/:id', async (req, res) => {
       return res.status(401).json({ message: 'Not authorized, no token' });
     }
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const admin = await Admin.findById(decoded.id);
+    const admin = await prisma.admin.findUnique({ where: { id: decoded.id } });
     if (!admin) {
       return res.status(403).json({ message: 'Forbidden: Only admins can download invoice PDFs' });
     }
@@ -171,7 +173,7 @@ app.post('/test-email', async (req, res) => {
     await transporter.sendMail({
       from: `"Tiruchendur Murugan Pazhamudhir Solai" <${process.env.EMAIL_USER}>`,
       to: email,
-      subject: 'Palumanicholai Email Service Test',
+      subject: 'Pazhamudhir Solai Email Service Test',
       text: `Hello,\n\nThis is a test email from the Tiruchendur Murugan Pazhamudhir Solai website.\n\nIf you received this email, Gmail SMTP configuration is working correctly.\n\nThank you,\nTiruchendur Murugan Pazhamudhir Solai Team.`
     });
 

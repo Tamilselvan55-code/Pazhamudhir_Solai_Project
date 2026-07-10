@@ -25,7 +25,7 @@ export const calculateDistance = (lat1, lon1, lat2, lon2) => {
 };
 
 // Check if within given radius (default 5km)
-export const isWithinDeliveryRadius = (userLat, userLon, storeLat, storeLon, radiusKm = 5) => {
+export const isWithinDeliveryRadius = (userLat, userLon, storeLat, storeLon, radiusKm = 40) => {
   const distance = calculateDistance(userLat, userLon, storeLat, storeLon);
   return {
     distance: parseFloat(distance.toFixed(2)),
