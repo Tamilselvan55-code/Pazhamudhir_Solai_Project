@@ -12,20 +12,20 @@ const updateCoords = async () => {
     if (!settings) {
       await prisma.storeSettings.create({
         data: {
-          location: { lat: 12.9666144, lon: 79.9458077 },
-          deliveryRadiusKm: Number(process.env.DELIVERY_RADIUS_KM) || 40
+          location: { lat: 13.005865, lon: 79.995026 },
+          deliveryRadiusKm: Number(process.env.DELIVERY_RADIUS_KM) || 30
         }
       });
     } else {
       await prisma.storeSettings.update({
         where: { id: settings.id },
         data: {
-          location: { lat: 12.9666144, lon: 79.9458077 },
-          deliveryRadiusKm: Number(process.env.DELIVERY_RADIUS_KM) || 40
+          location: { lat: 13.005865, lon: 79.995026 },
+          deliveryRadiusKm: Number(process.env.DELIVERY_RADIUS_KM) || 30
         }
       });
     }
-    console.log('Coordinates and Delivery Radius (40 km) updated in DB successfully');
+    console.log('Coordinates and Delivery Radius (30 km) updated in DB successfully');
   } catch (err) {
     console.error(err);
   } finally {

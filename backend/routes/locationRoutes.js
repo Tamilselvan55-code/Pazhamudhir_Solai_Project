@@ -19,15 +19,15 @@ router.post('/verify', async (req, res) => {
   try {
     const settingsRaw = await prisma.storeSettings.findFirst();
     const settings = formatMongoCompat(settingsRaw) || {
-      location:         { lat: 12.9666144, lon: 79.9458077 },
-      deliveryRadiusKm: Number(process.env.DELIVERY_RADIUS_KM) || 40,
+      location:         { lat: 13.005865, lon: 79.995026 },
+      deliveryRadiusKm: Number(process.env.DELIVERY_RADIUS_KM) || 30,
     };
 
     const result = isWithinDeliveryRadius(
       lat, lon,
-      settings.location?.lat ?? 12.9666144,
-      settings.location?.lon ?? 79.9458077,
-      settings.deliveryRadiusKm ?? 40
+      settings.location?.lat ?? 13.005865,
+      settings.location?.lon ?? 79.995026,
+      settings.deliveryRadiusKm ?? 30
     );
 
     return res.json({
@@ -35,12 +35,12 @@ router.post('/verify', async (req, res) => {
       lon,
       distanceKm:        result.distance,
       deliveryAvailable: result.isEligible,
-      radiusKm:          settings.deliveryRadiusKm ?? 40,
-      storeLat:          settings.location?.lat ?? 12.9666144,
-      storeLon:          settings.location?.lon ?? 79.9458077,
+      radiusKm:          settings.deliveryRadiusKm ?? 30,
+      storeLat:          settings.location?.lat ?? 13.005865,
+      storeLon:          settings.location?.lon ?? 79.995026,
       message:           result.isEligible
         ? 'Delivery available at your location.'
-        : `Sorry, delivery is available only within ${settings.deliveryRadiusKm ?? 40} km of the store.`,
+        : `Sorry, delivery is available only within ${settings.deliveryRadiusKm ?? 30} km of the store.`,
     });
   } catch (error) {
     console.error('Location verify error:', error.message);
@@ -58,15 +58,15 @@ router.post('/save', protect, async (req, res) => {
   try {
     const settingsRaw = await prisma.storeSettings.findFirst();
     const settings = formatMongoCompat(settingsRaw) || {
-      location:         { lat: 12.9666144, lon: 79.9458077 },
-      deliveryRadiusKm: Number(process.env.DELIVERY_RADIUS_KM) || 40,
+      location:         { lat: 13.005865, lon: 79.995026 },
+      deliveryRadiusKm: Number(process.env.DELIVERY_RADIUS_KM) || 30,
     };
 
     const result = isWithinDeliveryRadius(
       lat, lon,
-      settings.location?.lat ?? 12.9666144,
-      settings.location?.lon ?? 79.9458077,
-      settings.deliveryRadiusKm ?? 40
+      settings.location?.lat ?? 13.005865,
+      settings.location?.lon ?? 79.995026,
+      settings.deliveryRadiusKm ?? 30
     );
 
     const userId = req.user._id || req.user.id;

@@ -1,3 +1,4 @@
+import { API_BASE as config_API_BASE, API_URL as config_API_URL } from '../../config/api';
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { 
@@ -37,7 +38,7 @@ const StaffManagement = () => {
   const fetchStaff = async () => {
     try {
       setLoading(true);
-      const { data } = await axios.get('http://localhost:5000/api/admin/staff', {
+      const { data } = await axios.get(`${config_API_BASE}/admin/staff`, {
         headers: { Authorization: `Bearer ${adminInfo.token}` }
       });
       setStaffList(data);
@@ -140,13 +141,13 @@ const StaffManagement = () => {
           updatePayload.password = formData.password;
         }
 
-        await axios.put(`http://localhost:5000/api/admin/staff/${editingStaff._id}`, updatePayload, {
+        await axios.put(`${config_API_BASE}/admin/staff/${editingStaff._id}`, updatePayload, {
           headers: { Authorization: `Bearer ${adminInfo.token}` }
         });
         adminAlert('success', 'Staff Updated', 'Staff credentials and roles successfully updated.');
       } else {
         // Add staff member
-        await axios.post('http://localhost:5000/api/admin/staff', formData, {
+        await axios.post(`${config_API_BASE}/admin/staff`, formData, {
           headers: { Authorization: `Bearer ${adminInfo.token}` }
         });
         adminAlert('success', 'Staff Added', 'New staff account successfully created!');
@@ -167,7 +168,7 @@ const StaffManagement = () => {
       message: `Are you sure you want to permanently delete administrative account for: ${staffName}? They will instantly lose all access to the system.`,
       onConfirm: async () => {
         try {
-          await axios.delete(`http://localhost:5000/api/admin/staff/${staffId}`, {
+          await axios.delete(`${config_API_BASE}/admin/staff/${staffId}`, {
             headers: { Authorization: `Bearer ${adminInfo.token}` }
           });
           adminAlert('success', 'Staff Deleted', 'Administrative account removed successfully.');

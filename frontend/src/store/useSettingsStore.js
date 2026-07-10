@@ -1,8 +1,9 @@
 import { create } from 'zustand';
 import axios from 'axios';
 import { io } from 'socket.io-client';
+import { API_BASE, API_URL } from '../config/api';
 
-const API = 'http://localhost:5000/api/store/settings';
+const API = `${API_BASE}/store/settings`;
 
 const hexToRgb = (hex) => {
   if (!hex || typeof hex !== 'string') return '22, 163, 74';
@@ -32,7 +33,7 @@ const applySettings = (settings) => {
     }
     const iconUrl = settings.favicon.startsWith('http') || settings.favicon.startsWith('data:')
       ? settings.favicon
-      : `http://localhost:5000${settings.favicon.startsWith('/') ? '' : '/'}${settings.favicon}`;
+      : `${API_URL}${settings.favicon.startsWith('/') ? '' : '/'}${settings.favicon}`;
     link.href = iconUrl;
   }
 
@@ -77,7 +78,7 @@ export const useSettingsStore = create((set, get) => ({
     if (get().socketConnected) return;
 
     try {
-      const socket = io(import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000');
+      const socket = io(API_URL);
       socket.on('settings_update', (updatedSettings) => {
         console.log('[Socket.io Client] Received settings update:', updatedSettings);
         get().updateSettingsState(updatedSettings);

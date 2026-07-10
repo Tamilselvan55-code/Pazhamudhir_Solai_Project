@@ -1,3 +1,4 @@
+import { API_BASE as config_API_BASE, API_URL as config_API_URL } from '../../config/api';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import {
@@ -12,8 +13,8 @@ import useAuthStore from '../../store/useAuthStore';
 import useModal from '../../hooks/useModal';
 import { formatCurrency } from '../../utils/currency';
 
-const API_BASE = `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/admin`;
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
+const API_BASE = `${config_API_BASE}/admin`;
+const SOCKET_URL = config_API_URL;
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 

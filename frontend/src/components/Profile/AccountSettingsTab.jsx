@@ -1,10 +1,11 @@
+import { API_BASE as config_API_BASE, API_URL as config_API_URL } from '../../config/api';
 import React, { useState } from 'react';
 import axios from 'axios';
 import { Key, ShieldAlert, LogOut, Loader2, CheckCircle, AlertTriangle } from 'lucide-react';
 import useAuthStore from '../../store/useAuthStore';
 import useModal from '../../hooks/useModal';
 
-const API_BASE = 'http://localhost:5000/api';
+const API_BASE = config_API_BASE;
 
 const AccountSettingsTab = ({ onLogout }) => {
   const { userInfo } = useAuthStore();

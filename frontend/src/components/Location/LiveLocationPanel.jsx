@@ -1,14 +1,16 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Loader2, RefreshCw } from 'lucide-react';
+import { Loader2, RefreshCw, Map } from 'lucide-react';
 import useLocationStore from '../../store/useLocationStore';
+import MapLocationPicker from './MapLocationPicker';
 
 const LiveLocationPanel = () => {
   const {
     userLocation, fullAddress, distanceKm, isEligible, loading, error, permissionDenied,
-    requestLiveGPS, resetLiveCheck,
+    requestLiveGPS, resetLiveCheck, setManualLocation, saveAddressToBackend,
   } = useLocationStore();
 
   const [rechecking, setRechecking] = useState(false);
+  const [isMapOpen, setIsMapOpen] = useState(false);
   const hasFiredRef = useRef(false);
 
   /* ── Auto-request GPS on mount (only once per checkout visit) ─────────── */
@@ -78,25 +80,50 @@ const LiveLocationPanel = () => {
       </div>
 
       {/* Buttons */}
-      <div className="mt-4 pt-3 border-t border-gray-100">
+      <div className="mt-4 pt-3 border-t border-gray-100 flex flex-col sm:flex-row gap-3">
         <button
           onClick={handleRecheck}
           disabled={isLoading}
-          className="w-full py-3 rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm font-bold transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex-1 py-3 rounded-xl bg-gray-50 hover:bg-gray-100 text-gray-700 text-sm font-bold border border-gray-200 transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isLoading ? (
             <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              Rechecking Location...
+              <Loader2 className="w-4 h-4 animate-spin text-gray-500" />
+              Checking...
             </>
           ) : (
             <>
-              <RefreshCw className="w-4 h-4" />
-              Recheck Location
+              <RefreshCw className="w-4 h-4 text-gray-500" />
+              Recheck GPS
             </>
           )}
         </button>
+
+        <button
+          onClick={() => setIsMapOpen(true)}
+          disabled={isLoading}
+          className="flex-1 py-3 rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm font-bold transition-all flex items-center justify-center gap-1.5"
+        >
+          <Map className="w-4 h-4" />
+          Choose on Map
+        </button>
       </div>
+
+      {isMapOpen && (
+        <MapLocationPicker
+          isOpen={isMapOpen}
+          onClose={() => setIsMapOpen(false)}
+          onLocationSelect={(loc) => {
+            setManualLocation(loc);
+            const rawAuth = localStorage.getItem('auth-storage');
+            const token = rawAuth ? JSON.parse(rawAuth)?.state?.userInfo?.token : null;
+            if (token) {
+              saveAddressToBackend(token);
+            }
+          }}
+          initialLocation={userLocation}
+        />
+      )}
     </div>
   );
 };

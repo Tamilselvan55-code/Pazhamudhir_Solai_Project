@@ -1,3 +1,4 @@
+import { API_BASE as config_API_BASE, API_URL as config_API_URL } from '../../config/api';
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Heart, ShoppingBag, Trash2, Loader2, ExternalLink } from 'lucide-react';
@@ -7,7 +8,7 @@ import useCartStore from '../../store/useCartStore';
 import useModal from '../../hooks/useModal';
 import { formatCurrency } from '../../utils/currency';
 
-const API_BASE = 'http://localhost:5000/api';
+const API_BASE = config_API_BASE;
 
 const WishlistTab = () => {
   const { userInfo } = useAuthStore();

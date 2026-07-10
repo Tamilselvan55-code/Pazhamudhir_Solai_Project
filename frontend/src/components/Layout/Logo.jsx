@@ -1,3 +1,4 @@
+import { API_BASE as config_API_BASE, API_URL as config_API_URL } from '../../config/api';
 import React from 'react';
 import useSettingsStore from '../../store/useSettingsStore';
 
@@ -21,7 +22,7 @@ const Logo = ({ size = 'md', variant = 'full', theme = 'dark' }) => {
   const rawLogo = settings?.websiteLogo || settings?.storeLogo || "/logo.png";
   const logoUrl = rawLogo.startsWith('http') || rawLogo.startsWith('data:') || rawLogo.startsWith('/logo.png')
     ? rawLogo
-    : `http://localhost:5000${rawLogo.startsWith('/') ? '' : '/'}${rawLogo}`;
+    : `${config_API_URL}${rawLogo.startsWith('/') ? '' : '/'}${rawLogo}`;
 
   let part1 = "Tiruchendur Murugan";
   let part2 = "Pazhamudhir Solai";

@@ -1,3 +1,4 @@
+import { API_BASE as config_API_BASE, API_URL as config_API_URL } from '../config/api';
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, Navigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
@@ -14,7 +15,7 @@ import AccountSettingsTab from '../components/Profile/AccountSettingsTab';
 import OrderDetailsModal from '../components/Profile/OrderDetailsModal';
 import InvoiceModal from '../components/Profile/InvoiceModal';
 
-const API_BASE = 'http://localhost:5000/api';
+const API_BASE = config_API_BASE;
 
 const Profile = () => {
   const { userInfo, logout } = useAuthStore();

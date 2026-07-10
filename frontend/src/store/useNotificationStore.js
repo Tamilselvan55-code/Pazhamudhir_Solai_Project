@@ -2,9 +2,10 @@ import { create } from 'zustand';
 import axios from 'axios';
 import { io } from 'socket.io-client';
 import useAuthStore from './useAuthStore';
+import { API_URL as config_API_URL, API_BASE } from '../config/api';
 
-const SOCKET_URL = 'http://localhost:5000';
-const API_URL = 'http://localhost:5000/api';
+const SOCKET_URL = config_API_URL;
+const API_URL = API_BASE;
 
 const getAuthHeaders = () => {
   const token = useAuthStore.getState().userInfo?.token;

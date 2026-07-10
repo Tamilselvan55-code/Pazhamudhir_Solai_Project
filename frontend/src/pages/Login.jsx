@@ -1,3 +1,4 @@
+import { API_BASE as config_API_BASE, API_URL as config_API_URL } from '../config/api';
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
@@ -91,7 +92,7 @@ const Login = () => {
 
   const handleResendRegisterOtp = async () => {
     try {
-      await axios.post('http://localhost:5000/api/auth/resend-verification-otp', {
+      await axios.post(`${config_API_BASE}/auth/resend-verification-otp`, {
         email: unverifiedEmail
       });
       setApiError('Verification OTP resent successfully to your email. Click "Verify Email" to verify.');

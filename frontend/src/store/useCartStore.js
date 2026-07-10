@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { io } from 'socket.io-client';
+import { API_URL } from '../config/api';
 
 const sanitizeCartItem = (item) => {
   let price = Number(item.price);
@@ -106,7 +107,7 @@ const useCartStore = create(
         if (get().socketConnected) return;
 
         try {
-          const socket = io(import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000');
+          const socket = io(API_URL);
 
           socket.on('product_update', (updatedProd) => {
             console.log('[Socket.io Client] Received product update:', updatedProd);

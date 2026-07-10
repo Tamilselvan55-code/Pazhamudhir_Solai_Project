@@ -1,3 +1,4 @@
+import { API_BASE as config_API_BASE, API_URL as config_API_URL } from '../../config/api';
 import React, { useState, useEffect } from 'react';
 import { 
   Users, ShoppingBag, ShoppingCart, IndianRupee, 
@@ -193,7 +194,7 @@ const AdminDashboard = () => {
   const fetchDashboardData = async () => {
     if (!adminInfo) return;
     try {
-      const { data } = await axios.get('http://localhost:5000/api/admin/dashboard-stats', {
+      const { data } = await axios.get(`${config_API_BASE}/admin/dashboard-stats`, {
         headers: { Authorization: `Bearer ${adminInfo.token}` }
       });
       setStats(data.stats);
@@ -209,7 +210,7 @@ const AdminDashboard = () => {
   const fetchNotifications = async () => {
     if (!adminInfo) return;
     try {
-      const { data } = await axios.get('http://localhost:5000/api/admin/notifications', {
+      const { data } = await axios.get(`${config_API_BASE}/admin/notifications`, {
         headers: { Authorization: `Bearer ${adminInfo.token}` }
       });
       setNotifications(data.notifications);
@@ -223,7 +224,7 @@ const AdminDashboard = () => {
   const handleMarkAllRead = async () => {
     if (!adminInfo) return;
     try {
-      await axios.patch('http://localhost:5000/api/admin/notifications/mark-read', {}, {
+      await axios.patch(`${config_API_BASE}/admin/notifications/mark-read`, {}, {
         headers: { Authorization: `Bearer ${adminInfo.token}` }
       });
       setUnreadCount(0);
@@ -237,7 +238,7 @@ const AdminDashboard = () => {
   const fetchCalendarEvents = async () => {
     if (!adminInfo) return;
     try {
-      const { data } = await axios.get('http://localhost:5000/api/admin/calendar-events', {
+      const { data } = await axios.get(`${config_API_BASE}/admin/calendar-events`, {
         headers: { Authorization: `Bearer ${adminInfo.token}` }
       });
       setCalendarEvents(data);
@@ -250,7 +251,7 @@ const AdminDashboard = () => {
     e.preventDefault();
     if (!newEventTitle.trim()) return;
     try {
-      await axios.post('http://localhost:5000/api/admin/calendar-events', {
+      await axios.post(`${config_API_BASE}/admin/calendar-events`, {
         title: newEventTitle,
         eventType: newEventType,
         date: selectedDate
@@ -264,7 +265,7 @@ const AdminDashboard = () => {
 
   const handleDeleteEvent = async (id) => {
     try {
-      await axios.delete(`http://localhost:5000/api/admin/calendar-events/${id}`, {
+      await axios.delete(`${config_API_BASE}/admin/calendar-events/${id}`, {
         headers: { Authorization: `Bearer ${adminInfo.token}` }
       });
       fetchCalendarEvents();
@@ -285,7 +286,7 @@ const AdminDashboard = () => {
     loadAll();
 
     // Configure WebSockets for live notifications
-    const socket = io(import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000');
+    const socket = io(config_API_URL);
     socket.on('connect', () => {
       console.log('✓ Socket connected');
     });

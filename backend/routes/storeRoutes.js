@@ -24,7 +24,12 @@ router.get('/settings', async (req, res) => {
     res.json(formatMongoCompat(settingsRaw));
   } catch (error) {
     console.error('Fetch store settings error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({
+      success: false,
+      message: 'Server error fetching store settings',
+      error: error.message || String(error),
+      stack: error.stack
+    });
   }
 });
 

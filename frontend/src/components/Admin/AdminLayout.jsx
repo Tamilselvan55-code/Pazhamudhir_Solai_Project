@@ -1,3 +1,4 @@
+import { API_BASE as config_API_BASE, API_URL as config_API_URL } from '../../config/api';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
@@ -12,7 +13,7 @@ import { io as socketIO } from 'socket.io-client';
 import useAuthStore from '../../store/useAuthStore';
 import axios from 'axios';
 
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
+const SOCKET_URL = config_API_URL;
 
 const getNotifEmoji = (type) => {
   if (type === 'order') return '🛒';
@@ -89,7 +90,7 @@ const QuickSearch = ({ adminInfo }) => {
     if (!q || !q.trim()) { setResults(null); setIsOpen(false); return; }
     setIsLoading(true); setError('');
     try {
-      const { data } = await axios.get('http://localhost:5000/api/admin/search', {
+      const { data } = await axios.get(`${config_API_BASE}/admin/search`, {
         headers: { Authorization: `Bearer ${adminInfo.token}` },
         params: { q: q.trim() }
       });
@@ -327,7 +328,7 @@ const AdminLayout = ({ children }) => {
   useEffect(() => {
     if (!adminInfo) return;
     // Initial fetch
-    axios.get('http://localhost:5000/api/admin/notifications', {
+    axios.get(`${config_API_BASE}/admin/notifications`, {
       headers: { Authorization: `Bearer ${adminInfo.token}` },
       params: { limit: 5 }
     })
@@ -366,7 +367,7 @@ const AdminLayout = ({ children }) => {
     if (!adminInfo?.token) return;
     setNotifLoading(true);
     try {
-      const { data } = await axios.get('http://localhost:5000/api/admin/notifications', {
+      const { data } = await axios.get(`${config_API_BASE}/admin/notifications`, {
         headers: { Authorization: `Bearer ${adminInfo.token}` },
         params: { limit: 5 }
       });
@@ -381,7 +382,7 @@ const AdminLayout = ({ children }) => {
   useEffect(() => {
     const fetchTimeout = async () => {
       try {
-        const { data } = await axios.get('http://localhost:5000/api/store/settings');
+        const { data } = await axios.get(`${config_API_BASE}/store/settings`);
         if (data && data.sessionTimeout) {
           setSessionTimeoutMs(data.sessionTimeout * 60 * 1000);
         }

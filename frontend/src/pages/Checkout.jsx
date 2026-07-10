@@ -1,3 +1,4 @@
+import { API_BASE as config_API_BASE, API_URL as config_API_URL } from '../config/api';
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -16,7 +17,7 @@ import useSettingsStore from '../store/useSettingsStore';
 
 // Temporary testing value. Change back to 5 KM before production.
 const MAX_KM = Number(import.meta.env.VITE_DELIVERY_RADIUS_KM) || 5;
-const API_BASE = 'http://localhost:5000/api';
+const API_BASE = config_API_BASE;
 
 /* ── Haversine wrapper for recipient location ──────────────────────────────── */
 const calcDistance = (lat, lon) =>

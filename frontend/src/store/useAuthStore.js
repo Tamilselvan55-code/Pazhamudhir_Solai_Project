@@ -2,8 +2,10 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import axios from 'axios';
 
-const API = 'http://localhost:5000/api/auth';
-const ADMIN_API = 'http://localhost:5000/api/admin/auth';
+import { API_BASE } from '../config/api';
+
+const API = `${API_BASE}/auth`;
+const ADMIN_API = `${API_BASE}/admin/auth`;
 
 const useAuthStore = create(
   persist(

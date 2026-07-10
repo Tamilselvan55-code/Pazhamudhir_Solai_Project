@@ -1,3 +1,4 @@
+import { API_BASE as config_API_BASE, API_URL as config_API_URL } from '../config/api';
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { Mail, CheckCircle2, AlertCircle, Loader2, ArrowLeft, RefreshCw, Edit2 } from 'lucide-react';
@@ -145,7 +146,7 @@ const VerifyEmail = () => {
     setLoading(true);
     setErrorMsg('');
     try {
-      const { data } = await axios.post('http://localhost:5000/api/auth/verify-registration-otp', {
+      const { data } = await axios.post(`${config_API_BASE}/auth/verify-registration-otp`, {
         email,
         otp: code
       });
@@ -183,7 +184,7 @@ const VerifyEmail = () => {
     setLoading(true);
     setErrorMsg('');
     try {
-      const { data } = await axios.post('http://localhost:5000/api/auth/resend-verification-otp', { email });
+      const { data } = await axios.post(`${config_API_BASE}/auth/resend-verification-otp`, { email });
       if (data.success) {
         setExpiryTimer(600); // Reset 10 minute expiry
         setResendCooldown(60); // Reset 60 second cooldown

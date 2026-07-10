@@ -1,9 +1,10 @@
+import { API_BASE as config_API_BASE, API_URL as config_API_URL } from '../../config/api';
 import React, { useState } from 'react';
 import axios from 'axios';
 import { User, Phone, Mail, CheckCircle, Loader2, Save } from 'lucide-react';
 import useAuthStore from '../../store/useAuthStore';
 
-const API_BASE = 'http://localhost:5000/api';
+const API_BASE = config_API_BASE;
 
 const ProfileDetailsTab = () => {
   const { userInfo, setCredentials } = useAuthStore();

@@ -1,3 +1,4 @@
+import { API_BASE as config_API_BASE, API_URL as config_API_URL } from '../../config/api';
 import React, { useState, useEffect } from 'react';
 import { Tags, Plus, Search, Edit2, Trash2, Eye, EyeOff, Loader2, ShieldAlert } from 'lucide-react';
 import AdminLayout from '../../components/Admin/AdminLayout';
@@ -32,7 +33,7 @@ const Categories = () => {
     if (!adminInfo) return;
     try {
       setLoading(true);
-      const { data } = await axios.get('http://localhost:5000/api/admin/categories', {
+      const { data } = await axios.get(`${config_API_BASE}/admin/categories`, {
         headers: { Authorization: `Bearer ${adminInfo.token}` },
         params: { search: searchQuery || undefined }
       });
@@ -88,11 +89,11 @@ const Categories = () => {
     try {
       setSubmitting(true);
       if (modalType === 'add') {
-        await axios.post('http://localhost:5000/api/admin/categories', formData, {
+        await axios.post(`${config_API_BASE}/admin/categories`, formData, {
           headers: { Authorization: `Bearer ${adminInfo.token}` }
         });
       } else {
-        await axios.put(`http://localhost:5000/api/admin/categories/${selectedId}`, formData, {
+        await axios.put(`${config_API_BASE}/admin/categories/${selectedId}`, formData, {
           headers: { Authorization: `Bearer ${adminInfo.token}` }
         });
       }
@@ -109,7 +110,7 @@ const Categories = () => {
     const ok = await adminConfirm('Delete Category?', `Are you sure you want to delete "${name}"?\n\nThis action cannot be undone.`, { danger: true, confirmLabel: '🗑️ Delete' });
     if (!ok) return;
     try {
-      await axios.delete(`http://localhost:5000/api/admin/categories/${id}`, {
+      await axios.delete(`${config_API_BASE}/admin/categories/${id}`, {
         headers: { Authorization: `Bearer ${adminInfo.token}` }
       });
       fetchCategories();
@@ -121,7 +122,7 @@ const Categories = () => {
   const handleToggleStatus = async (cat) => {
     const newStatus = cat.status === 'Active' ? 'Hidden' : 'Active';
     try {
-      await axios.patch(`http://localhost:5000/api/admin/categories/${cat._id}/status`, {
+      await axios.patch(`${config_API_BASE}/admin/categories/${cat._id}/status`, {
         status: newStatus
       }, {
         headers: { Authorization: `Bearer ${adminInfo.token}` }
@@ -154,7 +155,7 @@ const Categories = () => {
 
     try {
       const orders = reorderedList.map(c => ({ id: c._id, displayOrder: c.displayOrder }));
-      await axios.post('http://localhost:5000/api/admin/categories/reorder', { orders }, {
+      await axios.post(`${config_API_BASE}/admin/categories/reorder`, { orders }, {
         headers: { Authorization: `Bearer ${adminInfo.token}` }
       });
     } catch (err) {

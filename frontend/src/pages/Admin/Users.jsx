@@ -1,3 +1,4 @@
+import { API_BASE as config_API_BASE, API_URL as config_API_URL } from '../../config/api';
 import React, { useState, useEffect, useCallback } from 'react';
 import { Navigate } from 'react-router-dom';
 import {
@@ -57,7 +58,7 @@ const Users = () => {
     try {
       setLoading(true);
       const token = adminInfo?.token;
-      const { data } = await axios.get('http://localhost:5000/api/admin/users', {
+      const { data } = await axios.get(`${config_API_BASE}/admin/users`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setUsers(data);
@@ -109,7 +110,7 @@ const Users = () => {
 
     try {
       await axios.patch(
-        `http://localhost:5000/api/admin/users/${user._id}/block`,
+        `${config_API_BASE}/admin/users/${user._id}/block`,
         { isBlocked: isBlocking, reason },
         { headers: { Authorization: `Bearer ${adminInfo?.token}` } }
       );
@@ -126,7 +127,7 @@ const Users = () => {
     setUserModalOpen(true);
     setOrdersLoading(true);
     try {
-      const { data } = await axios.get(`http://localhost:5000/api/admin/users/${user._id}/orders`, {
+      const { data } = await axios.get(`${config_API_BASE}/admin/users/${user._id}/orders`, {
         headers: { Authorization: `Bearer ${adminInfo?.token}` }
       });
       setUserOrders(data || []);
@@ -154,7 +155,7 @@ const Users = () => {
     setDeleteOrdersLoading(true);
     setUserToDeleteOrders([]);
     try {
-      const { data } = await axios.get(`http://localhost:5000/api/admin/users/${user._id}/orders`, {
+      const { data } = await axios.get(`${config_API_BASE}/admin/users/${user._id}/orders`, {
         headers: { Authorization: `Bearer ${adminInfo?.token}` }
       });
       setUserToDeleteOrders(data || []);
@@ -172,7 +173,7 @@ const Users = () => {
     setDeleteError('');
     try {
       await axios.delete(
-        `http://localhost:5000/api/admin/users/${userToDelete._id}`,
+        `${config_API_BASE}/admin/users/${userToDelete._id}`,
         { headers: { Authorization: `Bearer ${adminInfo?.token}` } }
       );
       setDeleteDialogOpen(false);

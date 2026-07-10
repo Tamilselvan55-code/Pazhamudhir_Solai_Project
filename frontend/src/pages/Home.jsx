@@ -1,3 +1,4 @@
+import { API_BASE as config_API_BASE, API_URL as config_API_URL } from '../config/api';
 import React, { useState, useMemo, useEffect } from 'react';
 import ProductCard from '../components/Product/ProductCard';
 import { ChevronRight, Search, X, Loader2 } from 'lucide-react';
@@ -120,7 +121,7 @@ const Home = () => {
   const fetchCategories = async () => {
     try {
       setCategoriesLoading(true);
-      const { data } = await axios.get('http://localhost:5000/api/categories');
+      const { data } = await axios.get(`${config_API_BASE}/categories`);
       
       const mapped = data.map((cat, idx) => {
         const id = getCategorySlug(cat.name);
@@ -147,7 +148,7 @@ const Home = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const { data } = await axios.get('http://localhost:5000/api/products');
+        const { data } = await axios.get(`${config_API_BASE}/products`);
         setProducts(data);
       } catch (err) {
         console.error('Error fetching products:', err);
@@ -232,7 +233,7 @@ const Home = () => {
             settings?.homepageBanner && settings.homepageBanner.trim() !== ''
               ? (settings.homepageBanner.startsWith('http') || settings.homepageBanner.startsWith('data:')
                   ? settings.homepageBanner
-                  : `http://localhost:5000${settings.homepageBanner.startsWith('/') ? '' : '/'}${settings.homepageBanner}`)
+                  : `${config_API_URL}${settings.homepageBanner.startsWith('/') ? '' : '/'}${settings.homepageBanner}`)
               : "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=1400&q=80"
           }
           alt="Fresh Groceries" 

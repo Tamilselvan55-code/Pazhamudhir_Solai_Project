@@ -1,3 +1,4 @@
+import { API_BASE as config_API_BASE, API_URL as config_API_URL } from '../../config/api';
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { CreditCard, Search, CheckCircle, Clock, XCircle, RefreshCw, Eye, Edit3, ShieldAlert, Loader2, UserCheck } from 'lucide-react';
@@ -26,7 +27,7 @@ const Payments = () => {
     if (!adminInfo) return;
     try {
       setLoading(true);
-      const { data } = await axios.get('http://localhost:5000/api/admin/payments', {
+      const { data } = await axios.get(`${config_API_BASE}/admin/payments`, {
         headers: { Authorization: `Bearer ${adminInfo.token}` },
         params: { status: filterStatus !== 'All' ? filterStatus : undefined, search: searchQuery.trim() || undefined }
       });
@@ -56,7 +57,7 @@ const Payments = () => {
     setSearchQuery('');
     if (!adminInfo) return;
     setLoading(true);
-    axios.get('http://localhost:5000/api/admin/payments', {
+    axios.get(`${config_API_BASE}/admin/payments`, {
       headers: { Authorization: `Bearer ${adminInfo.token}` },
       params: { status: filterStatus !== 'All' ? filterStatus : undefined, search: undefined }
     }).then(({ data }) => {
@@ -80,7 +81,7 @@ const Payments = () => {
     if (!selectedPayment) return;
     try {
       setUpdating(true);
-      await axios.patch(`http://localhost:5000/api/admin/payments/${selectedPayment._id}/status`, {
+      await axios.patch(`${config_API_BASE}/admin/payments/${selectedPayment._id}/status`, {
         status: statusToSet
       }, {
         headers: { Authorization: `Bearer ${adminInfo.token}` }

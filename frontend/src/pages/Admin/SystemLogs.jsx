@@ -1,3 +1,4 @@
+import { API_BASE as config_API_BASE, API_URL as config_API_URL } from '../../config/api';
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { 
@@ -26,7 +27,7 @@ const SystemLogs = () => {
     if (!adminInfo) return;
     setLoading(true);
     try {
-      const { data } = await axios.get('http://localhost:5000/api/admin/system-logs', {
+      const { data } = await axios.get(`${config_API_BASE}/admin/system-logs`, {
         params: { type, search, page, limit },
         headers: { Authorization: `Bearer ${adminInfo.token}` }
       });

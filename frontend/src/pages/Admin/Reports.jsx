@@ -1,3 +1,4 @@
+import { API_BASE as config_API_BASE, API_URL as config_API_URL } from '../../config/api';
 import React, { useState, useEffect, useCallback } from 'react';
 import { Navigate } from 'react-router-dom';
 import {
@@ -6,7 +7,7 @@ import {
   FileText, IndianRupee, Clock, CheckCircle, Package,
   Filter, RefreshCw, AlertTriangle, XCircle, Truck, Star,
   ShoppingCart, UserCheck, UserPlus, CreditCard, Layers,
-  AlertCircle, Eye, ChevronUp, ChevronDown, Minus
+  AlertCircle, Eye, ChevronUp, ChevronDown, Minus, Search
 } from 'lucide-react';
 import AdminLayout from '../../components/Admin/AdminLayout';
 import useAuthStore from '../../store/useAuthStore';
@@ -72,6 +73,16 @@ const Reports = () => {
   const [paymentAnalytics, setPaymentAnalytics]   = useState({ codTotal: 0, codPending: 0, codDelivered: 0, codCancelled: 0, codRevenue: 0 });
   const [charts, setCharts]     = useState({ dailySales: [], monthlySales: [], topSellingProducts: [], categoryPerformance: [], lowStock: [], outOfStock: [], recentOrders: [] });
   const [tableData, setTableData] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Filter table data by search query dynamically
+  const filteredTableData = tableData.filter(row => {
+    if (!searchQuery) return true;
+    const query = searchQuery.toLowerCase();
+    return Object.values(row).some(val => 
+      String(val ?? '').toLowerCase().includes(query)
+    );
+  });
 
   // ── Fetch analytics ───────────────────────────────────────────────────────
   const fetchAnalytics = useCallback(async () => {
@@ -79,7 +90,7 @@ const Reports = () => {
     try {
       setLoading(true);
       setError('');
-      const { data } = await axios.get('http://localhost:5000/api/admin/reports/analytics', {
+      const { data } = await axios.get(`${config_API_BASE}/admin/reports/analytics`, {
         headers: { Authorization: `Bearer ${adminInfo.token}` },
         params: {
           filter:    dateFilter,
@@ -122,9 +133,9 @@ const Reports = () => {
 
   // ── Exports ───────────────────────────────────────────────────────────────
   const exportExcel = () => {
-    if (!tableData.length) return;
-    const headings = Object.keys(tableData[0]);
-    const formatted = tableData.map(row => {
+    if (!filteredTableData.length) return;
+    const headings = Object.keys(filteredTableData[0]);
+    const formatted = filteredTableData.map(row => {
       const nr = {};
       Object.entries(row).forEach(([k, v]) => {
         const lk = k.toLowerCase();
@@ -136,7 +147,7 @@ const Reports = () => {
     const titleRows = [
       { [headings[0]]: 'TIRUCHENDUR MURUGAN PAZHAMUDHIR SOLAI' },
       { [headings[0]]: `${reportType} | Filter: ${dateFilter}` },
-      { [headings[0]]: `Exported: ${new Date().toLocaleString('en-IN')} | Records: ${tableData.length}` },
+      { [headings[0]]: `Exported: ${new Date().toLocaleString('en-IN')} | Records: ${filteredTableData.length}` },
       {},
     ];
     const ws = XLSX.utils.json_to_sheet([...titleRows, ...formatted], { skipHeader: true });
@@ -147,10 +158,10 @@ const Reports = () => {
   };
 
   const exportCSV = () => {
-    if (!tableData.length) return;
-    const headings = Object.keys(tableData[0]);
+    if (!filteredTableData.length) return;
+    const headings = Object.keys(filteredTableData[0]);
     let csv = '\uFEFF' + headings.join(',') + '\r\n';
-    tableData.forEach(row => {
+    filteredTableData.forEach(row => {
       const line = Object.entries(row).map(([k, v]) => {
         const lk = k.toLowerCase();
         const isAmt = typeof v === 'number' && (lk.includes('amount') || lk.includes('price') || lk.includes('total') || lk.includes('revenue'));
@@ -167,7 +178,7 @@ const Reports = () => {
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
   };
 
-  const exportPDF = () => generateReportPDF(reportType, summary, dateFilter, tableData, adminInfo);
+  const exportPDF = () => generateReportPDF(reportType, summary, dateFilter, filteredTableData, adminInfo);
 
   // ── Computed maximums for bar charts ──────────────────────────────────────
   const maxDailyRev   = Math.max(...(charts.dailySales  || []).map(d => d.revenue  || 0), 1);
@@ -239,17 +250,33 @@ const Reports = () => {
                 >{f}</button>
               ))}
             </div>
-            <div className="flex items-center gap-2.5">
-              <span className="text-xs font-bold text-[#94A3B8] uppercase tracking-wider">Report:</span>
-              <select
-                value={reportType}
-                onChange={e => setReportType(e.target.value)}
-                className="admin-form-input text-xs h-[40px] w-48 px-3 font-bold"
-              >
-                {['Sales Report', 'Orders Report', 'Inventory Report', 'Customer Report', 'Payment Report', 'Revenue Report'].map(t => (
-                  <option key={t} value={t} className="bg-[#081A38] text-white">{t}</option>
-                ))}
-              </select>
+            <div className="flex flex-wrap items-center gap-4">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-[#94A3B8] uppercase tracking-wider">Report:</span>
+                <select
+                  value={reportType}
+                  onChange={e => setReportType(e.target.value)}
+                  className="admin-form-input text-xs h-[40px] w-48 px-3 font-bold"
+                >
+                  {['Sales Report', 'Orders Report', 'Inventory Report', 'Customer Report', 'Payment Report', 'Revenue Report'].map(t => (
+                    <option key={t} value={t} className="bg-[#081A38] text-white">{t}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-[#94A3B8] uppercase tracking-wider">Search:</span>
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Search table..."
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    className="admin-form-input text-xs h-[40px] w-52 pl-9 pr-3 font-semibold bg-white/4 border border-white/8 rounded-xl text-white focus:outline-none focus:border-[#22C55E]/50 focus:bg-white/6 transition-all placeholder-gray-500"
+                  />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                </div>
+              </div>
             </div>
           </div>
 
@@ -285,11 +312,11 @@ const Reports = () => {
             <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-4">
               {[
                 { label: 'Total Revenue',    value: formatCurrency(summary.totalRevenue    || 0), icon: IndianRupee, color: 'text-[#22C55E]',  sub: 'Paid + COD Delivered'   },
-                { label: 'Total Orders',     value: summary.totalOrders     || 0,                  icon: ShoppingBag, color: 'text-violet-400', sub: 'Excl. Cancelled'         },
+                { label: 'Total Orders',     value: summary.totalOrders     || 0,                  icon: ShoppingBag, color: 'text-violet-400', sub: 'All orders in period'    },
                 { label: 'Avg Order Value',  value: formatCurrency(summary.avgOrderValue   || 0), icon: TrendingUp,  color: 'text-cyan-400',   sub: 'Revenue ÷ Orders'        },
                 { label: 'Monthly Revenue',  value: formatCurrency(summary.monthlyRevenue  || 0), icon: Calendar,    color: 'text-emerald-400',sub: 'Current month'           },
                 { label: 'Pending Payments', value: summary.pendingPayments || 0,                  icon: Clock,       color: 'text-amber-400',  sub: 'Unpaid orders'           },
-                { label: 'Total Customers',  value: summary.totalCustomers  || 0,                  icon: Users,       color: 'text-pink-400',   sub: 'Registered users'        },
+                { label: 'Total Customers',  value: summary.totalCustomers  || 0,                  icon: Users,       color: 'text-pink-400',   sub: 'Unique active users'     },
               ].map((card, i) => {
                 const Icon = card.icon;
                 return (
@@ -493,7 +520,7 @@ const Reports = () => {
                           <div className="flex items-center gap-2.5">
                             {p.image ? (
                               <img
-                                src={`http://localhost:5000${p.image}`}
+                                src={`${config_API_URL}${p.image}`}
                                 alt={p.name}
                                 className="w-8 h-8 rounded-lg object-cover border border-white/8 shrink-0"
                                 onError={e => { e.target.style.display = 'none'; }}
@@ -750,27 +777,27 @@ const Reports = () => {
                     Showing records for: <strong className="text-white">{dateFilter}</strong> · Exact same data in PDF/Excel/CSV exports
                   </p>
                 </div>
-                <span className="text-xs font-bold text-[#22C55E] bg-white/6 border border-white/8 px-3.5 py-1.5 rounded-full">
-                  {tableData.length} records
+                 <span className="text-xs font-bold text-[#22C55E] bg-white/6 border border-white/8 px-3.5 py-1.5 rounded-full">
+                  {filteredTableData.length} records
                 </span>
               </div>
               <div className="overflow-x-auto max-h-[55vh] admin-scroll">
                 <table className="w-full text-left border-collapse">
                   <thead className="sticky top-0 z-10 bg-[#081A38]">
                     <tr className="border-b border-white/8 text-[11px] font-bold text-[#94A3B8] uppercase tracking-wider">
-                      {tableData.length > 0 && Object.keys(tableData[0]).map(k => (
+                      {filteredTableData.length > 0 && Object.keys(filteredTableData[0]).map(k => (
                         <th key={k} className="px-6 py-4 whitespace-nowrap">{k}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/5 text-xs">
-                    {!tableData.length ? (
+                    {!filteredTableData.length ? (
                       <tr>
                         <td colSpan={10} className="px-6 py-12 text-center text-sm font-semibold text-[#94A3B8]">
                           No data available for the selected filter and report type.
                         </td>
                       </tr>
-                    ) : tableData.map((row, ri) => (
+                    ) : filteredTableData.map((row, ri) => (
                       <tr key={ri} className="hover:bg-white/4 transition-colors">
                         {Object.entries(row).map(([k, v], vi) => {
                           const lk = k.toLowerCase();

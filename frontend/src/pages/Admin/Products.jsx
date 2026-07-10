@@ -1,3 +1,4 @@
+import { API_BASE as config_API_BASE, API_URL as config_API_URL } from '../../config/api';
 import React, { useState, useEffect, useRef } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
@@ -111,7 +112,7 @@ const Products = () => {
     if (!adminInfo) return;
     setLoading(true);
     try {
-      const { data } = await axios.get('http://localhost:5000/api/admin/products', {
+      const { data } = await axios.get(`${config_API_BASE}/admin/products`, {
         params: {
           search,
           category,
@@ -163,7 +164,7 @@ const Products = () => {
   const handleToggleStatus = async (id, currentActive) => {
     setActionLoading(true);
     try {
-      await axios.patch(`http://localhost:5000/api/admin/products/${id}/status`, 
+      await axios.patch(`${config_API_BASE}/admin/products/${id}/status`, 
         { isActive: !currentActive },
         { headers: { Authorization: `Bearer ${adminInfo.token}` } }
       );
@@ -182,7 +183,7 @@ const Products = () => {
     if (!ok) return;
     setActionLoading(true);
     try {
-      await axios.delete(`http://localhost:5000/api/admin/products/${id}`, {
+      await axios.delete(`${config_API_BASE}/admin/products/${id}`, {
         headers: { Authorization: `Bearer ${adminInfo.token}` }
       });
       setSuccessMsg('Product deleted successfully!');
@@ -201,7 +202,7 @@ const Products = () => {
   const handleDuplicateProduct = async (id) => {
     setActionLoading(true);
     try {
-      await axios.post(`http://localhost:5000/api/admin/products/${id}/duplicate`, {}, {
+      await axios.post(`${config_API_BASE}/admin/products/${id}/duplicate`, {}, {
         headers: { Authorization: `Bearer ${adminInfo.token}` }
       });
       setSuccessMsg('Product duplicated successfully!');
@@ -246,7 +247,7 @@ const Products = () => {
 
     setActionLoading(true);
     try {
-      await axios.post('http://localhost:5000/api/admin/products/bulk', 
+      await axios.post(`${config_API_BASE}/admin/products/bulk`, 
         { ids: selectedIds, action, value },
         { headers: { Authorization: `Bearer ${adminInfo.token}` } }
       );
@@ -264,7 +265,7 @@ const Products = () => {
 
   const handleExportJSON = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/admin/products/export', {
+      const response = await axios.get(`${config_API_BASE}/admin/products/export`, {
         headers: { Authorization: `Bearer ${adminInfo.token}` }
       });
       const blob = new Blob([JSON.stringify(response.data, null, 2)], { type: 'application/json' });
@@ -296,7 +297,7 @@ const Products = () => {
         }
         
         setActionLoading(true);
-        const { data } = await axios.post('http://localhost:5000/api/admin/products/import', parsed, {
+        const { data } = await axios.post(`${config_API_BASE}/admin/products/import`, parsed, {
           headers: { Authorization: `Bearer ${adminInfo.token}` }
         });
         
@@ -323,7 +324,7 @@ const Products = () => {
         formData.append('images', file);
       });
 
-      const { data } = await axios.post('http://localhost:5000/api/admin/products/bulk-image-upload', formData, {
+      const { data } = await axios.post(`${config_API_BASE}/admin/products/bulk-image-upload`, formData, {
         headers: { 
           Authorization: `Bearer ${adminInfo.token}`,
           'Content-Type': 'multipart/form-data'
@@ -402,7 +403,7 @@ const Products = () => {
     });
 
     try {
-      const { data } = await axios.post('http://localhost:5000/api/admin/upload', formDataUpload, {
+      const { data } = await axios.post(`${config_API_BASE}/admin/upload`, formDataUpload, {
         headers: {
           'Content-Type': 'multipart/form-data',
           Authorization: `Bearer ${adminInfo.token}`
@@ -500,12 +501,12 @@ const Products = () => {
     setActionLoading(true);
     try {
       if (modalType === 'add') {
-        await axios.post('http://localhost:5000/api/admin/products', formData, {
+        await axios.post(`${config_API_BASE}/admin/products`, formData, {
           headers: { Authorization: `Bearer ${adminInfo.token}` }
         });
         setSuccessMsg('Product added successfully!');
       } else if (modalType === 'edit' && currentProduct) {
-        await axios.put(`http://localhost:5000/api/admin/products/${currentProduct._id}`, formData, {
+        await axios.put(`${config_API_BASE}/admin/products/${currentProduct._id}`, formData, {
           headers: { Authorization: `Bearer ${adminInfo.token}` }
         });
         setSuccessMsg('Product updated successfully!');

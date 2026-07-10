@@ -1,3 +1,4 @@
+import { API_BASE as config_API_BASE, API_URL as config_API_URL } from './config/api';
 import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import axios from 'axios';
@@ -71,7 +72,7 @@ function App() {
       const items = useCartStore.getState().cartItems;
       if (!items || items.length === 0) return;
       try {
-        const { data } = await axios.post('http://localhost:5000/api/products/validate-cart', { cartItems: items });
+        const { data } = await axios.post(`${config_API_BASE}/products/validate-cart`, { cartItems: items });
         if (data.success && data.hasChanges) {
           useCartStore.getState().setCartItems(data.validItems);
           setCartNotice('Some unavailable products were removed from your cart.');

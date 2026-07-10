@@ -1,3 +1,4 @@
+import { API_BASE as config_API_BASE, API_URL as config_API_URL } from '../../config/api';
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { 
@@ -30,8 +31,8 @@ const Settings = () => {
     invoicePrefix: 'INV-',
     invoiceFooter: '',
     storeDescription: '',
-    lat: 13.0606941,
-    lon: 80.2270751,
+    lat: 13.005865,
+    lon: 79.995026,
 
     // Platform
     websiteName: '',
@@ -131,7 +132,7 @@ const Settings = () => {
     if (!adminInfo) return;
     try {
       setLoading(true);
-      const { data } = await axios.get('http://localhost:5000/api/admin/settings', {
+      const { data } = await axios.get(`${config_API_BASE}/admin/settings`, {
         headers: { Authorization: `Bearer ${adminInfo.token}` }
       });
 
@@ -186,7 +187,7 @@ const Settings = () => {
     setSuccess(false);
 
     try {
-      await axios.put('http://localhost:5000/api/admin/settings', formData, {
+      await axios.put(`${config_API_BASE}/admin/settings`, formData, {
         headers: { Authorization: `Bearer ${adminInfo.token}` }
       });
       setSuccess(true);
@@ -207,7 +208,7 @@ const Settings = () => {
     }
     setTestingEmail(true);
     try {
-      const { data } = await axios.post('http://localhost:5000/api/admin/settings/test-email', {
+      const { data } = await axios.post(`${config_API_BASE}/admin/settings/test-email`, {
         smtpHost: formData.smtpHost,
         smtpPort: formData.smtpPort,
         smtpUsername: formData.smtpUsername,

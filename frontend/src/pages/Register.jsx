@@ -1,3 +1,4 @@
+import { API_BASE as config_API_BASE, API_URL as config_API_URL } from '../config/api';
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import {
@@ -167,7 +168,7 @@ const Register = () => {
     setIsLoading(true);
     setApiError('');
     try {
-      const { data } = await axios.post('http://localhost:5000/api/auth/register', {
+      const { data } = await axios.post(`${config_API_BASE}/auth/register`, {
         fullName: form.fullName.trim(),
         phoneNumber: form.phoneNumber.trim(),
         email: form.email.trim(),
@@ -236,7 +237,7 @@ const Register = () => {
     setLoading(true);
     setOtpError('');
     try {
-      const { data } = await axios.post('http://localhost:5000/api/auth/verify-register-otp', {
+      const { data } = await axios.post(`${config_API_BASE}/auth/verify-register-otp`, {
         email: form.email.trim(),
         otp: code
       });
@@ -260,7 +261,7 @@ const Register = () => {
     setLoading(true);
     setOtpError('');
     try {
-      const { data } = await axios.post('http://localhost:5000/api/auth/resend-register-otp', {
+      const { data } = await axios.post(`${config_API_BASE}/auth/resend-register-otp`, {
         email: form.email.trim()
       });
       if (data.success) {

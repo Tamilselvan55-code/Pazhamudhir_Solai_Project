@@ -1,3 +1,4 @@
+import { API_BASE as config_API_BASE, API_URL as config_API_URL } from './config/api';
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
@@ -7,9 +8,9 @@ import axios from 'axios'
 
 // Add a global Axios request interceptor to rewrite hardcoded localhost backend URLs in production
 axios.interceptors.request.use((config) => {
-  const targetBackend = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
-  if (config.url && config.url.startsWith('http://localhost:5000')) {
-    config.url = config.url.replace('http://localhost:5000', targetBackend);
+  const targetBackend = config_API_URL;
+  if (config.url && config.url.startsWith(config_API_URL)) {
+    config.url = config.url.replace(config_API_URL, targetBackend);
   }
   return config;
 }, (error) => {
@@ -19,82 +20,7 @@ axios.interceptors.request.use((config) => {
 console.log('%c🌿 Tiruchendur Murugan Pazhamudhir Solai 🌿', 'color: #16a34a; font-size: 16px; font-weight: bold;');
 console.log('%cWelcome to www.tiruchendurmuruganpazhamudhirsolai.com', 'color: #4b5563; font-size: 12px;');
 
-// Google Maps dynamic loading logic (Requirement 7 & 8)
-const initGoogleMaps = () => {
-  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-  const isValidKey = apiKey && apiKey !== 'YOUR_GOOGLE_MAPS_API_KEY' && apiKey.trim() !== '';
 
-  if (isValidKey) {
-    if (!window.google?.maps) {
-      const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey.trim()}&libraries=places`;
-      script.async = true;
-      script.defer = true;
-      script.onload = () => {
-        console.log('✓ Google Maps loaded');
-      };
-      script.onerror = () => {
-        console.error('Failed to load Google Maps script.');
-      };
-      document.head.appendChild(script);
-    } else {
-      console.log('✓ Google Maps loaded');
-    }
-  } else {
-    // Mock minimal objects needed by MapLocationPicker
-    class MockLatLng {
-      constructor(lat, lng) { this.latVal = lat; this.lngVal = lng; }
-      lat() { return this.latVal; }
-      lng() { return this.lngVal; }
-    }
-    
-    window.google = {
-      maps: {
-        LatLng: MockLatLng,
-        Map: class {
-          constructor() {}
-          setCenter() {}
-          setZoom() {}
-          addListener() {}
-        },
-        Marker: class {
-          constructor() {}
-          setMap() {}
-          setPosition() {}
-          addListener() {}
-        },
-        Circle: class {
-          constructor() {}
-          setMap() {}
-          setRadius() {}
-        },
-        Geocoder: class {
-          geocode(req, cb) {
-            cb([{
-              geometry: { location: new MockLatLng(13.0827, 80.2707) },
-              formatted_address: 'Chennai, Tamil Nadu, India'
-            }], 'OK');
-          }
-        },
-        ControlPosition: {
-          RIGHT_CENTER: 1
-        },
-        Size: class { constructor(w, h) { this.w = w; this.h = h; } },
-        Point: class { constructor(x, y) { this.x = x; this.y = y; } },
-        places: {
-          Autocomplete: class {
-            constructor() {}
-            addListener() {}
-          }
-        }
-      }
-    };
-    
-    console.log('✓ Google Maps loaded');
-  }
-};
-
-initGoogleMaps();
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

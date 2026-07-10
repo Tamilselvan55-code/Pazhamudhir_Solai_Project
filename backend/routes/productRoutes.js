@@ -76,7 +76,12 @@ router.get('/', async (req, res) => {
     res.json(formatMongoCompat(productsRaw));
   } catch (error) {
     console.error('Fetch products error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({
+      success: false,
+      message: 'Server error fetching products',
+      error: error.message || String(error),
+      stack: error.stack
+    });
   }
 });
 
@@ -97,7 +102,12 @@ router.get('/:id', async (req, res) => {
     }
   } catch (error) {
     console.error('Fetch single product error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({
+      success: false,
+      message: 'Server error fetching product details',
+      error: error.message || String(error),
+      stack: error.stack
+    });
   }
 });
 

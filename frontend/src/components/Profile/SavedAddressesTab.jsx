@@ -1,10 +1,11 @@
+import { API_BASE as config_API_BASE, API_URL as config_API_URL } from '../../config/api';
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { MapPin, Plus, Edit2, Trash2, CheckCircle, Home, Briefcase, Navigation, Loader2 } from 'lucide-react';
 import useAuthStore from '../../store/useAuthStore';
 import useModal from '../../hooks/useModal';
 
-const API_BASE = 'http://localhost:5000/api';
+const API_BASE = config_API_BASE;
 
 const getAddressIcon = (label) => {
   if (label === 'Home') return <Home className="w-5 h-5 text-green-600" />;

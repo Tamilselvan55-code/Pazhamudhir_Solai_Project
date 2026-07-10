@@ -1,3 +1,4 @@
+import { API_BASE as config_API_BASE, API_URL as config_API_URL } from '../../config/api';
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { 
@@ -26,7 +27,7 @@ const DatabaseController = () => {
   const fetchStatus = async () => {
     try {
       setLoadingStatus(true);
-      const { data } = await axios.get('http://localhost:5000/api/admin/database/status', {
+      const { data } = await axios.get(`${config_API_BASE}/admin/database/status`, {
         headers: { Authorization: `Bearer ${adminInfo.token}` }
       });
       setDbStatus(data);
@@ -40,7 +41,7 @@ const DatabaseController = () => {
   const fetchBackups = async () => {
     try {
       setLoadingBackups(true);
-      const { data } = await axios.get('http://localhost:5000/api/admin/database/backups', {
+      const { data } = await axios.get(`${config_API_BASE}/admin/database/backups`, {
         headers: { Authorization: `Bearer ${adminInfo.token}` }
       });
       setBackups(data);
@@ -61,7 +62,7 @@ const DatabaseController = () => {
   const handleCreateBackup = async () => {
     setActionLoading(true);
     try {
-      const { data } = await axios.post('http://localhost:5000/api/admin/database/backup', {}, {
+      const { data } = await axios.post(`${config_API_BASE}/admin/database/backup`, {}, {
         headers: { Authorization: `Bearer ${adminInfo.token}` }
       });
       adminAlert('success', 'Backup Created', data.message || 'Backup file successfully created!');
@@ -77,7 +78,7 @@ const DatabaseController = () => {
 
   const handleDownloadBackup = async (filename) => {
     try {
-      const response = await axios.get(`http://localhost:5000/api/admin/database/backups/download/${filename}`, {
+      const response = await axios.get(`${config_API_BASE}/admin/database/backups/download/${filename}`, {
         headers: { Authorization: `Bearer ${adminInfo.token}` },
         responseType: 'blob'
       });
@@ -102,7 +103,7 @@ const DatabaseController = () => {
       onConfirm: async () => {
         setActionLoading(true);
         try {
-          const { data } = await axios.post(`http://localhost:5000/api/admin/database/backups/restore/${filename}`, {}, {
+          const { data } = await axios.post(`${config_API_BASE}/admin/database/backups/restore/${filename}`, {}, {
             headers: { Authorization: `Bearer ${adminInfo.token}` }
           });
           adminAlert('success', 'Restore Successful', data.message || 'Database restored successfully!');
@@ -120,7 +121,7 @@ const DatabaseController = () => {
   const handleOptimizeDb = async () => {
     setOptimizing(true);
     try {
-      const { data } = await axios.post('http://localhost:5000/api/admin/database/optimize', {}, {
+      const { data } = await axios.post(`${config_API_BASE}/admin/database/optimize`, {}, {
         headers: { Authorization: `Bearer ${adminInfo.token}` }
       });
       adminAlert(
@@ -153,7 +154,7 @@ const DatabaseController = () => {
           const formData = new FormData();
           formData.append('file', uploadFile);
 
-          const { data } = await axios.post('http://localhost:5000/api/admin/database/backups/upload-restore', formData, {
+          const { data } = await axios.post(`${config_API_BASE}/admin/database/backups/upload-restore`, formData, {
             headers: { 
               Authorization: `Bearer ${adminInfo.token}`,
               'Content-Type': 'multipart/form-data'
@@ -185,7 +186,7 @@ const DatabaseController = () => {
       const formData = new FormData();
       formData.append('file', importFile);
 
-      const { data } = await axios.post('http://localhost:5000/api/admin/database/database-import', formData, {
+      const { data } = await axios.post(`${config_API_BASE}/admin/database/database-import`, formData, {
         headers: { 
           Authorization: `Bearer ${adminInfo.token}`,
           'Content-Type': 'multipart/form-data'

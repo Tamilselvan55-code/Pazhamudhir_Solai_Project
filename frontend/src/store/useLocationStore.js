@@ -1,12 +1,13 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import axios from 'axios';
+import { API_BASE } from '../config/api';
 
-// ── Store coordinates (Tiruchendur Murugan Palumanicholai) ────────────────────
-export const STORE_LOCATION = { lat: 13.0606941, lon: 80.2270751 };
+// ── Store coordinates (Tiruchendur Murugan Pazhamudhir Solai) ────────────────────
+export const STORE_LOCATION = { lat: 13.005865, lon: 79.995026 };
 // Temporary testing value. Change back to 5 KM before production.
-const MAX_RADIUS_KM = Number(import.meta.env.VITE_DELIVERY_RADIUS_KM) || 5;
-const API_BASE = 'http://localhost:5000/api/auth';
+const MAX_RADIUS_KM = Number(import.meta.env.VITE_DELIVERY_RADIUS_KM) || 30;
+const API_AUTH_BASE = `${API_BASE}/auth`;
 
 // ── Haversine formula ─────────────────────────────────────────────────────────
 export const haversineDistance = (lat1, lon1, lat2, lon2) => {
@@ -21,7 +22,7 @@ export const haversineDistance = (lat1, lon1, lat2, lon2) => {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 };
 
-const BACKEND_URL = 'http://localhost:5000/api';
+const BACKEND_URL = API_BASE;
 
 // ── Server-side coordinate verification ───────────────────────────────────────
 const verifyWithServer = async (lat, lon) => {
@@ -213,7 +214,7 @@ const useLocationStore = create(
         if (!userLocation || !token) return;
         try {
           await axios.put(
-            `${API_BASE}/delivery-address`,
+            `${API_AUTH_BASE}/delivery-address`,
             {
               lat:               userLocation.lat,
               lon:               userLocation.lon,

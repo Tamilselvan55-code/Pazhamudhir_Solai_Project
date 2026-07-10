@@ -1,3 +1,4 @@
+import { API_BASE as config_API_BASE, API_URL as config_API_URL } from '../../config/api';
 import { TrendingUp, Plus, Edit2, Trash2, Calendar, DollarSign, Percent, Eye, EyeOff, Loader2, ShieldAlert, Search } from 'lucide-react';
 import AdminLayout from '../../components/Admin/AdminLayout';
 import useAuthStore from '../../store/useAuthStore';
@@ -35,7 +36,7 @@ const Offers = () => {
     if (!adminInfo) return;
     try {
       setLoading(true);
-      const { data } = await axios.get('http://localhost:5000/api/admin/offers', {
+      const { data } = await axios.get(`${config_API_BASE}/admin/offers`, {
         headers: { Authorization: `Bearer ${adminInfo.token}` }
       });
       setOffers(data);
@@ -90,12 +91,12 @@ const Offers = () => {
     try {
       setSubmitting(true);
       if (modalType === 'add') {
-        await axios.post('http://localhost:5000/api/admin/offers', formData, {
+        await axios.post(`${config_API_BASE}/admin/offers`, formData, {
           headers: { Authorization: `Bearer ${adminInfo.token}` }
         });
         setToastMsg('Offer created successfully!');
       } else {
-        await axios.put(`http://localhost:5000/api/admin/offers/${selectedId}`, formData, {
+        await axios.put(`${config_API_BASE}/admin/offers/${selectedId}`, formData, {
           headers: { Authorization: `Bearer ${adminInfo.token}` }
         });
         setToastMsg('Offer updated successfully!');
@@ -115,7 +116,7 @@ const Offers = () => {
     const ok = await adminConfirm('Delete Offer?', `Are you sure you want to delete:\n\n"${title}"\n\nThis action cannot be undone.`, { danger: true, confirmLabel: '🗑️ Delete' });
     if (!ok) return;
     try {
-      await axios.delete(`http://localhost:5000/api/admin/offers/${id}`, {
+      await axios.delete(`${config_API_BASE}/admin/offers/${id}`, {
         headers: { Authorization: `Bearer ${adminInfo.token}` }
       });
       setToastMsg('Offer deleted successfully!');
@@ -130,7 +131,7 @@ const Offers = () => {
   const handleToggleStatus = async (offer) => {
     const newStatus = offer.status === 'Active' ? 'Expired' : 'Active';
     try {
-      await axios.patch(`http://localhost:5000/api/admin/offers/${offer._id}/status`, {
+      await axios.patch(`${config_API_BASE}/admin/offers/${offer._id}/status`, {
         status: newStatus
       }, {
         headers: { Authorization: `Bearer ${adminInfo.token}` }

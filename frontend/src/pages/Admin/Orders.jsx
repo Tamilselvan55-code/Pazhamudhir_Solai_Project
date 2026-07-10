@@ -1,3 +1,4 @@
+import { API_BASE as config_API_BASE, API_URL as config_API_URL } from '../../config/api';
 import React, { useState, useEffect, useCallback } from 'react';
 import { Navigate } from 'react-router-dom';
 import {
@@ -12,7 +13,7 @@ import useModal from '../../hooks/useModal';
 import { formatCurrency } from '../../utils/currency';
 import { generateInvoicePDF } from '../../utils/pdfGenerator';
 
-const API_BASE = 'http://localhost:5000/api/admin';
+const API_BASE = `${config_API_BASE}/admin`;
 
 /* ── Status & Payment badge helper styling (Spec 8) ───────────────────────── */
 const getOrderStatusBadgeStyle = (status) => {

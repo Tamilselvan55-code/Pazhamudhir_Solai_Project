@@ -23,7 +23,11 @@ dotenv.config();
 
 const app = express();
 
-app.use(cors());
+app.use(cors({
+  origin: 'https://pazhamudhir-solai-project.vercel.app',
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  credentials: true
+}));
 app.use(express.json());
 
 // Global response interceptor to dynamically replace hardcoded localhost backend URLs for images
@@ -106,7 +110,12 @@ app.get('/api/categories', async (req, res) => {
     res.json(formatMongoCompat(categoriesRaw));
   } catch (err) {
     console.error('Fetch public categories error:', err);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({
+      success: false,
+      message: 'Server error fetching categories',
+      error: err.message || String(err),
+      stack: err.stack
+    });
   }
 });
 
