@@ -311,6 +311,11 @@ const Home = () => {
           <p className="font-semibold text-base mb-1">Failed to load products</p>
           <p className="text-xs text-red-400">{error}</p>
         </div>
+      ) : products.length === 0 ? (
+        <div className="text-center py-16 text-gray-500 bg-white rounded-2xl border border-gray-100">
+          <p className="text-4xl mb-3">📦</p>
+          <p className="font-semibold text-base">No products available</p>
+        </div>
       ) : (
         <>
           {/* ── Search Results ────────────────────────────────────────────── */}
