@@ -1,9 +1,14 @@
-import Notification from '../models/Notification.js';
+import prisma from '../utils/prismaClient.js';
 
 // Helper to create and emit a notification
 export const createNotification = async (io, payload) => {
-  const notif = new Notification(payload);
-  await notif.save();
+  const notif = await prisma.adminNotification.create({
+    data: {
+      type: payload.type || 'system',
+      message: payload.message || '',
+      read: payload.isRead || payload.read || false
+    }
+  });
   if (io) io.emit('admin:notification:new', notif);
   return notif;
 };
@@ -12,71 +17,113 @@ export const createNotification = async (io, payload) => {
 export const getNotifications = async (req, res) => {
   try {
     const { page = 1, limit = 20, type, isRead, search } = req.query;
-    const filter = {};
-    if (type) filter.type = type;
-    if (isRead !== undefined) filter.isRead = isRead === 'true';
+    
+    const where = {};
+    if (type) where.type = type;
+    if (isRead !== undefined) where.read = isRead === 'true';
     if (search) {
-      const regex = new RegExp(search, 'i');
-      filter.$or = [{ title: { $regex: regex } }, { message: { $regex: regex } }];
+      where.OR = [
+        { message: { contains: search, mode: 'insensitive' } },
+        { type: { contains: search, mode: 'insensitive' } }
+      ];
     }
-    const notifications = await Notification.find(filter)
-      .sort('-createdAt')
-      .skip((page - 1) * limit)
-      .limit(parseInt(limit));
-    const total = await Notification.countDocuments(filter);
-    res.json({ notifications, total, page: parseInt(page), pages: Math.ceil(total / limit) });
+    
+    const pageNum = parseInt(page) || 1;
+    const limitNum = parseInt(limit) || 20;
+    
+    const notifications = await prisma.adminNotification.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      skip: (pageNum - 1) * limitNum,
+      take: limitNum
+    });
+    
+    const total = await prisma.adminNotification.count({ where });
+    
+    res.json({
+      notifications,
+      total,
+      page: pageNum,
+      pages: Math.ceil(total / limitNum)
+    });
   } catch (err) {
     console.error('Get notifications error:', err);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({
+      success: false,
+      message: 'Server error fetching admin notifications',
+      error: err.message || String(err)
+    });
   }
 };
 
 // PATCH /api/admin/notifications/read/:id
 export const markAsRead = async (req, res) => {
   try {
-    const notif = await Notification.findByIdAndUpdate(req.params.id, { isRead: true }, { new: true });
-    if (!notif) return res.status(404).json({ message: 'Notification not found' });
+    const id = req.params.id;
+    const notif = await prisma.adminNotification.update({
+      where: { id },
+      data: { read: true }
+    });
     const io = req.app.get('io');
     if (io) io.emit('admin:notification:unreadCount');
     res.json(notif);
   } catch (err) {
     console.error('Mark as read error:', err);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({
+      success: false,
+      message: 'Server error marking notification as read',
+      error: err.message || String(err)
+    });
   }
 };
 
 // PATCH /api/admin/notifications/read-all
 export const markAllAsRead = async (req, res) => {
   try {
-    await Notification.updateMany({ isRead: false }, { isRead: true });
+    await prisma.adminNotification.updateMany({
+      where: { read: false },
+      data: { read: true }
+    });
     const io = req.app.get('io');
     if (io) io.emit('admin:notification:unreadCount');
     res.json({ message: 'All notifications marked as read' });
   } catch (err) {
     console.error('Mark all read error:', err);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({
+      success: false,
+      message: 'Server error marking all notifications as read',
+      error: err.message || String(err)
+    });
   }
 };
 
 // DELETE /api/admin/notifications/:id
 export const deleteNotification = async (req, res) => {
   try {
-    const notif = await Notification.findByIdAndDelete(req.params.id);
-    if (!notif) return res.status(404).json({ message: 'Notification not found' });
+    const id = req.params.id;
+    await prisma.adminNotification.delete({ where: { id } });
     res.json({ message: 'Notification deleted' });
   } catch (err) {
     console.error('Delete notification error:', err);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({
+      success: false,
+      message: 'Server error deleting notification',
+      error: err.message || String(err)
+    });
   }
 };
 
 // DELETE /api/admin/notifications (clear all)
 export const clearAll = async (req, res) => {
   try {
-    await Notification.deleteMany({});
+    await prisma.adminNotification.deleteMany({});
     res.json({ message: 'All notifications cleared' });
   } catch (err) {
     console.error('Clear all notifications error:', err);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({
+      success: false,
+      message: 'Server error clearing notifications',
+      error: err.message || String(err)
+    });
   }
 };

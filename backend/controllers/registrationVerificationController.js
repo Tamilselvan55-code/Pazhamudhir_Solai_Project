@@ -1,6 +1,5 @@
 import bcrypt from 'bcryptjs';
-import User from '../models/User.js';
-import PendingUser from '../models/PendingUser.js';
+import prisma from '../utils/prismaClient.js';
 import { generateVerificationOtp, sendVerificationEmail } from '../utils/registrationVerificationService.js';
 import { createAndEmitNotification } from '../utils/notificationHelper.js';
 
@@ -13,12 +12,12 @@ export const sendVerificationOtp = async (req, res) => {
   const trimmedEmail = email.toLowerCase().trim();
 
   try {
-    const userExists = await User.findOne({ email: trimmedEmail });
+    const userExists = await prisma.user.findUnique({ where: { email: trimmedEmail } });
     if (userExists) {
       return res.status(400).json({ message: 'This email is already registered.' });
     }
 
-    const pendingUser = await PendingUser.findOne({ email: trimmedEmail });
+    const pendingUser = await prisma.pendingUser.findFirst({ where: { email: trimmedEmail } });
     if (!pendingUser) {
       return res.status(404).json({ message: 'No pending registration found for this email. Please register first.' });
     }
@@ -28,10 +27,14 @@ export const sendVerificationOtp = async (req, res) => {
     const hashedOtp = await bcrypt.hash(otpVal, salt);
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
-    pendingUser.emailVerificationOTP = hashedOtp;
-    pendingUser.emailVerificationOTPExpiry = expiresAt;
-    pendingUser.emailVerificationAttempts = 0;
-    await pendingUser.save();
+    await prisma.pendingUser.update({
+      where: { id: pendingUser.id },
+      data: {
+        emailVerificationOTP: hashedOtp,
+        emailVerificationOTPExpiry: expiresAt,
+        emailVerificationAttempts: 0
+      }
+    });
 
     await sendVerificationEmail({
       to: pendingUser.email,
@@ -59,17 +62,17 @@ export const verifyRegistrationOtp = async (req, res) => {
 
   try {
     // Check duplicate in User collection first to prevent race condition
-    const userExists = await User.findOne({ email: trimmedEmail });
+    const userExists = await prisma.user.findUnique({ where: { email: trimmedEmail } });
     if (userExists) {
       return res.status(400).json({ message: 'This email address is already registered. Please login.' });
     }
 
-    const pendingUser = await PendingUser.findOne({ email: trimmedEmail });
+    const pendingUser = await prisma.pendingUser.findFirst({ where: { email: trimmedEmail } });
     if (!pendingUser) {
       return res.status(400).json({ message: 'OTP expired. Please resend.' });
     }
 
-    if (pendingUser.emailVerificationOTPExpiry <= Date.now()) {
+    if (pendingUser.emailVerificationOTPExpiry <= new Date()) {
       return res.status(400).json({ message: 'OTP expired. Please resend.' });
     }
 
@@ -79,9 +82,12 @@ export const verifyRegistrationOtp = async (req, res) => {
 
     const isMatch = await bcrypt.compare(otp, pendingUser.emailVerificationOTP);
     if (!isMatch) {
-      pendingUser.emailVerificationAttempts += 1;
-      await pendingUser.save();
-      const remaining = 5 - pendingUser.emailVerificationAttempts;
+      const updatedAttempts = pendingUser.emailVerificationAttempts + 1;
+      await prisma.pendingUser.update({
+        where: { id: pendingUser.id },
+        data: { emailVerificationAttempts: updatedAttempts }
+      });
+      const remaining = 5 - updatedAttempts;
       return res.status(400).json({
         message: remaining > 0
           ? `Invalid OTP. ${remaining} attempts remaining.`
@@ -90,18 +96,18 @@ export const verifyRegistrationOtp = async (req, res) => {
     }
 
     // OTP is correct! Create user record in the main User collection now.
-    const newUser = await User.create({
-      fullName: pendingUser.fullName,
-      phoneNumber: pendingUser.phoneNumber,
-      email: pendingUser.email,
-      password: pendingUser.password, // Already bcrypt-hashed password from PendingUser
-      isVerified: true,
-      isEmailVerified: true,
-      verifiedAt: new Date()
+    const newUser = await prisma.user.create({
+      data: {
+        fullName: pendingUser.fullName,
+        phoneNumber: pendingUser.phoneNumber,
+        email: pendingUser.email,
+        password: pendingUser.password, // Already bcrypt-hashed password from PendingUser
+        emailVerified: true
+      }
     });
 
     // Delete the temporary registration record immediately
-    await PendingUser.deleteOne({ _id: pendingUser._id });
+    await prisma.pendingUser.delete({ where: { id: pendingUser.id } });
 
     // Create and Emit Admin Notification
     try {
@@ -140,12 +146,12 @@ export const resendVerificationOtp = async (req, res) => {
   const trimmedEmail = email.toLowerCase().trim();
 
   try {
-    const userExists = await User.findOne({ email: trimmedEmail });
+    const userExists = await prisma.user.findUnique({ where: { email: trimmedEmail } });
     if (userExists) {
       return res.status(400).json({ message: 'This email is already registered.' });
     }
 
-    const pendingUser = await PendingUser.findOne({ email: trimmedEmail });
+    const pendingUser = await prisma.pendingUser.findFirst({ where: { email: trimmedEmail } });
     if (!pendingUser) {
       return res.status(400).json({ message: 'No pending registration found for this email address. Please register again.' });
     }
@@ -159,11 +165,15 @@ export const resendVerificationOtp = async (req, res) => {
     const hashedOtp = await bcrypt.hash(otpVal, salt);
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
-    pendingUser.emailVerificationOTP = hashedOtp;
-    pendingUser.emailVerificationOTPExpiry = expiresAt;
-    pendingUser.emailVerificationAttempts = 0;
-    pendingUser.resendAttempts += 1;
-    await pendingUser.save();
+    await prisma.pendingUser.update({
+      where: { id: pendingUser.id },
+      data: {
+        emailVerificationOTP: hashedOtp,
+        emailVerificationOTPExpiry: expiresAt,
+        emailVerificationAttempts: 0,
+        resendAttempts: pendingUser.resendAttempts + 1
+      }
+    });
 
     await sendVerificationEmail({
       to: pendingUser.email,
