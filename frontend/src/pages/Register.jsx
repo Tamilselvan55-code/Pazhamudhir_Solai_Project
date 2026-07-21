@@ -234,10 +234,10 @@ const Register = () => {
       return;
     }
 
-    setLoading(true);
+    setIsLoading(true);
     setOtpError('');
     try {
-      const { data } = await axios.post(`${config_API_BASE}/auth/verify-register-otp`, {
+      const { data } = await axios.post(`${config_API_BASE}/auth/verify-registration-otp`, {
         email: form.email.trim(),
         otp: code
       });
@@ -253,15 +253,15 @@ const Register = () => {
       setOtpAttempts((prev) => prev + 1);
       setOtpError(err.response?.data?.message || 'Verification failed. Incorrect OTP.');
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   const handleResendOtp = async () => {
-    setLoading(true);
+    setIsLoading(true);
     setOtpError('');
     try {
-      const { data } = await axios.post(`${config_API_BASE}/auth/resend-register-otp`, {
+      const { data } = await axios.post(`${config_API_BASE}/auth/resend-verification-otp`, {
         email: form.email.trim()
       });
       if (data.success) {
@@ -274,9 +274,10 @@ const Register = () => {
     } catch (err) {
       setOtpError(err.response?.data?.message || 'Failed to resend code. Please try again.');
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
+
 
   // Check if field is fully validated (touched & no error & non-empty)
   const isFieldValid = (name) => {

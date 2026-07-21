@@ -4,6 +4,7 @@ import useCartStore from '../../store/useCartStore';
 import { useNavigate } from 'react-router-dom';
 import useModal from '../../hooks/useModal';
 import { formatCurrency } from '../../utils/currency';
+import ProductImage from '../Product/ProductImage';
 
 const CartDrawer = ({ isOpen, onClose }) => {
   const { cartItems, updateQuantity, getTotalPrice, getTotalItems } = useCartStore();
@@ -43,7 +44,7 @@ const CartDrawer = ({ isOpen, onClose }) => {
               {cartItems.map((item) => (
                 <div key={item.product} className="bg-white p-3 rounded-xl shadow-sm flex gap-3">
                   <div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden shrink-0">
-                    <img src={item.image || 'https://via.placeholder.com/150'} alt={item.name} className="w-full h-full object-cover" />
+                    <ProductImage src={item.image} alt={item.name} category={item.category} fit="cover" size="sm" className="w-full h-full" />
                   </div>
                   <div className="flex-1 flex flex-col justify-between">
                     <div>

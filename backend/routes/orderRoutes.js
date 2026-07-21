@@ -1,7 +1,7 @@
 import express from 'express';
 import prisma from '../utils/prismaClient.js';
 import { formatMongoCompat } from '../utils/formatMongoCompat.js';
-import { isWithinDeliveryRadius } from '../utils/distance.js';
+import { isWithinDeliveryRadius, logDeliveryDecision } from '../utils/distance.js';
 import { createAndEmitNotification } from '../utils/notificationHelper.js';
 import { protect } from '../middleware/auth.js';
 import { checkMaintenanceAndFeature } from '../middleware/maintenanceAndFeature.js';
@@ -82,10 +82,10 @@ router.post('/', protect, checkMaintenanceAndFeature('disableOrderPlacement'), c
     }
 
     const settingsRaw = await prisma.storeSettings.findFirst();
-    const settings = formatMongoCompat(settingsRaw) || {
-      location:         { lat: 12.9666144, lon: 79.9458077 },
-      deliveryRadiusKm: Number(process.env.DELIVERY_RADIUS_KM) || 30,
-    };
+    const settings = formatMongoCompat(settingsRaw) || {};
+    const storeLat = Number(settings.location?.lat ?? settings.lat ?? 13.0606941);
+    const storeLon = Number(settings.location?.lon ?? settings.lon ?? 80.2270751);
+    const radiusKm = Number(settings.deliveryRadiusKm || process.env.DELIVERY_RADIUS_KM || 30);
 
     if (settings.disableCheckout || settings.disableOrderPlacement) {
       return res.status(403).json({
@@ -97,17 +97,20 @@ router.post('/', protect, checkMaintenanceAndFeature('disableOrderPlacement'), c
     const locationCheck = isWithinDeliveryRadius(
       shippingAddress.lat,
       shippingAddress.lon,
-      settings.location?.lat ?? 12.9666144,
-      settings.location?.lon ?? 79.9458077,
-      settings.deliveryRadiusKm ?? 30
+      storeLat,
+      storeLon,
+      radiusKm
     );
+
+    logDeliveryDecision(storeLat, storeLon, shippingAddress.lat, shippingAddress.lon, locationCheck.rawDistance ?? locationCheck.distance, radiusKm, locationCheck.isEligible);
 
     if (!locationCheck.isEligible) {
       return res.status(400).json({
         success: false,
-        message: `Delivery not available. You are ${locationCheck.distance} km away. Limit is ${settings.deliveryRadiusKm ?? 30} km.`,
+        message: `Delivery not available. You are ${locationCheck.distance} km away. Limit is ${radiusKm} km.`,
       });
     }
+
 
     const processedItems = [];
     const validCartItems = [];

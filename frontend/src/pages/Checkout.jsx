@@ -8,19 +8,14 @@ import {
   Banknote, Package, ArrowLeft, Loader2, Info,
 } from 'lucide-react';
 import useCartStore from '../store/useCartStore';
-import useLocationStore, { haversineDistance, STORE_LOCATION, getDeliveryRadius } from '../store/useLocationStore';
+import useLocationStore, { getDeliveryRadius } from '../store/useLocationStore';
 import useAuthStore from '../store/useAuthStore';
 import LiveLocationPanel from '../components/Location/LiveLocationPanel';
 import useModal from '../hooks/useModal';
 import { formatCurrency } from '../utils/currency';
 import useSettingsStore from '../store/useSettingsStore';
 
-// Remove hardcoded MAX_KM fallback
 const API_BASE = config_API_BASE;
-
-/* ── Haversine wrapper for recipient location ──────────────────────────────── */
-const calcDistance = (lat, lon) =>
-  haversineDistance(lat, lon, STORE_LOCATION.lat, STORE_LOCATION.lon);
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
 const Checkout = () => {
@@ -103,7 +98,8 @@ const Checkout = () => {
   const hasLocation = !!userLocation;
   const radius = getDeliveryRadius();
   const distNumber = typeof distanceKm === 'number' && !isNaN(distanceKm) ? distanceKm : parseFloat(distanceKm || 0);
-  const isDeliveryAvailable = hasLocation && distNumber <= radius;
+  // Use isEligible from store — single source of truth. Do NOT re-calculate here.
+  const isDeliveryAvailable = hasLocation && isEligible;
   const isCartNotEmpty = sanitizedItems.length > 0;
   const isNameEntered = fullName.trim() !== '';
   const isPhoneEntered = phoneNumber.trim() !== '';
@@ -126,13 +122,7 @@ const Checkout = () => {
   const total = totalToPay;
   const deliveryAvailable = isDeliveryAvailable;
 
-  // Debug Logs
-  console.log('Cart:', cartItems);
-  console.log('Total:', total);
-  console.log('Delivery Available:', deliveryAvailable);
-  console.log('Form Valid:', formValid);
-  console.log('Cart Valid:', cartProductsValid);
-  console.log('Button Disabled:', buttonDisabled);
+
 
   /* ── Empty cart ─────────────────────────────────────────────────────────── */
   if (cartItems.length === 0 && !placed) {
@@ -219,15 +209,17 @@ const Checkout = () => {
     }
 
     // Check invalid items locally first
+    // UUID pattern for PostgreSQL IDs
+    const isValidId = (id) => typeof id === 'string' && /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(id);
     const invalidItem = sanitizedItems.find(item => 
       !item.product || 
-      !/^[0-9a-fA-F]{24}$/.test(item.product) || 
+      !isValidId(item.product) || 
       !(Number(item.quantity) > 0) || 
       !(Number(item.price) >= 0)
     );
 
     if (invalidItem || !cartProductsValid) {
-      const validOnly = sanitizedItems.filter(item => item.product && /^[0-9a-fA-F]{24}$/.test(item.product));
+      const validOnly = sanitizedItems.filter(item => item.product && isValidId(item.product));
       useCartStore.getState().setCartItems(validOnly);
       await userAlert('Cart Updated', 'Some products in your cart are no longer available. Please review your cart.');
       navigate('/cart');

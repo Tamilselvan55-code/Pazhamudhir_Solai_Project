@@ -33,7 +33,8 @@ const LiveLocationPanel = () => {
   const isLoading   = loading || rechecking;
   const radius      = getDeliveryRadius();
   const distNumber  = typeof distanceKm === 'number' && !isNaN(distanceKm) ? distanceKm : parseFloat(distanceKm || 0);
-  const deliveryAvailable = hasLocation && distNumber <= radius;
+  // Use isEligible from store — single source of truth. Do NOT re-calculate here.
+  const deliveryAvailable = hasLocation && isEligible;
 
   const displayAddress =
     isLoading && !userLocation
@@ -116,8 +117,8 @@ const LiveLocationPanel = () => {
         <MapLocationPicker
           isOpen={isMapOpen}
           onClose={() => setIsMapOpen(false)}
-          onLocationSelect={(loc) => {
-            setManualLocation(loc);
+          onLocationSelect={async (loc) => {
+            await setManualLocation(loc);
             const rawAuth = localStorage.getItem('auth-storage');
             const token = rawAuth ? JSON.parse(rawAuth)?.state?.userInfo?.token : null;
             if (token) {

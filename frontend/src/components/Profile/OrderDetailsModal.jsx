@@ -1,6 +1,7 @@
 import React from 'react';
 import { X, Package, Calendar, CreditCard, MapPin, CheckCircle, Clock, Truck, AlertCircle, FileText } from 'lucide-react';
 import { formatCurrency } from '../../utils/currency';
+import ProductImage from '../Product/ProductImage';
 
 const getStatusBadge = (status) => {
   const colors = {
@@ -158,12 +159,14 @@ const OrderDetailsModal = ({ order, onClose, onDownloadInvoice }) => {
             <div className="divide-y divide-gray-100 border border-gray-100 rounded-2xl overflow-hidden bg-white">
               {order.orderItems?.map((item, index) => {
                 const prod = item.product || {};
-                const img = item.image || prod.image || 'https://via.placeholder.com/60';
+                const img = item.image || prod.image;
                 const name = item.name || prod.name || 'Product';
                 return (
                   <div key={index} className="p-3.5 flex items-center justify-between hover:bg-gray-50/50 transition-colors">
                     <div className="flex items-center gap-3">
-                      <img src={img} alt={name} className="w-12 h-12 object-cover rounded-xl border border-gray-100 shrink-0" />
+                      <div className="w-12 h-12 rounded-xl border border-gray-100 shrink-0 overflow-hidden bg-gray-50">
+                        <ProductImage src={img} alt={name} category={item.category || prod.category} fit="cover" size="sm" className="w-full h-full" />
+                      </div>
                       <div>
                         <p className="text-sm font-bold text-gray-800">{name}</p>
                         <p className="text-xs text-gray-500 mt-0.5">{formatCurrency(item.price)} x {item.quantity}</p>

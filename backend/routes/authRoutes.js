@@ -56,40 +56,45 @@ router.post('/send-verification-otp', checkMaintenanceAndFeature('disableRegistr
 });
 
 router.post('/verify-registration-otp', checkMaintenanceAndFeature('disableRegistration'), async (req, res) => {
+  console.log("========== VERIFY REGISTRATION OTP REQUEST ==========");
   const { email, otp } = req.body;
   if (!email || !otp) {
-    return res.status(400).json({ message: 'Email and OTP are required' });
+    return res.status(400).json({ success: false, message: 'Email and OTP are required' });
   }
 
   try {
     const pendingUserRaw = await prisma.pendingUser.findFirst({ where: { email: email.toLowerCase().trim() } });
     if (!pendingUserRaw) {
-      return res.status(400).json({ message: 'No verification session found. Please register again.' });
+      return res.status(400).json({ success: false, message: 'No verification session found. Please register again.' });
     }
     const pendingUser = formatMongoCompat(pendingUserRaw);
 
     // Check OTP matches
     if (pendingUser.emailVerificationOTP !== String(otp).trim()) {
-      return res.status(400).json({ message: 'Invalid Verification Code' });
+      return res.status(400).json({ success: false, message: 'Invalid Verification Code' });
     }
 
     // Check OTP not expired
     if (new Date(pendingUser.emailVerificationOTPExpiry) < new Date()) {
-      return res.status(400).json({ message: 'Verification code expired. Please resend.' });
+      return res.status(400).json({ success: false, message: 'Verification code expired. Please resend.' });
     }
 
-    // Create user account
-    const userRaw = await prisma.user.create({
-      data: {
-        fullName: pendingUser.fullName,
-        phoneNumber: pendingUser.phoneNumber,
-        email: pendingUser.email,
-        password: pendingUser.password, // pre-hashed
-        emailVerified: true,
-        isVerified: true,
-        isEmailVerified: true
-      }
-    });
+    console.log("Creating user account in transaction...");
+    // Create user account & delete pendingUser inside atomic transaction with rollback
+    const [userRaw] = await prisma.$transaction([
+      prisma.user.create({
+        data: {
+          fullName: pendingUser.fullName,
+          phoneNumber: pendingUser.phoneNumber,
+          email: pendingUser.email,
+          password: pendingUser.password, // pre-hashed
+          emailVerified: true,
+          isVerified: true,
+          isEmailVerified: true
+        }
+      }),
+      prisma.pendingUser.delete({ where: { id: pendingUser.id } })
+    ]);
     const user = formatMongoCompat(userRaw);
 
     // Initialize notification settings and trigger welcome notification
@@ -107,9 +112,6 @@ router.post('/verify-registration-otp', checkMaintenanceAndFeature('disableRegis
     } catch (nsErr) {
       console.error('Failed to initialize user notifications/settings:', nsErr);
     }
-
-    // Delete OTP (PendingUser record)
-    await prisma.pendingUser.delete({ where: { id: pendingUser.id } });
 
     console.log('Verification successful');
 
@@ -131,65 +133,116 @@ router.post('/verify-registration-otp', checkMaintenanceAndFeature('disableRegis
       console.error('Failed to create registration notification:', err);
     }
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: 'Registration Successful. Your account has been verified. Please login.'
     });
 
   } catch (error) {
-    console.error('Verify registration OTP error:', error.message);
-    res.status(500).json({ message: 'Something went wrong. Please try again.' });
+    console.error("=================== VERIFY OTP FATAL ERROR ===================");
+    console.error("File: authRoutes.js");
+    console.error("Function: verify-registration-otp");
+    console.error("Line number: ~139");
+    console.error("Original Error:", error.message);
+    console.error("Code:", error.code);
+    console.error("Meta:", error.meta);
+    console.error("Stack Trace:", error.stack);
+    console.error("==============================================================");
+
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'Something went wrong during verification. Please try again.',
+      code: error.code || 'INTERNAL_ERROR'
+    });
   }
 });
 
 router.post('/resend-verification-otp', async (req, res) => {
+  console.log("========== RESEND VERIFICATION OTP REQUEST ==========");
   const { email } = req.body;
   if (!email) {
-    return res.status(400).json({ message: 'Email address is required.' });
+    return res.status(400).json({ success: false, message: 'Email address is required.' });
   }
 
   try {
     const pendingUserRaw = await prisma.pendingUser.findFirst({ where: { email: email.toLowerCase().trim() } });
     if (!pendingUserRaw) {
-      return res.status(400).json({ message: 'No registration record found. Please register again.' });
+      return res.status(400).json({ success: false, message: 'No registration record found. Please register again.' });
     }
     const pendingUser = formatMongoCompat(pendingUserRaw);
 
     // Generate new OTP
     const otpVal = String(crypto.randomInt(100000, 1000000));
-    console.log('OTP generated');
+    console.log('OTP generated:', otpVal);
 
     const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
 
+    // Update database first so OTP is ready right away
+    await prisma.pendingUser.update({
+      where: { id: pendingUser.id },
+      data: {
+        emailVerificationOTP: otpVal,
+        emailVerificationOTPExpiry: otpExpires,
+        resendAttempts: { increment: 1 }
+      }
+    });
+    console.log('OTP updated in PendingUser');
+
     const mailOptions = {
-      from: `"Tiruchendur Murugan Pazhamudhir Solai" <${process.env.EMAIL_USER}>`,
+      from: `"Tiruchendur Murugan Pazhamudhir Solai" <${process.env.EMAIL_USER || 'thiruchendurmurugan192@gmail.com'}>`,
       to: pendingUser.email,
       subject: 'Verify Your Email - Tiruchendur Murugan Pazhamudhir Solai',
       text: `Welcome to Tiruchendur Murugan Pazhamudhir Solai.\n\nUse the verification code below to activate your account.\n\n${otpVal}\n\nThis code expires in 10 minutes.\n\nIf you didn't register, ignore this email.\n\nRegards,\nTiruchendur Murugan Pazhamudhir Solai`,
       html: getVerificationHtmlTemplate(pendingUser.fullName, otpVal)
     };
 
-    // Send again
-    console.log('Sending OTP...');
-    const transporter = getGmailTransporter();
-    await transporter.sendMail(mailOptions);
-    console.log('Email sent successfully');
-
-    // Update database
-    await prisma.pendingUser.update({
-      where: { id: pendingUser.id },
-      data: {
-        emailVerificationOTP: otpVal,
-        emailVerificationOTPExpiry: otpExpires
+    // Attempt sending email without crashing if SMTP fails
+    let emailSent = false;
+    if (process.env.EMAIL_USER && process.env.EMAIL_PASS && process.env.EMAIL_USER !== 'your_email@gmail.com') {
+      try {
+        console.log('Sending OTP email...');
+        const transporter = getGmailTransporter();
+        await transporter.sendMail(mailOptions);
+        emailSent = true;
+        console.log('Email sent successfully');
+      } catch (emailErr) {
+        console.error("=================== RESEND EMAIL EXCEPTION ===================");
+        console.error("File: authRoutes.js");
+        console.error("Function: resend-verification-otp");
+        console.error("Line number: ~175");
+        console.error("Original Error:", emailErr.message);
+        console.error("Stack Trace:", emailErr.stack);
+        console.error("==============================================================");
       }
-    });
-    console.log('OTP stored');
+    } else {
+      console.warn("[WARNING] Gmail SMTP credentials not configured. Skipping resend email.");
+    }
 
-    res.json({ success: true, message: 'Verification OTP has been resent.' });
+    if (!emailSent) {
+      return res.status(202).json({
+        success: true,
+        message: 'Verification OTP generated and stored, but email sending failed.'
+      });
+    }
+
+    return res.status(200).json({ success: true, message: 'Verification OTP has been resent.' });
 
   } catch (error) {
-    console.error('Resend verification OTP error:', error.message);
-    res.status(500).json({ message: 'Failed to resend code. Please try again.' });
+    console.error("=================== RESEND OTP FATAL ERROR ===================");
+    console.error("File: authRoutes.js");
+    console.error("Function: resend-verification-otp");
+    console.error("Line number: ~190");
+    console.error("Original Error:", error.message);
+    console.error("Code:", error.code);
+    console.error("Meta:", error.meta);
+    console.error("Stack Trace:", error.stack);
+    console.error("==============================================================");
+
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to resend code. Please try again.',
+      code: error.code || 'INTERNAL_ERROR'
+    });
   }
 });
 
@@ -255,36 +308,38 @@ const getVerificationHtmlTemplate = (name, otpVal) => `<!DOCTYPE html>
 // ─── POST /api/auth/register ──────────────────────────────────────────────────
 router.post('/register', checkMaintenanceAndFeature('disableRegistration'), async (req, res) => {
   console.log("========== REGISTER REQUEST ==========");
-  console.log(req.body);
+  console.log("STEP 1: Register request received");
   try {
+    console.log("STEP 2: Validate body");
     const { fullName, phoneNumber, email, password } = req.body;
 
     if (!fullName && !phoneNumber && !email && !password) {
-      return res.status(400).json({ message: 'All fields are required' });
+      return res.status(400).json({ success: false, message: 'All fields are required' });
     }
     if (!fullName || !fullName.trim()) {
-      return res.status(400).json({ message: 'Please enter your full name' });
+      return res.status(400).json({ success: false, message: 'Please enter your full name' });
     }
     if (!phoneNumber) {
-      return res.status(400).json({ message: 'Phone number is required' });
+      return res.status(400).json({ success: false, message: 'Phone number is required' });
     }
     if (!email) {
-      return res.status(400).json({ message: 'Email address is required' });
+      return res.status(400).json({ success: false, message: 'Email address is required' });
     }
     if (!password) {
-      return res.status(400).json({ message: 'Password is required' });
+      return res.status(400).json({ success: false, message: 'Password is required' });
     }
 
     const nameTrimmed = fullName.trim();
     if (nameTrimmed.length < 3 || nameTrimmed.length > 50 || !/^[a-zA-Z\s]+$/.test(nameTrimmed)) {
-      return res.status(400).json({ message: 'Please enter a valid full name.' });
+      return res.status(400).json({ success: false, message: 'Please enter a valid full name.' });
     }
     if (!isValidPhone(phoneNumber)) {
-      return res.status(400).json({ message: 'Enter a valid 10-digit Indian phone number (starting with 6-9)' });
+      return res.status(400).json({ success: false, message: 'Enter a valid 10-digit Indian phone number (starting with 6-9)' });
     }
     if (!isValidEmail(email)) {
-      return res.status(400).json({ message: 'Invalid email format. Please enter a valid email address' });
+      return res.status(400).json({ success: false, message: 'Invalid email format. Please enter a valid email address' });
     }
+
     const settingsRaw = await prisma.storeSettings.findFirst();
     const settings = formatMongoCompat(settingsRaw);
     const policy = settings?.passwordPolicy || 'Medium';
@@ -293,28 +348,25 @@ router.post('/register', checkMaintenanceAndFeature('disableRegistration'), asyn
       if (policy === 'Low') policyMsg = 'Password must be at least 6 characters.';
       if (policy === 'Medium') policyMsg = 'Password must be at least 8 characters and contain at least one letter and one number.';
       if (policy === 'High') policyMsg = 'Password must be at least 10 characters and contain at least one uppercase letter, one lowercase letter, one number, and one special character.';
-      return res.status(400).json({ message: policyMsg });
+      return res.status(400).json({ success: false, message: policyMsg });
     }
     if (password.length > 50) {
-      return res.status(400).json({ message: 'Password must be at most 50 characters long.' });
+      return res.status(400).json({ success: false, message: 'Password must be at most 50 characters long.' });
     }
 
-    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS || process.env.EMAIL_USER === 'your_email@gmail.com' || process.env.EMAIL_PASS === 'your_app_password') {
-      return res.status(400).json({ success: false, message: 'Gmail SMTP credentials are not configured.' });
-    }
-
-    console.log("Checking duplicate phone...");
-    const phoneExists = await prisma.user.findUnique({ where: { phoneNumber: phoneNumber.trim() } });
-    if (phoneExists) {
-      return res.status(409).json({ message: 'Phone number already registered.' });
-    }
-
-    console.log("Checking duplicate email...");
+    console.log("STEP 3: Check duplicate email");
     const emailExists = await prisma.user.findUnique({ where: { email: email.toLowerCase().trim() } });
     if (emailExists) {
-      return res.status(409).json({ message: 'Email already registered.' });
+      return res.status(409).json({ success: false, message: 'Email already registered.' });
     }
 
+    console.log("STEP 4: Check duplicate phone");
+    const phoneExists = await prisma.user.findUnique({ where: { phoneNumber: phoneNumber.trim() } });
+    if (phoneExists) {
+      return res.status(409).json({ success: false, message: 'Phone number already registered.' });
+    }
+
+    // Clean up any incomplete registration attempts for this email/phone
     await prisma.pendingUser.deleteMany({
       where: {
         OR: [
@@ -324,32 +376,15 @@ router.post('/register', checkMaintenanceAndFeature('disableRegistration'), asyn
       }
     });
 
-    console.log("Generating OTP...");
-    const otpVal = String(crypto.randomInt(100000, 1000000));
-    const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
-
-    console.log("Creating user object...");
+    console.log("STEP 5: Hash password");
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    const mailOptions = {
-      from: `"Tiruchendur Murugan Pazhamudhir Solai" <${process.env.EMAIL_USER}>`,
-      to: email.toLowerCase().trim(),
-      subject: 'Verify Your Email - Tiruchendur Murugan Pazhamudhir Solai',
-      text: `Welcome to Tiruchendur Murugan Pazhamudhir Solai.\n\nUse the verification code below to activate your account.\n\n${otpVal}\n\nThis code expires in 10 minutes.\n\nIf you didn't register, ignore this email.\n\nRegards,\nTiruchendur Murugan Pazhamudhir Solai`,
-      html: getVerificationHtmlTemplate(nameTrimmed, otpVal)
-    };
+    console.log("STEP 6: Generate OTP");
+    const otpVal = String(crypto.randomInt(100000, 1000000));
+    const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
 
-    console.log("Sending verification email...");
-    try {
-      const transporter = getGmailTransporter();
-      await transporter.sendMail(mailOptions);
-      console.log("Email sent successfully");
-    } catch (emailErr) {
-      console.error("EMAIL SENDING FAILED:", emailErr);
-      return res.status(500).json({ success: false, message: 'Unable to send verification email.' });
-    }
-
+    console.log("STEP 7: Create User (PendingUser record)");
     const pendingUser = await prisma.pendingUser.create({
       data: {
         fullName: nameTrimmed,
@@ -360,26 +395,74 @@ router.post('/register', checkMaintenanceAndFeature('disableRegistration'), asyn
         emailVerificationOTPExpiry: otpExpires
       }
     });
-    console.log("OTP stored");
+    console.log("Created PendingUser ID:", pendingUser.id);
 
-    console.log("Registration completed.");
+    console.log("STEP 8: Create Verification Token & Mail Options");
+    const mailOptions = {
+      from: `"Tiruchendur Murugan Pazhamudhir Solai" <${process.env.EMAIL_USER || 'thiruchendurmurugan192@gmail.com'}>`,
+      to: pendingUser.email,
+      subject: 'Verify Your Email - Tiruchendur Murugan Pazhamudhir Solai',
+      text: `Welcome to Tiruchendur Murugan Pazhamudhir Solai.\n\nUse the verification code below to activate your account.\n\n${otpVal}\n\nThis code expires in 10 minutes.\n\nIf you didn't register, ignore this email.\n\nRegards,\nTiruchendur Murugan Pazhamudhir Solai`,
+      html: getVerificationHtmlTemplate(nameTrimmed, otpVal)
+    };
 
-    res.status(200).json({
+    console.log("STEP 9: Send Email");
+    let emailSent = false;
+    if (process.env.EMAIL_USER && process.env.EMAIL_PASS && process.env.EMAIL_USER !== 'your_email@gmail.com' && process.env.EMAIL_PASS !== 'your_app_password') {
+      try {
+        const transporter = getGmailTransporter();
+        await transporter.sendMail(mailOptions);
+        emailSent = true;
+        console.log("Email sent successfully");
+      } catch (emailErr) {
+        console.error("=================== EMAIL SENDING EXCEPTION ===================");
+        console.error("File: authRoutes.js");
+        console.error("Function: register");
+        console.error("Line number: ~348");
+        console.error("Original Error:", emailErr.message);
+        console.error("Stack Trace:", emailErr.stack);
+        console.error("===============================================================");
+      }
+    } else {
+      console.warn("[WARNING] Gmail SMTP credentials not configured. Skipping email send.");
+    }
+
+    console.log("STEP 10: Return Success");
+    if (!emailSent) {
+      return res.status(202).json({
+        success: true,
+        email: pendingUser.email,
+        message: 'Account created but verification email could not be sent.',
+        redirect: "/verify-email"
+      });
+    }
+
+    return res.status(200).json({
       success: true,
       email: pendingUser.email,
+      message: 'Registration Successful. Please check your email for the verification OTP.',
       redirect: "/verify-email"
     });
 
   } catch (error) {
-    console.error("REGISTER ERROR:");
-    console.error(error);
-    res.status(500).json({
+    console.error("=================== REGISTRATION FATAL ERROR ===================");
+    console.error("File: authRoutes.js");
+    console.error("Function: register");
+    console.error("Line number: ~370");
+    console.error("Original Error:", error.message);
+    console.error("Code:", error.code);
+    console.error("Meta:", error.meta);
+    console.error("Stack Trace:", error.stack);
+    console.error("================================================================");
+
+    return res.status(500).json({
       success: false,
-      message: error.message,
-      stack: error.stack
+      message: error.message || 'Server error occurred during registration.',
+      code: error.code || 'INTERNAL_ERROR'
     });
   }
 });
+
 
 
 // ─── POST /api/auth/login ─────────────────────────────────────────────────────

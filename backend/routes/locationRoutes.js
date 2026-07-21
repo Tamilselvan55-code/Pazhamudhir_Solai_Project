@@ -1,7 +1,7 @@
 import express from 'express';
 import prisma from '../utils/prismaClient.js';
 import { formatMongoCompat } from '../utils/formatMongoCompat.js';
-import { isWithinDeliveryRadius } from '../utils/distance.js';
+import { isWithinDeliveryRadius, logDeliveryDecision } from '../utils/distance.js';
 import { protect } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -18,29 +18,31 @@ router.post('/verify', async (req, res) => {
 
   try {
     const settingsRaw = await prisma.storeSettings.findFirst();
-    const settings = formatMongoCompat(settingsRaw) || {
-      location:         { lat: 13.005865, lon: 79.995026 },
-      deliveryRadiusKm: Number(process.env.DELIVERY_RADIUS_KM) || 30,
-    };
+    const settings = formatMongoCompat(settingsRaw) || {};
+    const storeLat = Number(settings.location?.lat ?? settings.lat ?? 13.0606941);
+    const storeLon = Number(settings.location?.lon ?? settings.lon ?? 80.2270751);
+    const radiusKm = Number(settings.deliveryRadiusKm || process.env.DELIVERY_RADIUS_KM || 30);
 
     const result = isWithinDeliveryRadius(
       lat, lon,
-      settings.location?.lat ?? 13.005865,
-      settings.location?.lon ?? 79.995026,
-      settings.deliveryRadiusKm ?? 30
+      storeLat,
+      storeLon,
+      radiusKm
     );
+
+    logDeliveryDecision(storeLat, storeLon, lat, lon, result.rawDistance ?? result.distance, radiusKm, result.isEligible);
 
     return res.json({
       lat,
       lon,
       distanceKm:        result.distance,
       deliveryAvailable: result.isEligible,
-      radiusKm:          settings.deliveryRadiusKm ?? 30,
-      storeLat:          settings.location?.lat ?? 13.005865,
-      storeLon:          settings.location?.lon ?? 79.995026,
+      radiusKm,
+      storeLat,
+      storeLon,
       message:           result.isEligible
         ? 'Delivery available at your location.'
-        : `Sorry, delivery is available only within ${settings.deliveryRadiusKm ?? 30} km of the store.`,
+        : `Sorry, delivery is available only within ${radiusKm} km of the store.`,
     });
   } catch (error) {
     console.error('Location verify error:', error.message);
@@ -57,17 +59,19 @@ router.post('/save', protect, async (req, res) => {
 
   try {
     const settingsRaw = await prisma.storeSettings.findFirst();
-    const settings = formatMongoCompat(settingsRaw) || {
-      location:         { lat: 13.005865, lon: 79.995026 },
-      deliveryRadiusKm: Number(process.env.DELIVERY_RADIUS_KM) || 30,
-    };
+    const settings = formatMongoCompat(settingsRaw) || {};
+    const storeLat = Number(settings.location?.lat ?? settings.lat ?? 13.0606941);
+    const storeLon = Number(settings.location?.lon ?? settings.lon ?? 80.2270751);
+    const radiusKm = Number(settings.deliveryRadiusKm || process.env.DELIVERY_RADIUS_KM || 30);
 
     const result = isWithinDeliveryRadius(
       lat, lon,
-      settings.location?.lat ?? 13.005865,
-      settings.location?.lon ?? 79.995026,
-      settings.deliveryRadiusKm ?? 30
+      storeLat,
+      storeLon,
+      radiusKm
     );
+
+    logDeliveryDecision(storeLat, storeLon, lat, lon, result.rawDistance ?? result.distance, radiusKm, result.isEligible);
 
     const userId = req.user._id || req.user.id;
     await prisma.user.update({
@@ -99,3 +103,4 @@ router.post('/save', protect, async (req, res) => {
 });
 
 export default router;
+

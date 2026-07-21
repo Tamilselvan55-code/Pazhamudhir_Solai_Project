@@ -31,8 +31,8 @@ const Settings = () => {
     invoicePrefix: 'INV-',
     invoiceFooter: '',
     storeDescription: '',
-    lat: 13.005865,
-    lon: 79.995026,
+    lat: 13.0606941,
+    lon: 80.2270751,
 
     // Platform
     websiteName: '',

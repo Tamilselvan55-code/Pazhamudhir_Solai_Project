@@ -5,6 +5,7 @@ import { Package, Search, Filter, RefreshCw, Eye, FileText, AlertCircle, Shoppin
 import useCartStore from '../../store/useCartStore';
 import useModal from '../../hooks/useModal';
 import { formatCurrency } from '../../utils/currency';
+import ProductImage from '../Product/ProductImage';
 
 const API_BASE = config_API_BASE;
 
@@ -195,7 +196,7 @@ const MyOrdersTab = ({ orders, loading, onRefresh, onViewDetails, onDownloadInvo
                     <div className="flex flex-wrap gap-2">
                       {(order.orderItems || []).slice(0, 3).map((item, idx) => (
                         <div key={idx} className="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-xl border border-gray-100 text-xs">
-                          <img src={item.image || 'https://via.placeholder.com/40'} alt={item.name} className="w-6 h-6 rounded-md object-cover" />
+                          <ProductImage src={item.image} alt={item.name} category={item.category} fit="cover" size="sm" className="w-6 h-6 rounded-md" />
                           <span className="font-bold text-gray-800">{item.name}</span>
                           <span className="text-gray-500 font-medium">x{item.quantity}</span>
                         </div>

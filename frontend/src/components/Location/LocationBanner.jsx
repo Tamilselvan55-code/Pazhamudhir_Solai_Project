@@ -32,16 +32,16 @@ const LocationBanner = () => {
     );
   }
 
+  // Use isEligible from store — single source of truth. Do NOT re-calculate here.
   const radius = getDeliveryRadius();
   const distNumber = typeof distanceKm === 'number' && !isNaN(distanceKm) ? distanceKm : parseFloat(distanceKm || 0);
-  const deliveryAvailable = distNumber <= radius;
 
   return (
     <div className={clsx(
       "px-4 py-2 text-sm flex items-center justify-center font-medium",
-      deliveryAvailable ? "bg-green-50 text-green-800" : "bg-red-50 text-red-800"
+      isEligible ? "bg-green-50 text-green-800" : "bg-red-50 text-red-800"
     )}>
-      {deliveryAvailable ? (
+      {isEligible ? (
         <>
           <MapPin className="w-4 h-4 mr-2" />
           Delivery Available • {distNumber.toFixed(2)} km away

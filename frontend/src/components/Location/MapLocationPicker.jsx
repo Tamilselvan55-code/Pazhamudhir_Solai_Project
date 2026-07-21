@@ -3,109 +3,85 @@ import {
   X, MapPin, Search, Navigation, Check, AlertTriangle,
   Loader2, Info,
 } from 'lucide-react';
-import { STORE_LOCATION, getDeliveryRadius } from '../../store/useLocationStore';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+import { getStoreLocation, getDeliveryRadius } from '../../store/useLocationStore';
+import { GoogleMap, useJsApiLoader, Marker, Circle } from '@react-google-maps/api';
 
 /* ── Custom Marker Icons ──────────────────────────────────────────────────── */
-const storeIcon = L.divIcon({
-  html: `<div style="background-color: #16a34a; width: 22px; height: 22px; border-radius: 50%; border: 2.5px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>`,
-  className: 'store-location-marker',
-  iconSize: [22, 22],
-  iconAnchor: [11, 11]
-});
-
-const userIcon = L.divIcon({
-  html: `
-    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="40" viewBox="0 0 32 40" style="filter: drop-shadow(0px 3px 4px rgba(0,0,0,0.35));">
-      <path d="M16 0C7.164 0 0 7.164 0 16c0 12 16 24 16 24s16-12 16-24C32 7.164 24.836 0 16 0z"
-        fill="#ef4444" stroke="#fff" stroke-width="2"/>
-      <circle cx="16" cy="16" r="6" fill="#fff"/>
+const storeIcon = {
+  url: `data:image/svg+xml;utf8,` + encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 22 22">
+      <circle cx="11" cy="11" r="8.5" fill="#16a34a" stroke="#fff" stroke-width="2.5" />
     </svg>
-  `,
-  className: 'user-delivery-marker',
-  iconSize: [32, 40],
-  iconAnchor: [16, 40]
-});
-
-/* ── Nominatim Helpers ───────────────────────────────────────────────────── */
-const reverseGeocodeNominatim = async (lat, lon) => {
-  try {
-    const res = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&addressdetails=1`,
-      {
-        headers: {
-          'Accept-Language': 'en',
-          'User-Agent': 'TiruchendurGroceryApp/1.0'
-        }
-      }
-    );
-    if (res.ok) {
-      const data = await res.json();
-      const addr = data.address || {};
-      const city = addr.city || addr.town || addr.village || addr.suburb || '';
-      const state = addr.state || '';
-      const pincode = addr.postcode || '';
-      return {
-        fullAddress: data.display_name || `${lat.toFixed(5)}, ${lon.toFixed(5)}`,
-        city,
-        state,
-        pincode
-      };
-    }
-  } catch (err) {
-    console.error('Reverse geocode error:', err);
-  }
-  return {
-    fullAddress: `${lat.toFixed(5)}, ${lon.toFixed(5)}`,
-    city: '',
-    state: '',
-    pincode: ''
-  };
+  `),
+  scaledSize: { width: 22, height: 22 },
+  anchor: { x: 11, y: 11 }
 };
 
-const fetchSuggestions = async (query) => {
-  if (!query || query.trim().length < 3) return [];
+const userIcon = {
+  url: `data:image/svg+xml;utf8,` + encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="40" viewBox="0 0 32 40">
+      <path d="M16 0C7.164 0 0 7.164 0 16c0 12 16 24 16 24s16-12 16-24C32 7.164 24.836 0 16 0z" fill="#ef4444" stroke="#fff" stroke-width="2"/>
+      <circle cx="16" cy="16" r="6" fill="#fff"/>
+    </svg>
+  `),
+  scaledSize: { width: 32, height: 40 },
+  anchor: { x: 16, y: 40 }
+};
+
+/* ── Google Maps Reverse Geocoding Helper ─────────────────────────────────── */
+const reverseGeocodeGoogle = async (lat, lon) => {
+  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
   try {
-    const response = await fetch(
-      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
-        query
-      )}&countrycodes=in&limit=5&addressdetails=1`,
-      {
-        headers: {
-          'Accept-Language': 'en',
-          'User-Agent': 'TiruchendurGroceryApp/1.0'
-        }
-      }
+    const res = await fetch(
+      `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lon}&key=${apiKey}`
     );
-    if (response.ok) {
-      const data = await response.json();
-      return data.map((item) => {
-        const addr = item.address || {};
-        const city = addr.city || addr.town || addr.village || addr.suburb || '';
-        const state = addr.state || '';
-        const pincode = addr.postcode || '';
-        return {
-          display_name: item.display_name,
-          lat: parseFloat(item.lat),
-          lon: parseFloat(item.lon),
-          city,
-          state,
-          pincode,
-        };
-      });
+    if (!res.ok) throw new Error('Google geocoding failed');
+    const data = await res.json();
+    if (data.status !== 'OK' || !data.results || data.results.length === 0) {
+      throw new Error(data.error_message || 'No results from Google Geocoding');
     }
+    const result = data.results[0];
+    const components = result.address_components || [];
+    
+    let city = '';
+    let state = '';
+    let pincode = '';
+    
+    for (const comp of components) {
+      const types = comp.types || [];
+      if (types.includes('postal_code')) {
+        pincode = comp.long_name;
+      } else if (types.includes('locality')) {
+        city = comp.long_name;
+      } else if (!city && types.includes('administrative_area_level_3')) {
+        city = comp.long_name;
+      } else if (!city && types.includes('sublocality_level_1')) {
+        city = comp.long_name;
+      } else if (types.includes('administrative_area_level_1')) {
+        state = comp.long_name;
+      }
+    }
+    
+    return {
+      fullAddress: result.formatted_address || `${lat.toFixed(5)}, ${lon.toFixed(5)}`,
+      city,
+      state,
+      pincode
+    };
   } catch (err) {
-    console.error('Error fetching suggestions:', err);
+    console.error('Google reverse geocoding error:', err);
+    return {
+      fullAddress: `${lat.toFixed(5)}, ${lon.toFixed(5)}`,
+      city: '',
+      state: '',
+      pincode: ''
+    };
   }
-  return [];
 };
 
 /* ── MapLocationPicker Component ─────────────────────────────────────────── */
 const MapLocationPicker = ({ isOpen, onClose, onLocationSelect, initialLocation = null }) => {
-  const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
-  const userMarkerRef = useRef(null);
 
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [searchValue, setSearchValue] = useState('');
@@ -116,6 +92,23 @@ const MapLocationPicker = ({ isOpen, onClose, onLocationSelect, initialLocation 
   const [isReady, setIsReady] = useState(false);
   const [isGeocodingLocation, setIsGeocodingLocation] = useState(false);
 
+  const storeCoords = getStoreLocation();
+  const storePos = { lat: storeCoords.lat, lng: storeCoords.lon };
+  
+  const [mapCenter, setMapCenter] = useState(storePos);
+  const [userPos, setUserPos] = useState(storePos);
+
+  const { isLoaded, loadError } = useJsApiLoader({
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
+    libraries: ['places'],
+  });
+
+  useEffect(() => {
+    if (loadError) {
+      setMapsError('Could not initialize Google Maps. Please check your network and VITE_GOOGLE_MAPS_API_KEY.');
+    }
+  }, [loadError]);
+
   /* ── Click outside handler to dismiss suggestions ──────────────────────── */
   useEffect(() => {
     const handleOutsideClick = () => setSuggestions([]);
@@ -123,22 +116,53 @@ const MapLocationPicker = ({ isOpen, onClose, onLocationSelect, initialLocation 
     return () => window.removeEventListener('click', handleOutsideClick);
   }, []);
 
+  /* ── Initialize Center & Position ───────────────────────────────────────── */
+  useEffect(() => {
+    if (!isOpen) return;
+    
+    if (initialLocation && initialLocation.lat && initialLocation.lon) {
+      const initPos = { lat: Number(initialLocation.lat), lng: Number(initialLocation.lon) };
+      setUserPos(initPos);
+      setMapCenter(initPos);
+      setSelectedLocation({
+        lat: initialLocation.lat,
+        lon: initialLocation.lon,
+        fullAddress: initialLocation.fullAddress || '',
+        city: initialLocation.city || '',
+        state: initialLocation.state || '',
+        pincode: initialLocation.pincode || ''
+      });
+      setSearchValue(initialLocation.fullAddress || '');
+    } else {
+      setUserPos(storePos);
+      setMapCenter(storePos);
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          async ({ coords: { latitude, longitude } }) => {
+            await updateMarker(latitude, longitude);
+          },
+          () => {
+            updateMarker(storePos.lat, storePos.lng);
+          },
+          { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+        );
+      } else {
+        updateMarker(storePos.lat, storePos.lng);
+      }
+    }
+  }, [isOpen, initialLocation]);
+
   /* ── Update user location marker & address ─────────────────────────────── */
   const updateMarker = useCallback(async (lat, lng, addressOverride = null) => {
     setIsGeocodingLocation(true);
-
-    if (userMarkerRef.current) {
-      userMarkerRef.current.setLatLng([lat, lng]);
-    }
-    if (mapInstanceRef.current) {
-      mapInstanceRef.current.panTo([lat, lng]);
-    }
+    setUserPos({ lat, lng });
+    setMapCenter({ lat, lng });
 
     let addressInfo;
     if (addressOverride) {
       addressInfo = addressOverride;
     } else {
-      addressInfo = await reverseGeocodeNominatim(lat, lng);
+      addressInfo = await reverseGeocodeGoogle(lat, lng);
     }
 
     const loc = { lat, lon: lng, ...addressInfo };
@@ -147,107 +171,37 @@ const MapLocationPicker = ({ isOpen, onClose, onLocationSelect, initialLocation 
     setIsGeocodingLocation(false);
   }, []);
 
-  /* ── Initialize Leaflet Map ────────────────────────────────────────────── */
-  useEffect(() => {
-    if (!isOpen || !mapContainerRef.current) return;
-
-    let map;
-    try {
-      const centerPos = [STORE_LOCATION.lat, STORE_LOCATION.lon];
-      const startPos = initialLocation
-        ? [initialLocation.lat, initialLocation.lon]
-        : centerPos;
-
-      // Create Leaflet map instance
-      map = L.map(mapContainerRef.current, {
-        center: startPos,
-        zoom: 15,
-        zoomControl: false,
-        attributionControl: false
-      });
-      mapInstanceRef.current = map;
-
-      // Add OpenStreetMap tiles
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19
-      }).addTo(map);
-
-      // Add Zoom control at bottomright
-      L.control.zoom({ position: 'bottomright' }).addTo(map);
-
-      // Add Store marker
-      L.marker(centerPos, { icon: storeIcon }).addTo(map);
-
-      // Add Delivery zone circle
-      const radiusKm = getDeliveryRadius();
-      L.circle(centerPos, {
-        radius: radiusKm * 1000,
-        color: '#16a34a',
-        weight: 1.5,
-        fillColor: '#16a34a',
-        fillOpacity: 0.05
-      }).addTo(map);
-
-      // Add draggable User marker
-      const userMarker = L.marker(startPos, {
-        icon: userIcon,
-        draggable: true
-      }).addTo(map);
-      userMarkerRef.current = userMarker;
-
-      // Setup initial selection
-      if (initialLocation) {
-        setSelectedLocation({
-          lat: initialLocation.lat,
-          lon: initialLocation.lon,
-          fullAddress: initialLocation.fullAddress || '',
-          city: initialLocation.city || '',
-          state: initialLocation.state || '',
-          pincode: initialLocation.pincode || ''
-        });
-        setSearchValue(initialLocation.fullAddress || '');
-      } else {
-        // Fallback geocode centerPos
-        updateMarker(centerPos[0], centerPos[1]);
-      }
-
-      // Drag event
-      userMarker.on('dragend', async () => {
-        const { lat, lng } = userMarker.getLatLng();
-        await updateMarker(lat, lng);
-      });
-
-      // Map click event
-      map.on('click', async (e) => {
-        const { lat, lng } = e.latlng;
-        await updateMarker(lat, lng);
-      });
-
-      setIsReady(true);
-
-    } catch (err) {
-      console.error('Leaflet initialization error:', err);
-      setMapsError('Could not initialize the map layout. Please try again.');
-    }
-
-    return () => {
-      if (map) {
-        map.remove();
-      }
-      mapInstanceRef.current = null;
-      userMarkerRef.current = null;
-      setIsReady(false);
-    };
-  }, [isOpen, initialLocation, updateMarker]);
-
   /* ── Address Autocomplete Suggestions Typing ───────────────────────────── */
   const handleInputChange = async (e) => {
     const val = e.target.value;
     setSearchValue(val);
-    if (val.trim().length >= 3) {
-      const results = await fetchSuggestions(val);
-      setSuggestions(results);
-    } else {
+    if (!window.google || val.trim().length < 3) {
+      setSuggestions([]);
+      return;
+    }
+
+    try {
+      const service = new window.google.maps.places.AutocompleteService();
+      service.getPlacePredictions(
+        {
+          input: val,
+          componentRestrictions: { country: 'in' },
+        },
+        (predictions, status) => {
+          if (status === window.google.maps.places.PlacesServiceStatus.OK && predictions) {
+            setSuggestions(
+              predictions.map((p) => ({
+                display_name: p.description,
+                place_id: p.place_id,
+              }))
+            );
+          } else {
+            setSuggestions([]);
+          }
+        }
+      );
+    } catch (err) {
+      console.error('Autocomplete service error:', err);
       setSuggestions([]);
     }
   };
@@ -257,19 +211,51 @@ const MapLocationPicker = ({ isOpen, onClose, onLocationSelect, initialLocation 
     setSuggestions([]);
     setSearchValue(item.display_name);
 
-    if (mapInstanceRef.current && userMarkerRef.current) {
-      userMarkerRef.current.setLatLng([item.lat, item.lon]);
-      mapInstanceRef.current.setView([item.lat, item.lon], 16);
+    if (mapInstanceRef.current && window.google) {
+      const service = new window.google.maps.places.PlacesService(mapInstanceRef.current);
+      service.getDetails({ placeId: item.place_id }, async (place, status) => {
+        if (
+          status === window.google.maps.places.PlacesServiceStatus.OK &&
+          place &&
+          place.geometry &&
+          place.geometry.location
+        ) {
+          const lat = place.geometry.location.lat();
+          const lng = place.geometry.location.lng();
 
-      const loc = {
-        lat: item.lat,
-        lon: item.lon,
-        fullAddress: item.display_name,
-        city: item.city || '',
-        state: item.state || '',
-        pincode: item.pincode || ''
-      };
-      setSelectedLocation(loc);
+          const components = place.address_components || [];
+          let city = '';
+          let state = '';
+          let pincode = '';
+
+          for (const comp of components) {
+            const types = comp.types || [];
+            if (types.includes('postal_code')) {
+              pincode = comp.long_name;
+            } else if (types.includes('locality')) {
+              city = comp.long_name;
+            } else if (!city && types.includes('administrative_area_level_3')) {
+              city = comp.long_name;
+            } else if (!city && types.includes('sublocality_level_1')) {
+              city = comp.long_name;
+            } else if (types.includes('administrative_area_level_1')) {
+              state = comp.long_name;
+            }
+          }
+
+          const addressInfo = {
+            fullAddress: place.formatted_address || item.display_name,
+            city,
+            state,
+            pincode,
+          };
+
+          const loc = { lat, lon: lng, ...addressInfo };
+          setSelectedLocation(loc);
+          setUserPos({ lat, lng });
+          setMapCenter({ lat, lng });
+        }
+      });
     }
   };
 
@@ -287,9 +273,6 @@ const MapLocationPicker = ({ isOpen, onClose, onLocationSelect, initialLocation 
     navigator.geolocation.getCurrentPosition(
       async ({ coords: { latitude, longitude } }) => {
         await updateMarker(latitude, longitude);
-        if (mapInstanceRef.current) {
-          mapInstanceRef.current.setView([latitude, longitude], 16);
-        }
         setGpsLoading(false);
       },
       (err) => {
@@ -300,7 +283,7 @@ const MapLocationPicker = ({ isOpen, onClose, onLocationSelect, initialLocation 
         }
         setGpsLoading(false);
       },
-      { timeout: 10000 }
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
     );
   };
 
@@ -384,12 +367,72 @@ const MapLocationPicker = ({ isOpen, onClose, onLocationSelect, initialLocation 
 
         {/* ── Map area ───────────────────────────────────────────────────── */}
         <div className="relative flex-1" style={{ minHeight: 320 }}>
-          {/* Map container */}
-          <div
-            ref={mapContainerRef}
-            className="w-full h-full"
-            style={{ minHeight: 320, opacity: mapsError ? 0 : 1 }}
-          />
+          {/* Map Container */}
+          {isLoaded && !mapsError ? (
+            <GoogleMap
+              mapContainerClassName="w-full h-full"
+              mapContainerStyle={{ minHeight: 320, width: '100%', height: '100%' }}
+              center={mapCenter}
+              zoom={15}
+              options={{
+                zoomControl: true,
+                zoomControlOptions: {
+                  position: window.google?.maps?.ControlPosition?.BOTTOM_RIGHT
+                },
+                mapTypeControl: false,
+                streetViewControl: false,
+                fullscreenControl: false
+              }}
+              onLoad={(map) => {
+                mapInstanceRef.current = map;
+                setIsReady(true);
+              }}
+              onUnmount={() => {
+                mapInstanceRef.current = null;
+                setIsReady(false);
+              }}
+              onClick={async (e) => {
+                if (e.latLng) {
+                  const lat = e.latLng.lat();
+                  const lng = e.latLng.lng();
+                  await updateMarker(lat, lng);
+                }
+              }}
+            >
+              {/* Store Marker */}
+              <Marker
+                position={storePos}
+                icon={storeIcon}
+              />
+
+              {/* User Marker */}
+              <Marker
+                position={userPos}
+                draggable={true}
+                onDragEnd={async (e) => {
+                  if (e.latLng) {
+                    const lat = e.latLng.lat();
+                    const lng = e.latLng.lng();
+                    await updateMarker(lat, lng);
+                  }
+                }}
+                icon={userIcon}
+              />
+
+              {/* Delivery Circle */}
+              <Circle
+                center={storePos}
+                radius={getDeliveryRadius() * 1000}
+                options={{
+                  strokeColor: '#16a34a',
+                  strokeOpacity: 0.8,
+                  strokeWeight: 1.5,
+                  fillColor: '#16a34a',
+                  fillOpacity: 0.05
+                }}
+              />
+            </GoogleMap>
+          ) : null}
 
           {/* Overlay: Maps error */}
           {mapsError && (

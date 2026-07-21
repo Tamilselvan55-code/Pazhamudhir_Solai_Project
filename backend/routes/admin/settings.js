@@ -13,7 +13,7 @@ router.get('/settings', async (req, res) => {
       settingsRaw = await prisma.storeSettings.create({
         data: {
           storeName: 'Tiruchendur Murugan Pazhamudhir Solai',
-          location: { lat: 12.9666144, lon: 79.9458077 },
+          location: { lat: 13.0606941, lon: 80.2270751 },
           deliveryRadiusKm: Number(process.env.DELIVERY_RADIUS_KM) || 30,
         }
       });

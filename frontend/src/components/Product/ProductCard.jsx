@@ -4,6 +4,7 @@ import useCartStore from '../../store/useCartStore';
 import useModal from '../../hooks/useModal';
 import useGuestGuard from '../../hooks/useGuestGuard';
 import { formatCurrency } from '../../utils/currency';
+import ProductImage from './ProductImage';
 
 const ProductCard = ({ product }) => {
   const { cartItems, addToCart, updateQuantity } = useCartStore();
@@ -24,15 +25,14 @@ const ProductCard = ({ product }) => {
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col transition-all duration-200 hover:shadow-lg hover:-translate-y-1 group">
       {/* Image */}
       <div className="relative pt-[90%] bg-white overflow-hidden" style={{ borderRadius: '12px 12px 0 0' }}>
-        <img
+        <ProductImage
           src={product.image}
           alt={product.name}
-          loading="lazy"
-          className="absolute top-0 left-0 w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
+          category={product.category}
+          fit="contain"
+          size="lg"
+          className="absolute top-0 left-0 w-full h-full group-hover:scale-105 transition-transform duration-500"
           style={{ padding: '8px' }}
-          onError={(e) => {
-            e.target.src = 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=300&q=60';
-          }}
         />
 
         {/* Offer badge */}

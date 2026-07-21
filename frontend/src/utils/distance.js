@@ -1,5 +1,15 @@
 /**
- * Calculates the distance between two points in kilometers using the Haversine formula.
+ * Unified distance calculation module for the entire frontend.
+ * Uses the Haversine formula — identical math to backend/utils/distance.js.
+ *
+ * RULES:
+ * - Every component MUST import from this file.
+ * - No inline haversine anywhere else in the codebase.
+ * - Never round before comparison. Round only for display.
+ */
+
+/**
+ * Calculates the distance between two geographic points using the Haversine formula.
  * Returns full-precision float — never round before comparison.
  * @param {number} lat1 - Latitude of point 1
  * @param {number} lon1 - Longitude of point 1
@@ -33,15 +43,35 @@ export const logDeliveryDecision = (storeLat, storeLon, userLat, userLon, distan
   console.log(`\nStore:\n${Number(storeLat).toFixed(7)}\n${Number(storeLon).toFixed(7)}\n\nUser:\n${Number(userLat).toFixed(6)}\n${Number(userLon).toFixed(6)}\n\nDistance:\n${Number(distanceKm).toFixed(3)} km\n\nRadius:\n${Number(radiusKm).toFixed(3)} km\n\nDecision:\n${decision}\n`);
 };
 
-// Check if within given radius (default 30km)
-// Comparison uses full precision (to 1 mm float tolerance). Returned `distance` is rounded for display only.
+/**
+ * Check if a user location is within the delivery radius of the store.
+ * Comparison uses full precision (to 1 mm float tolerance). Display distance is rounded to 2dp.
+ * @param {number} userLat
+ * @param {number} userLon
+ * @param {number} storeLat
+ * @param {number} storeLon
+ * @param {number} radiusKm - Delivery radius in km
+ * @returns {{ distance: number, rawDistance: number, distanceDisplay: string, isEligible: boolean }}
+ */
 export const isWithinDeliveryRadius = (userLat, userLon, storeLat, storeLon, radiusKm = 30) => {
   const rawDistance = calculateDistance(userLat, userLon, storeLat, storeLon);
   const isEligible = Number(rawDistance.toFixed(6)) <= radiusKm;
+  const displayDistance = parseFloat(rawDistance.toFixed(2));
   return {
-    distance: parseFloat(rawDistance.toFixed(2)),
+    distance: displayDistance,
     rawDistance,
+    distanceDisplay: rawDistance.toFixed(2),
     isEligible
   };
+};
+
+/**
+ * Round a distance for display only. Never use the result for comparison.
+ * @param {number} distance
+ * @returns {string}
+ */
+export const formatDistance = (distance) => {
+  if (typeof distance !== 'number' || isNaN(distance)) return '0.00';
+  return distance.toFixed(2);
 };
 

@@ -12,7 +12,8 @@ const updateCoords = async () => {
     if (!settings) {
       await prisma.storeSettings.create({
         data: {
-          location: { lat: 13.005865, lon: 79.995026 },
+          storeName: 'Tiruchendur Murugan Pazhamudhir Solai',
+          location: { lat: 13.0606941, lon: 80.2270751 },
           deliveryRadiusKm: Number(process.env.DELIVERY_RADIUS_KM) || 30
         }
       });
@@ -20,12 +21,13 @@ const updateCoords = async () => {
       await prisma.storeSettings.update({
         where: { id: settings.id },
         data: {
-          location: { lat: 13.005865, lon: 79.995026 },
+          storeName: 'Tiruchendur Murugan Pazhamudhir Solai',
+          location: { lat: 13.0606941, lon: 80.2270751 },
           deliveryRadiusKm: Number(process.env.DELIVERY_RADIUS_KM) || 30
         }
       });
     }
-    console.log('Coordinates and Delivery Radius (30 km) updated in DB successfully');
+    console.log('Coordinates (13.0606941, 80.2270751) and Delivery Radius (30 km) synced to DB successfully');
   } catch (err) {
     console.error(err);
   } finally {

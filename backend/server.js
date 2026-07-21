@@ -23,9 +23,25 @@ dotenv.config();
 
 const app = express();
 
+const allowedOrigins = [
+  'https://pazhamudhir-solai-project.vercel.app',
+  'https://pazhamudhir-solai-project-m60pthbev.vercel.app',
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'http://localhost:5000',
+  ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL.replace(/\/+$/, '')] : [])
+];
+
 app.use(cors({
-  origin: 'https://pazhamudhir-solai-project.vercel.app',
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin) || /\.vercel\.app$/.test(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error(`CORS policy error: Origin ${origin} not allowed.`));
+  },
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   credentials: true
 }));
 app.use(express.json());

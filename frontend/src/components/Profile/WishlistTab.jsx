@@ -7,6 +7,7 @@ import useAuthStore from '../../store/useAuthStore';
 import useCartStore from '../../store/useCartStore';
 import useModal from '../../hooks/useModal';
 import { formatCurrency } from '../../utils/currency';
+import ProductImage from '../Product/ProductImage';
 
 const API_BASE = config_API_BASE;
 
@@ -95,10 +96,13 @@ const WishlistTab = () => {
               className="bg-white rounded-3xl p-4 border border-gray-100 shadow-sm hover:shadow-md transition-all flex flex-col justify-between"
             >
               <div className="relative">
-                <img
-                  src={product.image || 'https://via.placeholder.com/150'}
+                <ProductImage
+                  src={product.image}
                   alt={product.name}
-                  className="w-full h-36 object-cover rounded-2xl bg-gray-50 mb-3"
+                  category={product.category}
+                  fit="cover"
+                  size="lg"
+                  className="w-full h-36 rounded-2xl bg-gray-50 mb-3"
                 />
                 <button
                   onClick={() => handleRemove(product._id)}
