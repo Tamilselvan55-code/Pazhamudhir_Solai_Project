@@ -1,7 +1,6 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import nodemailer from 'nodemailer';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import authRoutes from './routes/authRoutes.js';
@@ -13,7 +12,6 @@ import storeRoutes from './routes/storeRoutes.js';
 import locationRoutes from './routes/locationRoutes.js';
 import prisma from './utils/prismaClient.js';
 import bcrypt from 'bcryptjs';
-import dns from 'dns';
 import { sendEmail } from './utils/emailService.js';
 import { formatMongoCompat } from './utils/formatMongoCompat.js';
 import jwt from 'jsonwebtoken';
