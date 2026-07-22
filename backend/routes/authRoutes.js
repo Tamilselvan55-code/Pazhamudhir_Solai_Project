@@ -35,7 +35,7 @@ router.post('/send-verification-otp', checkMaintenanceAndFeature('disableRegistr
       html: getVerificationHtmlTemplate(pendingUser.fullName, otpVal)
     };
 
-    const transporter = getGmailTransporter();
+    const transporter = await getGmailTransporter();
     await transporter.sendMail(mailOptions);
     console.log('Email sent successfully');
 
@@ -201,7 +201,7 @@ router.post('/resend-verification-otp', async (req, res) => {
     if (process.env.EMAIL_USER && process.env.EMAIL_PASS && process.env.EMAIL_USER !== 'your_email@gmail.com') {
       try {
         console.log('Sending OTP email...');
-        const transporter = getGmailTransporter();
+        const transporter = await getGmailTransporter();
         await transporter.sendMail(mailOptions);
         emailSent = true;
         console.log('Email sent successfully');
@@ -410,7 +410,7 @@ router.post('/register', checkMaintenanceAndFeature('disableRegistration'), asyn
     let emailSent = false;
     if (process.env.EMAIL_USER && process.env.EMAIL_PASS && process.env.EMAIL_USER !== 'your_email@gmail.com' && process.env.EMAIL_PASS !== 'your_app_password') {
       try {
-        const transporter = getGmailTransporter();
+        const transporter = await getGmailTransporter();
         await transporter.sendMail(mailOptions);
         emailSent = true;
         console.log("Email sent successfully");
