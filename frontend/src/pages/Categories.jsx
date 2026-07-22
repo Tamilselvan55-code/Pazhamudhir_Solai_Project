@@ -4,6 +4,47 @@ import axios from 'axios';
 import { API_BASE as config_API_BASE } from '../config/api';
 import { Search, ChevronRight, PackageX } from 'lucide-react';
 
+const CATEGORY_BANNERS = {
+  'vegetables': 'https://images.unsplash.com/photo-1566385101042-1a0aa0c1268c?auto=format&fit=crop&w=800&q=80',
+  'fruits': 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?auto=format&fit=crop&w=800&q=80',
+  'dairy': 'https://images.unsplash.com/photo-1628088062854-d1870b4553da?auto=format&fit=crop&w=800&q=80',
+  'biscuits': 'https://images.unsplash.com/photo-1558961363-fa8fdf82db35?auto=format&fit=crop&w=800&q=80',
+  'snacks': 'https://images.unsplash.com/photo-1621939514649-280e2ee25f60?auto=format&fit=crop&w=800&q=80',
+  'masala': 'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?auto=format&fit=crop&w=800&q=80',
+  'oils': 'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?auto=format&fit=crop&w=800&q=80',
+  'detergents': 'https://images.unsplash.com/photo-1585652643899-2708303f8f9e?auto=format&fit=crop&w=800&q=80',
+  'pickles': 'https://images.unsplash.com/photo-1626200419188-f1530d4aad6e?auto=format&fit=crop&w=800&q=80',
+  'coffee': 'https://images.unsplash.com/photo-1559525839-b184a4d698c7?auto=format&fit=crop&w=800&q=80',
+  'personal care': 'https://images.unsplash.com/photo-1556228578-0d85b1a4d571?auto=format&fit=crop&w=800&q=80',
+  'household': 'https://images.unsplash.com/photo-1584820927498-cafe4c148c90?auto=format&fit=crop&w=800&q=80',
+  'rice': 'https://images.unsplash.com/photo-1586201375761-83865001e8ac?auto=format&fit=crop&w=800&q=80',
+  'dry fruits': 'https://images.unsplash.com/photo-1599579183492-4f35836c2e39?auto=format&fit=crop&w=800&q=80',
+  'beverages': 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&w=800&q=80',
+};
+
+const getBannerImage = (cat) => {
+  const name = cat.name.toLowerCase();
+  
+  if (name.includes('veg')) return CATEGORY_BANNERS['vegetables'];
+  if (name.includes('fruit') && !name.includes('dry')) return CATEGORY_BANNERS['fruits'];
+  if (name.includes('dairy') || name.includes('milk')) return CATEGORY_BANNERS['dairy'];
+  if (name.includes('biscuit') || name.includes('cookie')) return CATEGORY_BANNERS['biscuits'];
+  if (name.includes('snack') || name.includes('chip')) return CATEGORY_BANNERS['snacks'];
+  if (name.includes('masala') || name.includes('spice')) return CATEGORY_BANNERS['masala'];
+  if (name.includes('oil')) return CATEGORY_BANNERS['oils'];
+  if (name.includes('detergent') || name.includes('wash')) return CATEGORY_BANNERS['detergents'];
+  if (name.includes('pickle')) return CATEGORY_BANNERS['pickles'];
+  if (name.includes('coffee') || name.includes('tea')) return CATEGORY_BANNERS['coffee'];
+  if (name.includes('personal') || name.includes('care') || name.includes('soap') || name.includes('shampoo')) return CATEGORY_BANNERS['personal care'];
+  if (name.includes('house') || name.includes('clean')) return CATEGORY_BANNERS['household'];
+  if (name.includes('rice') || name.includes('grain') || name.includes('dal')) return CATEGORY_BANNERS['rice'];
+  if (name.includes('dry fruit') || name.includes('nut')) return CATEGORY_BANNERS['dry fruits'];
+  if (name.includes('beverage') || name.includes('drink')) return CATEGORY_BANNERS['beverages'];
+  
+  if (cat.image) return cat.image;
+  return 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&w=800&q=80';
+};
+
 const Categories = () => {
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
@@ -135,13 +176,7 @@ const Categories = () => {
               >
                 {/* Banner Image */}
                 <div className="relative h-36 md:h-44 w-full bg-green-50 overflow-hidden">
-                  {cat.image ? (
-                    <img src={cat.image} alt={cat.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-green-100 to-teal-50 flex items-center justify-center group-hover:scale-105 transition-transform duration-500">
-                      <span className="text-6xl opacity-20">{cat.emoji || '📦'}</span>
-                    </div>
-                  )}
+                  <img src={getBannerImage(cat)} alt={cat.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                   
                   {/* Floating Count Badge */}
                   <div className="absolute top-3 left-3 bg-white/95 backdrop-blur-sm px-2.5 py-1 rounded-full shadow-sm">
