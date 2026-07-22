@@ -182,11 +182,20 @@ app.post('/test-email', async (req, res) => {
   }
 
   try {
+    console.log("SMTP HOST:", "smtp.gmail.com");
+    console.log("SMTP FAMILY:", 4);
+
     const transporter = nodemailer.createTransport({
       host: 'smtp.gmail.com',
       port: 465,
       secure: true,
       family: 4,
+      lookup: (hostname, options, callback) => {
+        require('dns').lookup(hostname, { family: 4 }, (err, address, family) => {
+          console.log("Custom DNS Lookup Resolved:", address, "Family:", family);
+          callback(err, address, family);
+        });
+      },
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS

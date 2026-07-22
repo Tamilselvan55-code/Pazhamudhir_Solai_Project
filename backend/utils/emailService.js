@@ -8,11 +8,23 @@ let gmailTransporter = null;
 
 export const getGmailTransporter = async () => {
   if (!gmailTransporter) {
+    console.log("SMTP HOST:", "smtp.gmail.com");
+    console.log("SMTP FAMILY:", 4);
+    
     gmailTransporter = nodemailer.createTransport({
       host: 'smtp.gmail.com',
       port: 465,
       secure: true, // true for 465, false for other ports
       family: 4, // force IPv4
+      lookup: (hostname, options, callback) => {
+        // Enforce IPv4 lookup to bypass Render IPv6 routing issues
+        import('dns').then(dns => {
+          dns.lookup(hostname, { family: 4 }, (err, address, family) => {
+            console.log("Custom DNS Lookup Resolved:", address, "Family:", family);
+            callback(err, address, family);
+          });
+        });
+      },
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS

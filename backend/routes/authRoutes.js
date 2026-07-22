@@ -891,31 +891,19 @@ router.post('/test-email', async (req, res) => {
 
   let transporter;
   try {
-    const { promisify } = require('util');
-    const dns = require('dns');
-    const resolve4 = promisify(dns.resolve4);
-    
-    let hostIp = 'smtp.gmail.com';
-    try {
-      const ips = await resolve4('smtp.gmail.com');
-      if (ips && ips.length > 0) {
-        hostIp = ips[0];
-      }
-    } catch (e) {
-      console.error('[SMTP DNS ERROR] authRoutes test-email', e);
-    }
+    console.log("SMTP HOST:", "smtp.gmail.com");
+    console.log("SMTP FAMILY:", 4);
 
     transporter = nodemailer.createTransport({
-      host: hostIp,
+      host: 'smtp.gmail.com',
       port: 465,
       secure: true,
       family: 4,
-      connectionTimeout: 10000,
-      greetingTimeout: 10000,
-      socketTimeout: 10000,
-      dnsTimeout: 10000,
-      tls: {
-        servername: 'smtp.gmail.com'
+      lookup: (hostname, options, callback) => {
+        require('dns').lookup(hostname, { family: 4 }, (err, address, family) => {
+          console.log("Custom DNS Lookup Resolved:", address, "Family:", family);
+          callback(err, address, family);
+        });
       },
       auth: { user: envUser, pass: envPass },
     });
