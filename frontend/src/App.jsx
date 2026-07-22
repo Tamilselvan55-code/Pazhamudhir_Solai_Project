@@ -21,7 +21,7 @@ const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword'));
-const Terms = lazy(() => import('./pages/Terms'));
+const Legal = lazy(() => import('./pages/Legal'));
 const UserCategories = lazy(() => import('./pages/Categories'));
 const Profile = lazy(() => import('./pages/Profile'));
 const VerifyEmail = lazy(() => import('./pages/VerifyEmail'));
@@ -179,7 +179,7 @@ function App() {
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password/:token" element={<ResetPassword />} />
             <Route path="/notifications" element={<CustomerNotifications />} />
-            <Route path="/terms" element={<Terms />} />
+            <Route path="/legal" element={<Legal />} />
             
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
@@ -207,9 +207,9 @@ function App() {
             <h3 className="font-extrabold text-gray-800 text-base">Tiruchendur Murugan Pazhamudhir Solai</h3>
             <p className="text-gray-500 text-xs">Fresh fruits, vegetables, groceries and daily essentials delivered within our service area.</p>
             <div className="flex justify-center items-center gap-4 py-2">
-              <a href="#privacy" className="text-xs text-green-600 hover:underline">Privacy Policy</a>
+              <a href="/legal?tab=privacy" className="text-xs text-green-600 hover:underline">Privacy Policy</a>
               <span className="text-gray-300 text-xs">|</span>
-              <a href="/terms" className="text-xs text-green-600 hover:underline">Terms & Conditions</a>
+              <a href="/legal?tab=terms" className="text-xs text-green-600 hover:underline">Terms & Conditions</a>
               <span className="text-gray-300 text-xs">|</span>
               <a href="mailto:support@tiruchendurmurugan.com" className="text-xs text-green-600 hover:underline">Contact Us</a>
               <span className="text-gray-300 text-xs">|</span>
