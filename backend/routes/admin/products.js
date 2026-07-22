@@ -42,12 +42,12 @@ router.get('/products', async (req, res) => {
         { nameTamil: { contains: search.trim(), mode: 'insensitive' } },
         { tamilName: { contains: search.trim(), mode: 'insensitive' } },
         { englishName: { contains: search.trim(), mode: 'insensitive' } },
-        { category: { contains: search.trim(), mode: 'insensitive' } },
+        { categorySlug: { contains: search.trim(), mode: 'insensitive' } },
         { sku: { contains: search.trim(), mode: 'insensitive' } }
       ];
     }
     if (category) {
-      filter.category = category;
+      filter.categorySlug = category;
     }
     if (stockStatus) {
       if (stockStatus === 'low') filter.stock = { gt: 0, lte: 5 };
@@ -297,11 +297,11 @@ router.post('/products/:id/duplicate', async (req, res) => {
     const original = formatMongoCompat(originalRaw);
 
     let duplicateName = `${original.name} (Copy)`;
-    let nameExists = await prisma.product.findFirst({ where: { name: duplicateName, category: original.category } });
+    let nameExists = await prisma.product.findFirst({ where: { name: duplicateName, categorySlug: original.category } });
     let counter = 1;
     while (nameExists) {
       duplicateName = `${original.name} (Copy ${counter})`;
-      nameExists = await prisma.product.findFirst({ where: { name: duplicateName, category: original.category } });
+      nameExists = await prisma.product.findFirst({ where: { name: duplicateName, categorySlug: original.category } });
       counter++;
     }
 
@@ -311,7 +311,8 @@ router.post('/products/:id/duplicate', async (req, res) => {
         nameTamil: original.nameTamil ? `${original.nameTamil} (நகல்)` : '',
         tamilName: (original.nameTamil || original.tamilName) ? `${original.nameTamil || original.tamilName} (நகல்)` : '',
         price: original.price,
-        category: original.category,
+        categorySlug: original.category,
+        categoryId: originalRaw.categoryId || undefined,
         image: original.image,
         images: original.images || [],
         inStock: original.inStock,

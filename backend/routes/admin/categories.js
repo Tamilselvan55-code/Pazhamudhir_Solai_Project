@@ -65,7 +65,7 @@ router.get('/categories', async (req, res) => {
 
       const searchTerms = [slug, cat.name, cat.name.toLowerCase(), cat.name.toLowerCase().replace(/\\s+/g, '-')];
       const count = await prisma.product.count({
-        where: { category: { in: searchTerms } }
+        where: { categorySlug: { in: searchTerms } }
       });
 
       return { 
