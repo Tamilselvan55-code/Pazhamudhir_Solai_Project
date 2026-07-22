@@ -16,6 +16,7 @@ import staffRouter from './admin/staff.js';
 import databaseRouter from './admin/database.js';
 import systemLogsRouter from './admin/systemLogs.js';
 import uploadRouter from './admin/upload.js';
+import reportsRouter from './admin/reports.js';
 
 const router = express.Router();
 
@@ -37,5 +38,6 @@ router.use(staffRouter);
 router.use(databaseRouter);
 router.use(systemLogsRouter);
 router.use(uploadRouter);
+router.use(reportsRouter);
 
 export default router;
