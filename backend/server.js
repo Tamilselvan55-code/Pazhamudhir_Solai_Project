@@ -109,8 +109,8 @@ prisma.$connect()
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
-app.use('/api/admin', adminRoutes);
 app.use('/api/admin/auth', adminAuthRoutes);
+app.use('/api/admin', adminRoutes);
 app.use('/api/store', storeRoutes);
 app.use('/api/location', locationRoutes);
 app.use('/api', userNotificationRoutes);
