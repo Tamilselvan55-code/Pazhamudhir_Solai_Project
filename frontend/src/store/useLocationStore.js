@@ -388,14 +388,11 @@ const useLocationStore = create(
           console.log('[LOCATION CACHE] Cached GPS coordinates are older than 1 minute (STEP 8).');
         }
         if (userLocation?.lat != null && userLocation?.lon != null) {
+          set({ loading: true });
           const { distanceKm, isEligible } = await fetchDeliveryData(userLocation.lat, userLocation.lon);
-          // Only update if values actually changed (avoid unnecessary re-renders)
-          const currentState = get();
-          if (currentState.distanceKm !== distanceKm || currentState.isEligible !== isEligible) {
-            set({ distanceKm, isEligible });
-          }
+          set({ distanceKm, isEligible, loading: false, liveChecked: true });
         } else {
-          set({ distanceKm: 0, isEligible: false });
+          set({ distanceKm: 0, isEligible: false, loading: false, liveChecked: true });
         }
       },
     }),

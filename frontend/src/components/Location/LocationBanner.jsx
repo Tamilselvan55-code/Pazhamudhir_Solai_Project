@@ -10,6 +10,9 @@ const LocationBanner = () => {
     // Only auto-request if we haven't checked yet
     if (!userLocation && !error) {
       requestLocation();
+    } else if (userLocation) {
+      // Force server verification on every page load
+      useLocationStore.getState().recalculateEligibility();
     }
   }, [userLocation, error, requestLocation]);
 
