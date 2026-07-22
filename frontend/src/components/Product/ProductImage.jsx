@@ -1,4 +1,5 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { getProfessionalProductImage } from '../../utils/imageMapping';
 
 /**
  * Category-aware product image placeholders.
@@ -86,7 +87,15 @@ const ProductImage = ({
   const retriedRef = useRef(false);
   const imgRef = useRef(null);
 
+  // Automatically fetch the professional image mapped by name and category
+  const professionalSrc = getProfessionalProductImage(alt, category, src);
   const placeholder = getPlaceholderForCategory(category);
+
+  // When props.src changes (e.g. pagination or filtered view), reset state
+  useEffect(() => {
+    setStatus('loading');
+    retriedRef.current = false;
+  }, [professionalSrc]);
 
   const handleLoad = useCallback(() => {
     setStatus('loaded');
@@ -94,29 +103,25 @@ const ProductImage = ({
 
   const handleError = useCallback(() => {
     // Retry once with cache-busting
-    if (!retriedRef.current && src) {
+    if (!retriedRef.current && professionalSrc) {
       retriedRef.current = true;
-      const separator = src.includes('?') ? '&' : '?';
+      const separator = professionalSrc.includes('?') ? '&' : '?';
       if (imgRef.current) {
-        imgRef.current.src = `${src}${separator}_retry=1`;
+        imgRef.current.src = `${professionalSrc}${separator}_retry=1`;
       }
-      return;
+    } else {
+      // After retry fails, show category placeholder
+      setStatus('error');
+      if (imgRef.current) {
+        imgRef.current.src = placeholder;
+      }
     }
-    // After retry fails, show category placeholder
-    setStatus('error');
-    if (imgRef.current) {
-      imgRef.current.src = placeholder;
-    }
-  }, [src, placeholder]);
-
-  // Determine actual source
-  const actualSrc = (!src || src.trim() === '') ? placeholder : src;
-  const showSkeleton = status === 'loading' && actualSrc !== placeholder;
+  }, [professionalSrc, placeholder]);
 
   return (
     <div className="relative w-full h-full overflow-hidden" style={{ minHeight: size === 'sm' ? 24 : size === 'lg' ? 144 : 64 }}>
       {/* Skeleton shimmer */}
-      {showSkeleton && (
+      {status === 'loading' && (
         <div
           className="absolute inset-0 bg-gray-100 animate-pulse"
           style={{ borderRadius: 'inherit' }}
@@ -124,11 +129,11 @@ const ProductImage = ({
       )}
       <img
         ref={imgRef}
-        src={actualSrc}
+        src={professionalSrc || placeholder}
         alt={alt || 'Product'}
         loading="lazy"
-        className={`${className} ${showSkeleton ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
-        style={{ objectFit: fit, ...style }}
+        className={`w-full h-full object-${fit} ${className} transition-opacity duration-300 ${status === 'loaded' ? 'opacity-100' : 'opacity-0'}`}
+        style={style}
         onLoad={handleLoad}
         onError={handleError}
       />
