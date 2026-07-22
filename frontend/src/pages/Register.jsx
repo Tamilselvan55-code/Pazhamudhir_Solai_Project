@@ -580,7 +580,7 @@ const Register = () => {
                         className="mt-1 w-5 h-5 rounded text-green-600 focus:ring-green-500 cursor-pointer border-gray-300 bg-gray-50 focus:ring-offset-0"
                       />
                       <span className="text-xs sm:text-sm text-gray-600 font-bold leading-relaxed select-none">
-                        I agree to the <a href="#terms" className="text-green-600 hover:underline">Terms of Service</a> & <a href="#privacy" className="text-green-600 hover:underline">Privacy Policy</a>.
+                        I agree to the <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-green-600 hover:underline">Terms of Service</a> & <a href="#privacy" className="text-green-600 hover:underline">Privacy Policy</a>.
                       </span>
                     </label>
                     {touched.agree && errors.agree && (
