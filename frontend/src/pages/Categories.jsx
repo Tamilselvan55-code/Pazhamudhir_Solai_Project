@@ -179,18 +179,20 @@ const Categories = () => {
                   <img src={getBannerImage(cat)} alt={cat.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                   
                   {/* Floating Count Badge */}
-                  <div className="absolute top-3 left-3 bg-white/95 backdrop-blur-sm px-2.5 py-1 rounded-full shadow-sm">
-                    <span className="text-[10px] font-extrabold text-gray-700 tracking-wide uppercase">
-                      {categoryCounts[cat.id] || 0} Products
-                    </span>
-                  </div>
+                  {categoryCounts[cat.id] > 0 && (
+                    <div className="absolute top-3 left-3 bg-white/95 backdrop-blur-sm px-2.5 py-1 rounded-full shadow-sm">
+                      <span className="text-[10px] font-extrabold text-gray-700 tracking-wide uppercase">
+                        {categoryCounts[cat.id]} Products
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Card Content */}
                 <div className="p-4 flex flex-col flex-1 bg-white relative">
                   <div className="flex items-start gap-3">
                     <div className="w-11 h-11 shrink-0 bg-green-50 rounded-full flex items-center justify-center shadow-sm">
-                      <span className="text-2xl">{cat.emoji || '📦'}</span>
+                      <span className="text-2xl">{cat.emoji || '🛒'}</span>
                     </div>
                     <div className="flex-1 mt-0.5">
                       <h3 className="text-base font-extrabold text-gray-800 leading-tight group-hover:text-green-600 transition-colors">
@@ -229,7 +231,7 @@ const Categories = () => {
                   {cat.image ? (
                     <img src={cat.image} alt={cat.name} className="w-full h-full object-contain" />
                   ) : (
-                    <span className="text-2xl">{cat.emoji || '🔥'}</span>
+                    <span className="text-2xl">{cat.emoji || '🛒'}</span>
                   )}
                 </div>
                 <span className="text-xs font-bold text-gray-800 line-clamp-1">{cat.name}</span>
