@@ -537,7 +537,7 @@ const Checkout = () => {
           </button>
 
           <p className="text-[11px] text-gray-400 text-center">
-            By placing the order, you agree to our delivery terms. Free delivery within {MAX_KM} km of the store.
+            By placing the order, you agree to our delivery terms. Free delivery within {getDeliveryRadius()} km of the store.
           </p>
         </div>
       </div>
