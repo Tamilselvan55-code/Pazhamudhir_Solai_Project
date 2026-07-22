@@ -1,13 +1,13 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
-import nodemailer from 'nodemailer';
+
 import bcrypt from 'bcryptjs';
 import prisma from '../utils/prismaClient.js';
 import { formatMongoCompat } from '../utils/formatMongoCompat.js';
 import { protect } from '../middleware/auth.js';
 import { createAndEmitNotification } from '../utils/notificationHelper.js';
-import { sendEmail, getOtpEmailContent, sendRegistrationOTP, getGmailTransporter } from '../utils/emailService.js';
+import { sendEmail, getOtpEmailContent, sendRegistrationOTP } from '../utils/emailService.js';
 import { checkMaintenanceAndFeature } from '../middleware/maintenanceAndFeature.js';
 import { validatePasswordPolicy, handleFailedLogin, resetFailedLogin } from '../utils/securityHelper.js';
 
@@ -35,8 +35,7 @@ router.post('/send-verification-otp', checkMaintenanceAndFeature('disableRegistr
       html: getVerificationHtmlTemplate(pendingUser.fullName, otpVal)
     };
 
-    const transporter = await getGmailTransporter();
-    await transporter.sendMail(mailOptions);
+    await sendEmail(mailOptions);
     console.log('Email sent successfully');
 
     await prisma.pendingUser.update({
@@ -201,8 +200,7 @@ router.post('/resend-verification-otp', async (req, res) => {
     if (process.env.EMAIL_USER && process.env.EMAIL_PASS && process.env.EMAIL_USER !== 'your_email@gmail.com') {
       try {
         console.log('Sending OTP email...');
-        const transporter = await getGmailTransporter();
-        await transporter.sendMail(mailOptions);
+        await sendEmail(mailOptions);
         emailSent = true;
         console.log('Email sent successfully');
       } catch (emailErr) {
@@ -410,8 +408,7 @@ router.post('/register', checkMaintenanceAndFeature('disableRegistration'), asyn
     let emailSent = false;
     if (process.env.EMAIL_USER && process.env.EMAIL_PASS && process.env.EMAIL_USER !== 'your_email@gmail.com' && process.env.EMAIL_PASS !== 'your_app_password') {
       try {
-        const transporter = await getGmailTransporter();
-        await transporter.sendMail(mailOptions);
+        await sendEmail(mailOptions);
         emailSent = true;
         console.log("Email sent successfully");
       } catch (emailErr) {
@@ -889,42 +886,23 @@ router.post('/test-email', async (req, res) => {
     });
   }
 
-  let transporter;
   try {
-    console.log("SMTP HOST:", "smtp.gmail.com");
-    console.log("SMTP FAMILY:", 4);
-
-    transporter = nodemailer.createTransport({
-      host: 'smtp.gmail.com',
-      port: 587,
-      secure: false,    // false = STARTTLS (port 587). Render blocks 465.
-      requireTLS: true, // Force STARTTLS upgrade — never send plain text
-      lookup: (hostname, options, callback) => {
-        require('dns').lookup(hostname, { family: 4 }, (err, address, family) => {
-          console.log("Custom DNS Lookup Resolved:", address, "Family:", family);
-          callback(err, address, family);
-        });
-      },
-      auth: { user: envUser, pass: envPass },
-    });
-
-    await transporter.verify();
-    addLog('✅ SMTP Connected');
-    diagnostics.smtp = '✅ SMTP Connected';
-  } catch (error) {
-    addLog(`❌ SMTP Failed`);
-    addLog(error.message);
-    diagnostics.smtp = '❌ SMTP Failed';
-    diagnostics.smtpError = error.message;
-
-    if (error.message.includes('535') || error.message.toLowerCase().includes('username and password not accepted')) {
-      addLog('[OTP ERROR] Gmail authentication failed. Normal Gmail password or invalid App Password used.');
-      diagnostics.authReason = 'Gmail authentication failed.';
+    const apiKey = process.env.BREVO_API_KEY;
+    if (!apiKey) {
+      throw new Error('BREVO_API_KEY is missing.');
     }
+
+    addLog('✅ Email API Configured');
+    diagnostics.smtp = '✅ Email API Configured';
+  } catch (error) {
+    addLog(`❌ Email API Failed`);
+    addLog(error.message);
+    diagnostics.smtp = '❌ Email API Failed';
+    diagnostics.smtpError = error.message;
 
     return res.status(500).json({
       success: false,
-      message: 'SMTP connection or authentication failed.',
+      message: 'Email API configuration failed.',
       diagnostics,
       logs
     });

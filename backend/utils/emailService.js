@@ -1,130 +1,60 @@
-import nodemailer from 'nodemailer';
+import axios from 'axios';
 
 /**
- * Enterprise Email Service supporting multiple providers
- * Supports: Gmail SMTP, Resend, Brevo, SendGrid
+ * Brevo Transactional Email API Service (HTTPS)
+ * Bypasses Render port blocking by using standard HTTP port 443
  */
-import dns from 'dns';
-
-let gmailTransporter = null;
-
-export const getGmailTransporter = async () => {
-  if (!gmailTransporter) {
-    console.log("SMTP HOST: smtp.gmail.com");
-    console.log("SMTP PORT: 587 (STARTTLS)");
-
-    gmailTransporter = nodemailer.createTransport({
-      host: 'smtp.gmail.com',
-      port: 587,
-      secure: false,    // false = STARTTLS (port 587). Render blocks 465.
-      requireTLS: true, // Force STARTTLS upgrade — never send plain text
-      lookup: (hostname, options, callback) => {
-        // Enforce IPv4 lookup to bypass Render IPv6 routing issues
-        dns.lookup(hostname, { family: 4 }, (err, address, family) => {
-          console.log("Custom DNS Lookup Resolved:", address, "Family:", family);
-          callback(err, address, family);
-        });
-      },
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-      }
-    });
-  }
-  return gmailTransporter;
-};
-
 export const sendEmail = async ({ to, subject, text, html }) => {
-  const provider = (process.env.EMAIL_PROVIDER || 'gmail').toLowerCase();
+  const apiKey = process.env.BREVO_API_KEY;
+  if (!apiKey) {
+    const err = new Error('Brevo API key is not configured (BREVO_API_KEY missing).');
+    err.code = 'MISSING_CREDENTIALS';
+    throw err;
+  }
+
   const senderEmail = process.env.EMAIL_USER || 'thiruchendurmurugan192@gmail.com';
   const senderName = 'Tiruchendur Murugan Pazhamudhir Solai';
 
-  const fromHeader = `"${senderName}" <${senderEmail}>`;
-  const replyToHeader = senderEmail;
+  const payload = {
+    sender: { name: senderName, email: senderEmail },
+    to: [{ email: to }],
+    subject: subject,
+    htmlContent: html,
+    textContent: text,
+  };
 
-  // 1. Gmail SMTP (Default)
-  if (provider === 'gmail' || provider === 'smtp') {
-    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS || process.env.EMAIL_USER === 'your_email@gmail.com' || process.env.EMAIL_PASS === 'your_app_password') {
-      const err = new Error('Gmail SMTP credentials are not configured.');
-      err.code = 'MISSING_CREDENTIALS';
-      throw err;
-    }
-
-    console.log('[OTP] SMTP configuration loaded');
-
-    const transporter = await getGmailTransporter();
-
+  let lastError = null;
+  for (let attempt = 1; attempt <= 3; attempt++) {
     try {
-      await transporter.verify();
-      console.log('[SMTP] Connection successful');
-    } catch (verifyErr) {
-      console.error(`[SMTP ERROR] ${verifyErr.message || verifyErr}`);
-      throw verifyErr;
+      console.log(`[EMAIL] Sending via Brevo API (Attempt ${attempt}/3) to ${to}`);
+      const response = await axios.post('https://api.brevo.com/v3/smtp/email', payload, {
+        headers: {
+          'api-key': apiKey,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        timeout: 10000 // 10 seconds timeout
+      });
+      console.log(`[EMAIL] Sent successfully via Brevo API. MessageId: ${response.data.messageId}`);
+      return response.data;
+    } catch (error) {
+      lastError = error;
+      const statusCode = error.response?.status;
+      console.error(`[EMAIL ERROR] Brevo API Attempt ${attempt} Failed. Status: ${statusCode || 'Network/Timeout'} - ${error.response?.data?.message || error.message}`);
+      
+      // Don't retry on client errors (400, 401, 403)
+      if (statusCode && statusCode >= 400 && statusCode < 500) {
+        throw new Error(`Brevo API Error: ${error.response?.data?.message || error.message}`);
+      }
+      
+      if (attempt < 3) {
+        // Wait 1 second before retrying (Exponential backoff can be added if needed)
+        await new Promise(res => setTimeout(res, 1000 * attempt));
+      }
     }
-
-    return await transporter.sendMail({
-      from: fromHeader,
-      replyTo: replyToHeader,
-      to,
-      subject,
-      text,
-      html
-    });
   }
 
-  // 2. Resend SMTP Bridge / API Migration Support
-  if (provider === 'resend') {
-    const transporter = nodemailer.createTransport({
-      host: 'smtp.resend.com',
-      port: 465,
-      secure: true,
-      auth: { user: 'resend', pass: process.env.RESEND_API_KEY }
-    });
-    return await transporter.sendMail({
-      from: fromHeader,
-      replyTo: replyToHeader,
-      to,
-      subject,
-      text,
-      html
-    });
-  }
-
-  // 3. Brevo (formerly Sendinblue) Migration Support
-  if (provider === 'brevo') {
-    const transporter = nodemailer.createTransport({
-      host: 'smtp-relay.brevo.com',
-      port: 587,
-      auth: { user: process.env.BREVO_USER, pass: process.env.BREVO_API_KEY }
-    });
-    return await transporter.sendMail({
-      from: fromHeader,
-      replyTo: replyToHeader,
-      to,
-      subject,
-      text,
-      html
-    });
-  }
-
-  // 4. SendGrid Migration Support
-  if (provider === 'sendgrid') {
-    const transporter = nodemailer.createTransport({
-      host: 'smtp.sendgrid.net',
-      port: 587,
-      auth: { user: 'apikey', pass: process.env.SENDGRID_API_KEY }
-    });
-    return await transporter.sendMail({
-      from: fromHeader,
-      replyTo: replyToHeader,
-      to,
-      subject,
-      text,
-      html
-    });
-  }
-
-  throw new Error(`Unsupported email provider configured: ${provider}`);
+  throw new Error(`Failed to send email after 3 attempts: ${lastError.message}`);
 };
 
 /**

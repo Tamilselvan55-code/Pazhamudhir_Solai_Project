@@ -14,6 +14,7 @@ import locationRoutes from './routes/locationRoutes.js';
 import prisma from './utils/prismaClient.js';
 import bcrypt from 'bcryptjs';
 import dns from 'dns';
+import { sendEmail } from './utils/emailService.js';
 import { formatMongoCompat } from './utils/formatMongoCompat.js';
 import jwt from 'jsonwebtoken';
 import { migrateTamilNames } from './utils/migrateTamilNames.js';
@@ -183,36 +184,13 @@ app.post('/test-email', async (req, res) => {
   }
 
   try {
-    console.log("SMTP HOST:", "smtp.gmail.com");
-    console.log("SMTP FAMILY:", 4);
+    console.log('[EMAIL TEST] Sending Email via Brevo');
 
-    const transporter = nodemailer.createTransport({
-      host: 'smtp.gmail.com',
-      port: 587,
-      secure: false,    // false = STARTTLS (port 587). Render blocks 465.
-      requireTLS: true, // Force STARTTLS upgrade — never send plain text
-      lookup: (hostname, options, callback) => {
-        dns.lookup(hostname, { family: 4 }, (err, address, family) => {
-          console.log("Custom DNS Lookup Resolved:", address, "Family:", family);
-          callback(err, address, family);
-        });
-      },
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-      }
-    });
-
-    await transporter.verify();
-    console.log('[EMAIL TEST] SMTP Connected');
-
-    console.log('[EMAIL TEST] Sending Email');
-
-    await transporter.sendMail({
-      from: `"Tiruchendur Murugan Pazhamudhir Solai" <${process.env.EMAIL_USER}>`,
+    await sendEmail({
       to: email,
       subject: 'Pazhamudhir Solai Email Service Test',
-      text: `Hello,\n\nThis is a test email from the Tiruchendur Murugan Pazhamudhir Solai website.\n\nIf you received this email, Gmail SMTP configuration is working correctly.\n\nThank you,\nTiruchendur Murugan Pazhamudhir Solai Team.`
+      text: `Hello,\n\nThis is a test email from the Tiruchendur Murugan Pazhamudhir Solai website.\n\nIf you received this email, Brevo API configuration is working correctly.\n\nThank you,\nTiruchendur Murugan Pazhamudhir Solai Team.`,
+      html: `Hello,<br><br>This is a test email from the Tiruchendur Murugan Pazhamudhir Solai website.<br><br>If you received this email, Brevo API configuration is working correctly.<br><br>Thank you,<br>Tiruchendur Murugan Pazhamudhir Solai Team.`
     });
 
     console.log('[EMAIL TEST] Email Sent Successfully');
