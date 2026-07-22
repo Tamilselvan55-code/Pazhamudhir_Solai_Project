@@ -4,36 +4,15 @@ import nodemailer from 'nodemailer';
  * Enterprise Email Service supporting multiple providers
  * Supports: Gmail SMTP, Resend, Brevo, SendGrid
  */
-import dns from 'dns';
-import { promisify } from 'util';
-const resolve4 = promisify(dns.resolve4);
-
 let gmailTransporter = null;
 
 export const getGmailTransporter = async () => {
   if (!gmailTransporter) {
-    let hostIp = 'smtp.gmail.com';
-    try {
-      const ips = await resolve4('smtp.gmail.com');
-      if (ips && ips.length > 0) {
-        hostIp = ips[0];
-      }
-    } catch (dnsErr) {
-      console.error('[SMTP DNS ERROR] Could not resolve IPv4 for smtp.gmail.com, falling back to hostname', dnsErr);
-    }
-
     gmailTransporter = nodemailer.createTransport({
-      host: hostIp,
+      host: 'smtp.gmail.com',
       port: 465,
       secure: true, // true for 465, false for other ports
       family: 4, // force IPv4
-      connectionTimeout: 10000, // 10 seconds (don't wait 2 mins)
-      greetingTimeout: 10000,
-      socketTimeout: 10000,
-      dnsTimeout: 10000,
-      tls: {
-        servername: 'smtp.gmail.com' // Required for TLS verification when using raw IP
-      },
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
