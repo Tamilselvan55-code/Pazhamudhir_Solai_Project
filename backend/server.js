@@ -188,9 +188,9 @@ app.post('/test-email', async (req, res) => {
 
     const transporter = nodemailer.createTransport({
       host: 'smtp.gmail.com',
-      port: 465,
-      secure: true,
-      family: 4,
+      port: 587,
+      secure: false,    // false = STARTTLS (port 587). Render blocks 465.
+      requireTLS: true, // Force STARTTLS upgrade — never send plain text
       lookup: (hostname, options, callback) => {
         dns.lookup(hostname, { family: 4 }, (err, address, family) => {
           console.log("Custom DNS Lookup Resolved:", address, "Family:", family);

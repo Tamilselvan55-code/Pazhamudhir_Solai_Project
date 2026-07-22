@@ -10,14 +10,14 @@ let gmailTransporter = null;
 
 export const getGmailTransporter = async () => {
   if (!gmailTransporter) {
-    console.log("SMTP HOST:", "smtp.gmail.com");
-    console.log("SMTP FAMILY:", 4);
-    
+    console.log("SMTP HOST: smtp.gmail.com");
+    console.log("SMTP PORT: 587 (STARTTLS)");
+
     gmailTransporter = nodemailer.createTransport({
       host: 'smtp.gmail.com',
-      port: 465,
-      secure: true, // true for 465, false for other ports
-      family: 4, // force IPv4
+      port: 587,
+      secure: false,    // false = STARTTLS (port 587). Render blocks 465.
+      requireTLS: true, // Force STARTTLS upgrade — never send plain text
       lookup: (hostname, options, callback) => {
         // Enforce IPv4 lookup to bypass Render IPv6 routing issues
         dns.lookup(hostname, { family: 4 }, (err, address, family) => {
