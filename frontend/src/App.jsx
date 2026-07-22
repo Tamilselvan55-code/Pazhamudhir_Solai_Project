@@ -22,6 +22,7 @@ const Register = lazy(() => import('./pages/Register'));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const Terms = lazy(() => import('./pages/Terms'));
+const UserCategories = lazy(() => import('./pages/Categories'));
 const Profile = lazy(() => import('./pages/Profile'));
 const VerifyEmail = lazy(() => import('./pages/VerifyEmail'));
 const CustomerNotifications = lazy(() => import('./pages/Notifications'));
@@ -172,6 +173,7 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/verify-email" element={<VerifyEmail />} />
+            <Route path="/categories" element={<UserCategories />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/dashboard" element={<Profile />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
