@@ -86,7 +86,20 @@ router.get('/products', async (req, res) => {
 router.post('/products', async (req, res) => {
   try {
     const { name, category } = req.body;
-    const exists = await prisma.product.findFirst({ where: { name, category } });
+    
+    if (req.body.category && typeof req.body.category === 'string') {
+      req.body.categorySlug = req.body.category;
+      const catRec = await prisma.category.findFirst({
+        where: { name: { equals: req.body.category, mode: 'insensitive' } }
+      });
+      if (catRec) {
+        req.body.category = { connect: { id: catRec.id } };
+      } else {
+        delete req.body.category;
+      }
+    }
+
+    const exists = await prisma.product.findFirst({ where: { name, categorySlug: typeof category === 'string' ? category : undefined } });
     if (exists) {
       return res.status(409).json({ message: 'Product name already exists in this category.' });
     }
@@ -209,6 +222,18 @@ router.put('/products/:id', productUpdateUpload, async (req, res) => {
     if (req.body.discount !== undefined) req.body.discount = Number(req.body.discount);
     if (req.body.isActive !== undefined) req.body.isActive = req.body.isActive === true || req.body.isActive === 'true';
     if (req.body.isFeatured !== undefined) req.body.isFeatured = req.body.isFeatured === true || req.body.isFeatured === 'true';
+
+    if (req.body.category && typeof req.body.category === 'string') {
+      req.body.categorySlug = req.body.category;
+      const catRec = await prisma.category.findFirst({
+        where: { name: { equals: req.body.category, mode: 'insensitive' } }
+      });
+      if (catRec) {
+        req.body.category = { connect: { id: catRec.id } };
+      } else {
+        delete req.body.category;
+      }
+    }
 
     const updatedProductRaw = await prisma.product.update({
       where: { id: req.params.id },
@@ -359,7 +384,14 @@ router.post('/products/bulk', async (req, res) => {
         ids.forEach(id => io.emit('product_update', { _id: id, isActive: false, isDeleted: true }));
       }
     } else if (action === 'category') {
-      await prisma.product.updateMany({ where: { id: { in: ids } }, data: { category: value } });
+      let updateData = { categorySlug: value };
+      const catRec = await prisma.category.findFirst({
+        where: { name: { equals: value, mode: 'insensitive' } }
+      });
+      if (catRec) {
+        updateData.categoryId = catRec.id;
+      }
+      await prisma.product.updateMany({ where: { id: { in: ids } }, data: updateData });
     } else if (action === 'price') {
       const valStr = String(value);
       if (valStr.startsWith('+')) {
