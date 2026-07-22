@@ -126,32 +126,52 @@ const Categories = () => {
             <p className="text-sm text-gray-500">Try adjusting your search</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 lg:gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
             {filteredCategories.map(cat => (
               <Link 
                 to={`/?category=${cat.id}`} 
                 key={cat.id}
-                className={`group bg-white rounded-[20px] p-4 flex flex-col items-center text-center shadow-sm border transition-all duration-300 cursor-pointer relative overflow-hidden ${
-                  activeChip === cat.name ? 'border-green-500 bg-green-50/30' : 'border-gray-50 hover:shadow-lg hover:border-green-200 hover:-translate-y-1'
-                }`}
+                className="flex flex-col bg-white rounded-[20px] overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 group cursor-pointer"
               >
-                <div className="w-16 h-16 md:w-20 md:h-20 mb-3 bg-gray-50 rounded-full flex items-center justify-center group-hover:scale-105 transition-transform duration-300 overflow-hidden p-2">
+                {/* Banner Image */}
+                <div className="relative h-36 md:h-44 w-full bg-green-50 overflow-hidden">
                   {cat.image ? (
-                    <img src={cat.image} alt={cat.name} className="w-full h-full object-contain" />
+                    <img src={cat.image} alt={cat.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                   ) : (
-                    <span className="text-3xl">{cat.emoji || '📦'}</span>
+                    <div className="w-full h-full bg-gradient-to-br from-green-100 to-teal-50 flex items-center justify-center group-hover:scale-105 transition-transform duration-500">
+                      <span className="text-6xl opacity-20">{cat.emoji || '📦'}</span>
+                    </div>
                   )}
+                  
+                  {/* Floating Count Badge */}
+                  <div className="absolute top-3 left-3 bg-white/95 backdrop-blur-sm px-2.5 py-1 rounded-full shadow-sm">
+                    <span className="text-[10px] font-extrabold text-gray-700 tracking-wide uppercase">
+                      {categoryCounts[cat.id] || 0} Products
+                    </span>
+                  </div>
                 </div>
-                <h3 className="text-sm font-extrabold text-gray-800 leading-tight group-hover:text-green-600 transition-colors line-clamp-1">{cat.name}</h3>
-                {cat.tamilName && (
-                  <span className="text-[10px] text-green-700 font-semibold mt-0.5 line-clamp-1">{cat.tamilName}</span>
-                )}
-                <span className="text-[10px] font-bold text-gray-400 bg-gray-50 px-2 py-0.5 rounded-md mt-2">
-                  {categoryCounts[cat.id] || 0} Products
-                </span>
-                
-                <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0 transition-all duration-300">
-                  <ChevronRight className="w-4 h-4 text-green-500" />
+
+                {/* Card Content */}
+                <div className="p-4 flex flex-col flex-1 bg-white relative">
+                  <div className="flex items-start gap-3">
+                    <div className="w-11 h-11 shrink-0 bg-green-50 rounded-full flex items-center justify-center shadow-sm">
+                      <span className="text-2xl">{cat.emoji || '📦'}</span>
+                    </div>
+                    <div className="flex-1 mt-0.5">
+                      <h3 className="text-base font-extrabold text-gray-800 leading-tight group-hover:text-green-600 transition-colors">
+                        {cat.name}
+                      </h3>
+                      <p className="text-[11px] text-gray-500 mt-1 line-clamp-1">
+                        {cat.tamilName ? `Shop fresh ${cat.name.toLowerCase()} & ${cat.tamilName}` : `Explore our premium ${cat.name.toLowerCase()}`}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-4 pt-3 border-t border-gray-50 flex items-center justify-between">
+                    <span className="text-xs font-bold text-green-600 group-hover:text-green-700 transition-colors flex items-center gap-1">
+                      Explore {cat.name} <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    </span>
+                  </div>
                 </div>
               </Link>
             ))}
