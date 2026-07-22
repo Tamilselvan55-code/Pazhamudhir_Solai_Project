@@ -51,7 +51,9 @@ const applySettings = (settings) => {
   // Automatically recalculate delivery eligibility whenever settings change
   import('./useLocationStore').then((mod) => {
     if (mod && mod.default && typeof mod.default.getState === 'function') {
-      mod.default.getState().recalculateEligibility?.();
+      if (mod.default.persist?.hasHydrated()) {
+        mod.default.getState().recalculateEligibility?.();
+      }
     }
   }).catch(() => {});
 };

@@ -1,0 +1,23 @@
+﻿powershell : = : The term '=' is not recognized as the name of a cmdlet, function, script file, or operable program. 
+Check the 
+At line:1 char:1
++ powershell -Command "$response = Invoke-WebRequest -Uri 'https://pazh ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (= : The term '=...ram. Check the :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+spelling of the name, or if a path was included, verify that the path is correct and try again.
+At line:1 char:2
++  = Invoke-WebRequest -Uri 'https://pazhamudhir-solai-project-q7j2.onr ...
++  ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+ 
+.Content : The term '.Content' is not recognized as the name of a cmdlet, function, script file, or operable program. 
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+At line:1 char:112
++ ... ai-project-q7j2.onrender.com/api/products' -UseBasicParsing; .Content
++                                                                  ~~~~~~~~
+    + CategoryInfo          : ObjectNotFound: (.Content:String) [], CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+ 

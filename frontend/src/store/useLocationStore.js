@@ -381,6 +381,7 @@ const useLocationStore = create(
        * - Settings change (delivery radius or store location updated by admin)
        * - Zustand store rehydrates from localStorage on page load
        */
+      // ── Background check if cached GPS is still valid ───────────────────────
       recalculateEligibility: async () => {
         const { userLocation, locationSource, locationTimestamp } = get();
         if (locationSource === 'gps' && locationTimestamp && (Date.now() - locationTimestamp > 60000)) {
@@ -410,8 +411,10 @@ const useLocationStore = create(
         locationSource:    s.locationSource,
         locationTimestamp: s.locationTimestamp,
       }),
-      onRehydrateStorage: () => () => {
-        useLocationStore.getState().recalculateEligibility();
+      onRehydrateStorage: () => (state, error) => {
+        if (!error && state) {
+          state.recalculateEligibility();
+        }
       },
     }
   )
