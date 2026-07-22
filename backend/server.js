@@ -13,6 +13,7 @@ import storeRoutes from './routes/storeRoutes.js';
 import locationRoutes from './routes/locationRoutes.js';
 import prisma from './utils/prismaClient.js';
 import bcrypt from 'bcryptjs';
+import dns from 'dns';
 import { formatMongoCompat } from './utils/formatMongoCompat.js';
 import jwt from 'jsonwebtoken';
 import { migrateTamilNames } from './utils/migrateTamilNames.js';
@@ -191,7 +192,7 @@ app.post('/test-email', async (req, res) => {
       secure: true,
       family: 4,
       lookup: (hostname, options, callback) => {
-        require('dns').lookup(hostname, { family: 4 }, (err, address, family) => {
+        dns.lookup(hostname, { family: 4 }, (err, address, family) => {
           console.log("Custom DNS Lookup Resolved:", address, "Family:", family);
           callback(err, address, family);
         });

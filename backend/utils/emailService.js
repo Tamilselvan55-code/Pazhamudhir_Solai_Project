@@ -4,6 +4,8 @@ import nodemailer from 'nodemailer';
  * Enterprise Email Service supporting multiple providers
  * Supports: Gmail SMTP, Resend, Brevo, SendGrid
  */
+import dns from 'dns';
+
 let gmailTransporter = null;
 
 export const getGmailTransporter = async () => {
@@ -18,11 +20,9 @@ export const getGmailTransporter = async () => {
       family: 4, // force IPv4
       lookup: (hostname, options, callback) => {
         // Enforce IPv4 lookup to bypass Render IPv6 routing issues
-        import('dns').then(dns => {
-          dns.lookup(hostname, { family: 4 }, (err, address, family) => {
-            console.log("Custom DNS Lookup Resolved:", address, "Family:", family);
-            callback(err, address, family);
-          });
+        dns.lookup(hostname, { family: 4 }, (err, address, family) => {
+          console.log("Custom DNS Lookup Resolved:", address, "Family:", family);
+          callback(err, address, family);
         });
       },
       auth: {
