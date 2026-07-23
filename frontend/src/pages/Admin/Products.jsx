@@ -479,44 +479,88 @@ const Products = () => {
     document.body.removeChild(link);
   };
 
-  // Handle Multi-file uploads
+  // Handle Image Uploads via Cloudinary API
   const handleFileChange = async (e) => {
     const files = Array.from(e.target.files);
     if (files.length === 0) return;
 
-    // Show instant local previews
-    const localPreviews = files.map(file => ({
-      name: file.name,
-      url: URL.createObjectURL(file),
-      file
-    }));
-    setSelectedFiles([...selectedFiles, ...localPreviews]);
+    const file = files[0];
+    const allowedExtensions = ['jpg', 'jpeg', 'png', 'webp'];
+    const fileExt = file.name.split('.').pop().toLowerCase();
+    const allowedMimeTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
 
-    // Perform upload
+    if (!allowedExtensions.includes(fileExt) || !allowedMimeTypes.includes(file.type)) {
+      const msg = 'Invalid file type. Only JPG, JPEG, PNG, and WEBP images are allowed.';
+      setError(msg);
+      adminAlert('error', 'Invalid File Type', msg);
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      const msg = 'File too large. Maximum size allowed is 10MB.';
+      setError(msg);
+      adminAlert('error', 'File Too Large', msg);
+      return;
+    }
+
     setUploadProgress(true);
-    const formDataUpload = new FormData();
-    files.forEach(file => {
-      formDataUpload.append('images', file);
-    });
-
     try {
-      const { data } = await axios.post(`${config_API_BASE}/admin/upload`, formDataUpload, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          Authorization: `Bearer ${adminInfo.token}`
-        }
-      });
-      // Append new URLs to formData
-      setFormData(prev => ({
-        ...prev,
-        images: [...(prev.images || []), ...data.urls],
-        // Set first uploaded image as main image if main image is empty
-        image: prev.image || data.urls[0] || ''
-      }));
+      if (currentProduct && currentProduct._id) {
+        // Upload directly to Cloudinary POST /api/admin/products/:id/upload-image
+        const formDataUpload = new FormData();
+        formDataUpload.append('image', file);
+
+        const { data } = await axios.post(
+          `${config_API_BASE}/admin/products/${currentProduct._id}/upload-image`,
+          formDataUpload,
+          {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+              Authorization: `Bearer ${adminInfo.token}`
+            }
+          }
+        );
+
+        const timestamp = Date.now();
+        const rawImageUrl = data.image || '';
+        const versionedImageUrl = rawImageUrl
+          ? `${rawImageUrl}${rawImageUrl.includes('?') ? '&' : '?'}v=${timestamp}`
+          : rawImageUrl;
+
+        const updatedProductObj = {
+          ...data,
+          image: versionedImageUrl,
+          images: (data.images || []).map(img => (img === rawImageUrl ? versionedImageUrl : img))
+        };
+
+        setProducts(prevProducts =>
+          prevProducts.map(p => (p._id === data._id ? updatedProductObj : p))
+        );
+
+        setCurrentProduct(updatedProductObj);
+        setFormData(prev => ({
+          ...prev,
+          image: versionedImageUrl,
+          images: updatedProductObj.images || []
+        }));
+
+        setSuccessMsg('Product image uploaded to Cloudinary successfully!');
+      } else {
+        // For new product addition, hold selected file preview
+        const localPreviews = files.map(f => ({
+          name: f.name,
+          url: URL.createObjectURL(f),
+          file: f
+        }));
+        setSelectedFiles(localPreviews);
+      }
     } catch (err) {
-      setError('Image upload failed. Try again.');
+      const msg = err.response?.data?.message || 'Cloudinary image upload failed. Please try again.';
+      setError(msg);
+      adminAlert('error', 'Upload Failed', msg);
     } finally {
       setUploadProgress(false);
+      e.target.value = '';
     }
   };
 
@@ -598,11 +642,29 @@ const Products = () => {
     setActionLoading(true);
     try {
       if (modalType === 'add') {
-        await axios.post(`${config_API_BASE}/admin/products`, formData, {
+        const { data: newProd } = await axios.post(`${config_API_BASE}/admin/products`, formData, {
           headers: { Authorization: `Bearer ${adminInfo.token}` }
         });
+
+        // If an image file was selected during creation, upload it to Cloudinary immediately
+        if (selectedFiles.length > 0 && selectedFiles[0].file && newProd && newProd._id) {
+          const formDataUpload = new FormData();
+          formDataUpload.append('image', selectedFiles[0].file);
+
+          await axios.post(
+            `${config_API_BASE}/admin/products/${newProd._id}/upload-image`,
+            formDataUpload,
+            {
+              headers: {
+                'Content-Type': 'multipart/form-data',
+                Authorization: `Bearer ${adminInfo.token}`
+              }
+            }
+          );
+        }
         setSuccessMsg('Product added successfully!');
       } else if (modalType === 'edit' && currentProduct) {
+        // Send text/numeric JSON data to PUT endpoint (no file objects sent to PUT)
         await axios.put(`${config_API_BASE}/admin/products/${currentProduct._id}`, formData, {
           headers: { Authorization: `Bearer ${adminInfo.token}` }
         });
