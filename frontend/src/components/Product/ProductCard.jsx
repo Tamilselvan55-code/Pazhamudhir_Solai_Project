@@ -24,7 +24,7 @@ const ProductCard = ({ product }) => {
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col transition-all duration-200 hover:shadow-lg hover:-translate-y-1 group">
       {/* Image */}
-      <div className="relative w-full h-[180px] flex items-center justify-center bg-white overflow-hidden p-[12px]" style={{ borderRadius: '12px 12px 0 0' }}>
+      <div className="relative w-full h-[110px] sm:h-[140px] md:h-[160px] lg:h-[180px] flex items-center justify-center bg-white overflow-hidden p-[8px] sm:p-[12px]" style={{ borderRadius: '12px 12px 0 0' }}>
         <ProductImage
           src={product.image}
           alt={product.name}

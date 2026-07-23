@@ -35,7 +35,7 @@ const getBannerImage = (cat) => {
   if (name.includes('detergent') || name.includes('wash')) return CATEGORY_BANNERS['detergents'];
   if (name.includes('pickle')) return CATEGORY_BANNERS['pickles'];
   if (name.includes('coffee') || name.includes('tea')) return CATEGORY_BANNERS['coffee'];
-  if (name.includes('personal') || name.includes('care') || name.includes('soap') || name.includes('shampoo')) return CATEGORY_BANNERS['personal care'];
+  if (name.includes('personal') || name.includes('care') || name.includes('soap')) return CATEGORY_BANNERS['personal care'];
   if (name.includes('house') || name.includes('clean')) return CATEGORY_BANNERS['household'];
   if (name.includes('rice') || name.includes('grain') || name.includes('dal')) return CATEGORY_BANNERS['rice'];
   if (name.includes('dry fruit') || name.includes('nut')) return CATEGORY_BANNERS['dry fruits'];
@@ -121,11 +121,11 @@ const Categories = () => {
   }
 
   return (
-    <div className="pb-28 max-w-7xl mx-auto px-4 pt-4 sm:pt-6 animate-in fade-in duration-300">
+    <div className="pb-28 max-w-7xl mx-auto px-3 sm:px-4 pt-3 sm:pt-4 animate-in fade-in duration-300">
       
       {/* Sticky Header */}
-      <div className="sticky top-14 sm:top-16 bg-[#f7fdf7]/95 backdrop-blur-md z-40 py-4 -mx-4 px-4 shadow-sm border-b border-gray-100 transition-all">
-        <h1 className="text-2xl md:text-3xl font-extrabold text-gray-900 leading-tight">Categories</h1>
+      <div className="sticky top-14 sm:top-16 bg-[#f7fdf7]/95 backdrop-blur-md z-40 py-3 sm:py-4 -mx-3 sm:-mx-4 px-3 sm:px-4 shadow-sm border-b border-gray-100 transition-all">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-gray-900 leading-tight">Categories</h1>
         <p className="text-sm text-gray-500 font-medium mt-1">Choose your shopping category</p>
         
         {/* Search Bar */}
@@ -170,7 +170,7 @@ const Categories = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
             {filteredCategories.map(cat => (
               <Link 
-                to={`/?category=${cat.id}`} 
+                to={`/?scroll=${cat.id}`}
                 key={cat.id}
                 className="flex flex-col bg-white rounded-[20px] overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 group cursor-pointer"
               >
@@ -224,7 +224,7 @@ const Categories = () => {
             {popularCategories.map(cat => (
               <Link
                 key={`pop-${cat.id}`}
-                to={`/?category=${cat.id}`}
+                to={`/?scroll=${cat.id}`}
                 className="min-w-[120px] bg-white rounded-[20px] p-3 shadow-sm border border-gray-100 flex flex-col items-center text-center hover:border-green-300 hover:-translate-y-0.5 transition-all"
               >
                 <div className="w-12 h-12 mb-2 bg-gray-50 rounded-full flex items-center justify-center p-1.5">

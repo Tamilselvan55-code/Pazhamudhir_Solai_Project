@@ -14,7 +14,6 @@ const CATEGORIES_DATA = [
   { name: 'Rice', tamilName: 'அரிசி', displayOrder: 11 },
   { name: 'Flour', tamilName: 'மாவு வகைகள்', displayOrder: 12 },
   { name: 'Soap', tamilName: 'சோப்பு', displayOrder: 13 },
-  { name: 'Shampoo', tamilName: 'ஷாம்பு', displayOrder: 14 },
   { name: 'Beverages', tamilName: 'பானங்கள்', displayOrder: 15 }
 ];
 
@@ -440,33 +439,6 @@ const main = async () => {
     });
   });
 
-  // --- SHAMPOO (10) ---
-  const shampoo = [
-    { name: 'Clinic Plus Strong & Long', tamil: 'கிளினிக் பிளஸ் ஷாம்பு', price: 95, unit: '175 ml' },
-    { name: 'Head & Shoulders Anti-Dandruff', tamil: 'ஹெட் & சோல்டர்ஸ்', price: 160, unit: '180 ml' },
-    { name: 'Dove Intense Repair Shampoo', tamil: 'டவ் ஷாம்பு', price: 175, unit: '180 ml' },
-    { name: 'TRESemme Keratin Smooth', tamil: 'டிரெஸமே ஷாம்பு', price: 220, unit: '185 ml' },
-    { name: 'Himalaya Anti Hair Fall', tamil: 'இமாலயா ஷாம்பு', price: 130, unit: '200 ml' },
-    { name: 'Pantene Silky Smooth Care', tamil: 'பான்டீன் ஷாம்பு', price: 140, unit: '180 ml' },
-    { name: 'Loreal Total Repair 5', tamil: 'லோரியல் ஷாம்பு', price: 199, unit: '175 ml' },
-    { name: 'Meera Herbal Hair Wash Powder', tamil: 'மீரா சீயக்காய் தூள்', price: 60, unit: '100g' },
-    { name: 'Karthika Shikakai Shampoo', tamil: 'கார்த்திகா ஷாம்பு', price: 75, unit: '180 ml' },
-    { name: 'Sunsilk Black Shine Shampoo', tamil: 'சன்சில்க் ஷாம்பு', price: 95, unit: '180 ml' }
-  ];
-  shampoo.forEach((sha, idx) => {
-    productsToSeed.push({
-      name: sha.name,
-      tamilName: sha.tamil,
-      nameTamil: sha.tamil,
-      price: sha.price,
-      unit: sha.unit,
-      categorySlug: 'shampoo',
-      categoryId: categoriesMap['shampoo'].id,
-      image: null,
-      stock: 35 + idx,
-      description: `Premium hair care formula: ${sha.name}.`
-    });
-  });
 
   // --- BEVERAGES (10) ---
   const beverages = [

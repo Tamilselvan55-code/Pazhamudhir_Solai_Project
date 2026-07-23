@@ -75,7 +75,7 @@ const KEYWORD_IMAGE_MAP = [
   { keys: ['surf excel', 'ariel', 'rin', 'wheel', 'ghadi', 'detergent', 'washing powder'], image: 'https://images.unsplash.com/photo-1585652643899-2708303f8f9e?auto=format&fit=crop&w=800&q=80' },
 
   // ── PERSONAL CARE ───────────────────────────────────────────────
-  { keys: ['soap', 'shampoo', 'toothpaste', 'face wash', 'body wash', 'personal care', 'brush'], image: 'https://images.unsplash.com/photo-1556228578-0d85b1a4d571?auto=format&fit=crop&w=800&q=80' }
+  { keys: ['soap', 'toothpaste', 'face wash', 'body wash', 'personal care', 'brush'], image: 'https://images.unsplash.com/photo-1556228578-0d85b1a4d571?auto=format&fit=crop&w=800&q=80' }
 ];
 
 const FALLBACK_CATEGORY_IMAGES = {

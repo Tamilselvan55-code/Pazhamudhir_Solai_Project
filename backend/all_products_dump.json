@@ -1,0 +1,682 @@
+[
+  {
+    "name": "Drumstick",
+    "categorySlug": "vegetables"
+  },
+  {
+    "name": "Bottle Gourd",
+    "categorySlug": "vegetables"
+  },
+  {
+    "name": "Bitter Gourd",
+    "categorySlug": "vegetables"
+  },
+  {
+    "name": "Snake Gourd",
+    "categorySlug": "vegetables"
+  },
+  {
+    "name": "Pumpkin",
+    "categorySlug": "vegetables"
+  },
+  {
+    "name": "Broad Beans",
+    "categorySlug": "vegetables"
+  },
+  {
+    "name": "Plantain Flower",
+    "categorySlug": "vegetables"
+  },
+  {
+    "name": "Cauliflower",
+    "categorySlug": "vegetables"
+  },
+  {
+    "name": "Garlic",
+    "categorySlug": "vegetables"
+  },
+  {
+    "name": "Onion",
+    "categorySlug": "vegetables"
+  },
+  {
+    "name": "Ridge Gourd",
+    "categorySlug": "vegetables"
+  },
+  {
+    "name": "Beans",
+    "categorySlug": "vegetables"
+  },
+  {
+    "name": "Capsicum",
+    "categorySlug": "vegetables"
+  },
+  {
+    "name": "Carrot",
+    "categorySlug": "vegetables"
+  },
+  {
+    "name": "Coriander Leaves",
+    "categorySlug": "vegetables"
+  },
+  {
+    "name": "Ginger",
+    "categorySlug": "vegetables"
+  },
+  {
+    "name": "Green Chilli",
+    "categorySlug": "vegetables"
+  },
+  {
+    "name": "Lemon",
+    "categorySlug": "vegetables"
+  },
+  {
+    "name": "Mint Leaves",
+    "categorySlug": "vegetables"
+  },
+  {
+    "name": "Radish",
+    "categorySlug": "vegetables"
+  },
+  {
+    "name": "Sweet Potato",
+    "categorySlug": "vegetables"
+  },
+  {
+    "name": "Tomato",
+    "categorySlug": "vegetables"
+  },
+  {
+    "name": "Brinjal",
+    "categorySlug": "vegetables"
+  },
+  {
+    "name": "Curry Leaves",
+    "categorySlug": "vegetables"
+  },
+  {
+    "name": "Plantain Stem",
+    "categorySlug": "vegetables"
+  },
+  {
+    "name": "Banana Yelakki",
+    "categorySlug": "fruits"
+  },
+  {
+    "name": "Mango Alphonso",
+    "categorySlug": "fruits"
+  },
+  {
+    "name": "Pomegranate",
+    "categorySlug": "fruits"
+  },
+  {
+    "name": "Sweet Lime",
+    "categorySlug": "fruits"
+  },
+  {
+    "name": "Green Grapes",
+    "categorySlug": "fruits"
+  },
+  {
+    "name": "Sapota",
+    "categorySlug": "fruits"
+  },
+  {
+    "name": "Jackfruit",
+    "categorySlug": "fruits"
+  },
+  {
+    "name": "Muskmelon",
+    "categorySlug": "fruits"
+  },
+  {
+    "name": "Custard Apple",
+    "categorySlug": "fruits"
+  },
+  {
+    "name": "Gold Winner Sunflower Oil",
+    "categorySlug": "oils"
+  },
+  {
+    "name": "Idhayam Sesame Oil",
+    "categorySlug": "oils"
+  },
+  {
+    "name": "Parachute Coconut Oil",
+    "categorySlug": "oils"
+  },
+  {
+    "name": "VSL Groundnut Oil",
+    "categorySlug": "oils"
+  },
+  {
+    "name": "Fortune Mustard Oil",
+    "categorySlug": "oils"
+  },
+  {
+    "name": "Olive Oil Pomace",
+    "categorySlug": "oils"
+  },
+  {
+    "name": "Heritage Cow Ghee",
+    "categorySlug": "oils"
+  },
+  {
+    "name": "Plums",
+    "categorySlug": "fruits"
+  },
+  {
+    "name": "Guava",
+    "categorySlug": "fruits"
+  },
+  {
+    "name": "Banana Robusta",
+    "categorySlug": "fruits"
+  },
+  {
+    "name": "Dragon Fruit",
+    "categorySlug": "fruits"
+  },
+  {
+    "name": "Grapes Seedless",
+    "categorySlug": "fruits"
+  },
+  {
+    "name": "Orange Imported",
+    "categorySlug": "fruits"
+  },
+  {
+    "name": "Pineapple",
+    "categorySlug": "fruits"
+  },
+  {
+    "name": "Watermelon",
+    "categorySlug": "fruits"
+  },
+  {
+    "name": "Rice Bran Oil",
+    "categorySlug": "oils"
+  },
+  {
+    "name": "Gingelly Oil Premium",
+    "categorySlug": "oils"
+  },
+  {
+    "name": "Castor Oil Pure",
+    "categorySlug": "oils"
+  },
+  {
+    "name": "Mango Pickle",
+    "categorySlug": "pickles"
+  },
+  {
+    "name": "Lemon Pickle",
+    "categorySlug": "pickles"
+  },
+  {
+    "name": "Garlic Pickle",
+    "categorySlug": "pickles"
+  },
+  {
+    "name": "Mixed Vegetable Pickle",
+    "categorySlug": "pickles"
+  },
+  {
+    "name": "Citron Pickle (Narthangai)",
+    "categorySlug": "pickles"
+  },
+  {
+    "name": "Ginger Pickle (Inji)",
+    "categorySlug": "pickles"
+  },
+  {
+    "name": "Tomato Pickle",
+    "categorySlug": "pickles"
+  },
+  {
+    "name": "Amla Pickle",
+    "categorySlug": "pickles"
+  },
+  {
+    "name": "Green Chilli Pickle",
+    "categorySlug": "pickles"
+  },
+  {
+    "name": "Bitter Gourd Pickle",
+    "categorySlug": "pickles"
+  },
+  {
+    "name": "Parle-G Gluco Biscuits",
+    "categorySlug": "biscuits"
+  },
+  {
+    "name": "Britannia Good Day Cashew",
+    "categorySlug": "biscuits"
+  },
+  {
+    "name": "Britannia Marie Gold",
+    "categorySlug": "biscuits"
+  },
+  {
+    "name": "Oreo Chocolate Cream",
+    "categorySlug": "biscuits"
+  },
+  {
+    "name": "Britannia Bourbon",
+    "categorySlug": "biscuits"
+  },
+  {
+    "name": "Sunfeast Dark Fantasy",
+    "categorySlug": "biscuits"
+  },
+  {
+    "name": "Sunfeast Mom’s Magic",
+    "categorySlug": "biscuits"
+  },
+  {
+    "name": "Parle Hide & Seek",
+    "categorySlug": "biscuits"
+  },
+  {
+    "name": "Britannia Milk Bikis",
+    "categorySlug": "biscuits"
+  },
+  {
+    "name": "Britannia 50-50 Maska Chaska",
+    "categorySlug": "biscuits"
+  },
+  {
+    "name": "Potato Chips Salted",
+    "categorySlug": "snacks"
+  },
+  {
+    "name": "Traditional Murukku",
+    "categorySlug": "snacks"
+  },
+  {
+    "name": "Madras Mixture",
+    "categorySlug": "snacks"
+  },
+  {
+    "name": "Kara Boondi",
+    "categorySlug": "snacks"
+  },
+  {
+    "name": "Banana Chips Pepper",
+    "categorySlug": "snacks"
+  },
+  {
+    "name": "Ribbon Pakoda",
+    "categorySlug": "snacks"
+  },
+  {
+    "name": "Masala Peanuts",
+    "categorySlug": "snacks"
+  },
+  {
+    "name": "Thattai Snacks",
+    "categorySlug": "snacks"
+  },
+  {
+    "name": "Omapodi",
+    "categorySlug": "snacks"
+  },
+  {
+    "name": "Haldiram’s Bhujia Sev",
+    "categorySlug": "snacks"
+  },
+  {
+    "name": "Aavin Green Milk Premium",
+    "categorySlug": "dairy-products"
+  },
+  {
+    "name": "Amul Salted Butter",
+    "categorySlug": "dairy-products"
+  },
+  {
+    "name": "Amul Paneer Fresh",
+    "categorySlug": "dairy-products"
+  },
+  {
+    "name": "Aavin Curd Packet",
+    "categorySlug": "dairy-products"
+  },
+  {
+    "name": "Amul Cheese Slices",
+    "categorySlug": "dairy-products"
+  },
+  {
+    "name": "Milky Mist Fresh Paneer",
+    "categorySlug": "dairy-products"
+  },
+  {
+    "name": "Amul Taaza Milk Tetrapack",
+    "categorySlug": "dairy-products"
+  },
+  {
+    "name": "Aavin Ghee Jar",
+    "categorySlug": "dairy-products"
+  },
+  {
+    "name": "Milky Mist Set Curd Cup",
+    "categorySlug": "dairy-products"
+  },
+  {
+    "name": "Amul Fresh Whipping Cream",
+    "categorySlug": "dairy-products"
+  },
+  {
+    "name": "Surf Excel Easy Wash",
+    "categorySlug": "detergents"
+  },
+  {
+    "name": "Rin Detergent Powder",
+    "categorySlug": "detergents"
+  },
+  {
+    "name": "Ariel Complete Powder",
+    "categorySlug": "detergents"
+  },
+  {
+    "name": "Vim Dishwash Liquid Gel",
+    "categorySlug": "detergents"
+  },
+  {
+    "name": "Comfort Fabric Conditioner",
+    "categorySlug": "detergents"
+  },
+  {
+    "name": "Pril Liquid Dishwash",
+    "categorySlug": "detergents"
+  },
+  {
+    "name": "Dettol Antiseptic Liquid",
+    "categorySlug": "detergents"
+  },
+  {
+    "name": "Lizol Floor Cleaner Citrus",
+    "categorySlug": "detergents"
+  },
+  {
+    "name": "Harpic Toilet Cleaner",
+    "categorySlug": "detergents"
+  },
+  {
+    "name": "Rin Detergent Soap Bar",
+    "categorySlug": "detergents"
+  },
+  {
+    "name": "Narasus Udhayam Coffee",
+    "categorySlug": "coffee-and-tea"
+  },
+  {
+    "name": "3 Roses Dust Tea",
+    "categorySlug": "coffee-and-tea"
+  },
+  {
+    "name": "Taj Mahal Premium Tea",
+    "categorySlug": "coffee-and-tea"
+  },
+  {
+    "name": "Cothas Coffee Traditional",
+    "categorySlug": "coffee-and-tea"
+  },
+  {
+    "name": "Nescafe Classic Instant",
+    "categorySlug": "coffee-and-tea"
+  },
+  {
+    "name": "Tata Tea Chakra Gold",
+    "categorySlug": "coffee-and-tea"
+  },
+  {
+    "name": "Red Label Tea Natural Care",
+    "categorySlug": "coffee-and-tea"
+  },
+  {
+    "name": "AVT Premium Dust Tea",
+    "categorySlug": "coffee-and-tea"
+  },
+  {
+    "name": "Green Tea Honey Lemon",
+    "categorySlug": "coffee-and-tea"
+  },
+  {
+    "name": "Aachi Sambar Powder",
+    "categorySlug": "masalas"
+  },
+  {
+    "name": "Aachi Garam Masala",
+    "categorySlug": "masalas"
+  },
+  {
+    "name": "Turmeric Powder Pure",
+    "categorySlug": "masalas"
+  },
+  {
+    "name": "Chilli Powder Extra Hot",
+    "categorySlug": "masalas"
+  },
+  {
+    "name": "Sakthi Coriander Powder",
+    "categorySlug": "masalas"
+  },
+  {
+    "name": "Sakthi Biryani Masala",
+    "categorySlug": "masalas"
+  },
+  {
+    "name": "Aachi Kulambu Milagai Thool",
+    "categorySlug": "masalas"
+  },
+  {
+    "name": "Sakthi Pepper Powder",
+    "categorySlug": "masalas"
+  },
+  {
+    "name": "Ponni Boiled Rice Premium",
+    "categorySlug": "rice"
+  },
+  {
+    "name": "Basmati Rice India Gate",
+    "categorySlug": "rice"
+  },
+  {
+    "name": "Raw Rice (Pachai Arisi)",
+    "categorySlug": "rice"
+  },
+  {
+    "name": "Idli Rice Gundu Arisi",
+    "categorySlug": "rice"
+  },
+  {
+    "name": "Aachi Chicken Masala",
+    "categorySlug": "masalas"
+  },
+  {
+    "name": "Aachi Mutton Masala",
+    "categorySlug": "masalas"
+  },
+  {
+    "name": "Brown Rice Organic",
+    "categorySlug": "rice"
+  },
+  {
+    "name": "Jeeraga Samba Rice",
+    "categorySlug": "rice"
+  },
+  {
+    "name": "Sona Masoori Rice",
+    "categorySlug": "rice"
+  },
+  {
+    "name": "Seeraga Samba Briyani Rice",
+    "categorySlug": "rice"
+  },
+  {
+    "name": "Karuppu Kavuni Rice",
+    "categorySlug": "rice"
+  },
+  {
+    "name": "Mapillai Samba Rice",
+    "categorySlug": "rice"
+  },
+  {
+    "name": "Aashirvaad Shudh Chakki Atta",
+    "categorySlug": "flour"
+  },
+  {
+    "name": "Maida Premium Quality",
+    "categorySlug": "flour"
+  },
+  {
+    "name": "Rice Flour (Arisi Maavu)",
+    "categorySlug": "flour"
+  },
+  {
+    "name": "Ragi Flour (Finger Millet)",
+    "categorySlug": "flour"
+  },
+  {
+    "name": "Gram Flour (Besan)",
+    "categorySlug": "flour"
+  },
+  {
+    "name": "Bajra Flour (Pearl Millet)",
+    "categorySlug": "flour"
+  },
+  {
+    "name": "Semolina (Sooji Rava)",
+    "categorySlug": "flour"
+  },
+  {
+    "name": "Wheat Rava Medium",
+    "categorySlug": "flour"
+  },
+  {
+    "name": "Corn Flour Thickener",
+    "categorySlug": "flour"
+  },
+  {
+    "name": "Multi Grain Atta",
+    "categorySlug": "flour"
+  },
+  {
+    "name": "Dettol Liquid Handwash Refill",
+    "categorySlug": "soap"
+  },
+  {
+    "name": "Santoor Sandal Bath Soap",
+    "categorySlug": "soap"
+  },
+  {
+    "name": "Dettol Original Soap Bar",
+    "categorySlug": "soap"
+  },
+  {
+    "name": "Lifebuoy Total Soap Bar",
+    "categorySlug": "soap"
+  },
+  {
+    "name": "Hammam Neem Soap Bar",
+    "categorySlug": "soap"
+  },
+  {
+    "name": "Lux Soft Touch Rose Soap",
+    "categorySlug": "soap"
+  },
+  {
+    "name": "Medimix Ayurvedic Soap",
+    "categorySlug": "soap"
+  },
+  {
+    "name": "Margo Pure Neem Soap",
+    "categorySlug": "soap"
+  },
+  {
+    "name": "Godrej No.1 Sandal Soap",
+    "categorySlug": "soap"
+  },
+  {
+    "name": "Dove Cream Bathing Bar",
+    "categorySlug": "soap"
+  },
+  {
+    "name": "Maaza Mango Drink Juice",
+    "categorySlug": "beverages"
+  },
+  {
+    "name": "Tropicana Orange Juice Juice",
+    "categorySlug": "beverages"
+  },
+  {
+    "name": "Coca Cola Soft Drink",
+    "categorySlug": "beverages"
+  },
+  {
+    "name": "Sprite Soft Drink Lime",
+    "categorySlug": "beverages"
+  },
+  {
+    "name": "Pepsi Soft Drink",
+    "categorySlug": "beverages"
+  },
+  {
+    "name": "Kinley Mineral Water bottle",
+    "categorySlug": "beverages"
+  },
+  {
+    "name": "Paper Boat Mango Aamras",
+    "categorySlug": "beverages"
+  },
+  {
+    "name": "Real Mixed Fruit Juice",
+    "categorySlug": "beverages"
+  },
+  {
+    "name": "7Up Soft Drink Lemon",
+    "categorySlug": "beverages"
+  },
+  {
+    "name": "Papaya",
+    "categorySlug": "fruits"
+  },
+  {
+    "name": "Bru Instant Coffee Powder",
+    "categorySlug": "coffee-and-tea"
+  },
+  {
+    "name": "Apple Royal Gala",
+    "categorySlug": "fruits"
+  },
+  {
+    "name": "Beetroot",
+    "categorySlug": "vegetables"
+  },
+  {
+    "name": "Cabbage",
+    "categorySlug": "vegetables"
+  },
+  {
+    "name": "Cucumber",
+    "categorySlug": "vegetables"
+  },
+  {
+    "name": "Kiwi Imported",
+    "categorySlug": "fruits"
+  },
+  {
+    "name": "Ladies Finger",
+    "categorySlug": "vegetables"
+  },
+  {
+    "name": "Potato",
+    "categorySlug": "vegetables"
+  },
+  {
+    "name": "Red Bull Energy Drink",
+    "categorySlug": "beverages"
+  }
+]

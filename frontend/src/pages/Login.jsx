@@ -180,9 +180,9 @@ const Login = () => {
         </div>
       </div>
 
-      {/* RIGHT COLUMN: LOGIN CARD (55%) */}
-      <div className="flex-1 flex items-center justify-center p-6 lg:p-16">
-        <div className="max-w-[480px] w-full bg-white rounded-[24px] shadow-[0_12px_40px_rgba(22,163,74,0.06)] border border-green-50/50 p-8 lg:p-10 transition-all duration-300">
+      {/* RIGHT COLUMN: LOGIN CARD */}
+      <div className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-16">
+        <div className="max-w-[480px] w-full bg-white rounded-[24px] shadow-[0_12px_40px_rgba(22,163,74,0.06)] border border-green-50/50 p-6 sm:p-8 lg:p-10 transition-all duration-300">
           
           {/* Heading */}
           <div className="text-left mb-8">

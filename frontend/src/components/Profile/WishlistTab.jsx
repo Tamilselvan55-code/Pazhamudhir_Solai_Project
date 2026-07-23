@@ -89,7 +89,7 @@ const WishlistTab = () => {
           </Link>
         </div>
       ) : (
-        <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
           {wishlist.map((product) => (
             <div
               key={product._id}

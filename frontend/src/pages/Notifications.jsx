@@ -170,7 +170,7 @@ const Notifications = () => {
   };
 
   return (
-    <div className="min-h-screen pb-24 pt-8 px-4 sm:px-6 lg:px-8" style={{ background: '#f7fdf7' }}>
+    <div className="min-h-screen pb-24 pt-4 sm:pt-8 px-3 sm:px-4 lg:px-8" style={{ background: '#f7fdf7' }}>
       <div className="max-w-4xl mx-auto">
         {/* Header Block */}
         <div className="mb-6 flex items-center justify-between">

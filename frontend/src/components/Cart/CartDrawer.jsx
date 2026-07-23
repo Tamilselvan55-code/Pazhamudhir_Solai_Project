@@ -46,7 +46,7 @@ const CartDrawer = ({ isOpen, onClose }) => {
                   <div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden shrink-0">
                     <ProductImage src={item.image} alt={item.name} category={item.category} fit="cover" size="sm" className="w-full h-full" />
                   </div>
-                  <div className="flex-1 flex flex-col justify-between">
+                  <div className="flex-1 flex flex-col justify-between min-w-0">
                     <div>
                       <h3 className="text-sm font-semibold text-gray-800 line-clamp-1">{item.name}</h3>
                       {(item.tamilName || item.nameTamil) && (
@@ -81,7 +81,7 @@ const CartDrawer = ({ isOpen, onClose }) => {
 
         {/* Footer */}
         {cartItems.length > 0 && (
-          <div className="bg-white border-t border-gray-100 p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] pb-safe">
+          <div className="bg-white border-t border-gray-100 p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]" style={{ paddingBottom: 'max(16px, env(safe-area-inset-bottom))' }}>
             <div className="flex justify-between items-center mb-4 text-sm">
               <span className="text-gray-600">Total Bill</span>
               <span className="font-bold text-lg">{formatCurrency(getTotalPrice())}</span>

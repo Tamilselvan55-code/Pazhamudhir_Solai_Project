@@ -34,13 +34,13 @@ const Navbar = ({ toggleCart }) => {
     <>
       {settings?.announcementBanner && (
         <div 
-          className="text-white text-center py-2 px-4 text-xs font-bold tracking-wide select-none"
+          className="text-white text-center py-2 px-3 text-xs font-bold tracking-wide select-none overflow-hidden"
           style={{
             background: 'linear-gradient(135deg, var(--color-primary, #16a34a), var(--color-secondary, #15803d))',
             boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
           }}
         >
-          {settings.announcementBanner}
+          <span className="block truncate">{settings.announcementBanner}</span>
         </div>
       )}
       <header className="sticky top-0 z-50" style={{
@@ -50,7 +50,7 @@ const Navbar = ({ toggleCart }) => {
       borderBottom: '1px solid rgba(22,163,74,0.12)',
       boxShadow: '0 2px 20px rgba(0,0,0,0.06)',
     }}>
-      <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-4">
 
         {/* Logo */}
         <Link to="/" className="shrink-0" style={{ textDecoration: 'none' }}>
@@ -141,7 +141,7 @@ const Navbar = ({ toggleCart }) => {
         </div>
 
         {/* Mobile Actions: Bell + Profile + Cart */}
-        <div className="flex md:hidden items-center gap-2">
+        <div className="flex md:hidden items-center gap-1.5">
           {userInfo && <NotificationBell />}
 
           {userInfo ? (

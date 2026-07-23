@@ -20,9 +20,9 @@ const DashboardOverviewTab = ({ userInfo, orders, onLogout, onViewAllOrders, onV
       {/* 1. Overview Stats Cards */}
       <div>
         <h2 className="text-xl font-bold text-gray-900 mb-4">Dashboard Overview</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
           {/* Card 1: Total Orders */}
-          <div className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all">
+          <div className="bg-white p-4 sm:p-5 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all">
             <div className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mb-3">
               <Package className="w-5 h-5" />
             </div>
@@ -31,7 +31,7 @@ const DashboardOverviewTab = ({ userInfo, orders, onLogout, onViewAllOrders, onV
           </div>
 
           {/* Card 2: Total Products Ordered */}
-          <div className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all">
+          <div className="bg-white p-4 sm:p-5 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all">
             <div className="w-10 h-10 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center mb-3">
               <ShoppingBag className="w-5 h-5" />
             </div>
@@ -40,7 +40,7 @@ const DashboardOverviewTab = ({ userInfo, orders, onLogout, onViewAllOrders, onV
           </div>
 
           {/* Card 3: Total Amount Spent */}
-          <div className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all">
+          <div className="bg-white p-4 sm:p-5 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all">
             <div className="w-10 h-10 rounded-2xl bg-green-50 text-green-600 flex items-center justify-center mb-3">
               <Banknote className="w-5 h-5" />
             </div>
@@ -49,7 +49,7 @@ const DashboardOverviewTab = ({ userInfo, orders, onLogout, onViewAllOrders, onV
           </div>
 
           {/* Card 4: Pending Orders */}
-          <div className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all">
+          <div className="bg-white p-4 sm:p-5 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all">
             <div className="w-10 h-10 rounded-2xl bg-yellow-50 text-yellow-600 flex items-center justify-center mb-3">
               <Clock className="w-5 h-5" />
             </div>
@@ -58,7 +58,7 @@ const DashboardOverviewTab = ({ userInfo, orders, onLogout, onViewAllOrders, onV
           </div>
 
           {/* Card 5: Delivered Orders */}
-          <div className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all col-span-2 sm:col-span-1">
+          <div className="bg-white p-4 sm:p-5 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all col-span-2 sm:col-span-1">
             <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-3">
               <CheckCircle className="w-5 h-5" />
             </div>

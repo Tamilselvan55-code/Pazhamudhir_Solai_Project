@@ -15,6 +15,37 @@
   --admin-border: #E2E8F0;
 }
 
+/* ── GLOBAL MOBILE BASELINE ─────────────────────────────────────────────────── */
+html, body {
+  overflow-x: hidden;
+  max-width: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* No-scrollbar utility — used throughout app */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Safe area support for iPhone notch / home indicator */
+.pb-safe { padding-bottom: env(safe-area-inset-bottom, 16px); }
+.bottom-safe { bottom: env(safe-area-inset-bottom, 0px); }
+
+/* Touch-friendly min tap targets */
+@media (max-width: 767px) {
+  button, a, [role="button"] {
+    min-height: 36px;
+  }
+  /* Prevent text from being too small to read */
+  .text-\[9px\], .text-\[10px\] {
+    font-size: 10px;
+  }
+}
+
+/* Ensure images never overflow their containers */
+img {
+  max-width: 100%;
+}
+
 html.dark {
   --admin-bg: #020B24;
   --admin-sidebar: #081529;

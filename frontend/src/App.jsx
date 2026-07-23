@@ -149,9 +149,9 @@ function App() {
     <GuestToastProvider />
     <div className="min-h-screen relative" style={{ background: '#f7fdf7' }}>
       {cartNotice && (
-        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[100] bg-orange-600 text-white px-6 py-3 rounded-xl shadow-xl flex items-center gap-3 text-sm font-semibold animate-bounce">
-          <span>{cartNotice}</span>
-          <button onClick={() => setCartNotice('')} className="font-bold text-lg ml-2 hover:opacity-80">✕</button>
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[100] bg-orange-600 text-white px-4 sm:px-6 py-3 rounded-xl shadow-xl flex items-center gap-3 text-sm font-semibold animate-bounce max-w-[90vw] sm:max-w-none">
+          <span className="line-clamp-2 sm:line-clamp-none">{cartNotice}</span>
+          <button onClick={() => setCartNotice('')} className="font-bold text-lg ml-2 hover:opacity-80 shrink-0">✕</button>
         </div>
       )}
 
@@ -206,17 +206,17 @@ function App() {
           <div className="max-w-4xl mx-auto space-y-2">
             <h3 className="font-extrabold text-gray-800 text-base">Tiruchendur Murugan Pazhamudhir Solai</h3>
             <p className="text-gray-500 text-xs">Fresh fruits, vegetables, groceries and daily essentials delivered within our service area.</p>
-            <div className="flex justify-center items-center gap-4 py-2">
+            <div className="flex flex-wrap justify-center items-center gap-x-3 gap-y-2 py-2">
               <a href="/legal?tab=privacy" className="text-xs text-green-600 hover:underline">Privacy Policy</a>
-              <span className="text-gray-300 text-xs">|</span>
-              <a href="/legal?tab=terms" className="text-xs text-green-600 hover:underline">Terms & Conditions</a>
-              <span className="text-gray-300 text-xs">|</span>
+              <span className="text-gray-300 text-xs hidden sm:inline">|</span>
+              <a href="/legal?tab=terms" className="text-xs text-green-600 hover:underline">Terms &amp; Conditions</a>
+              <span className="text-gray-300 text-xs hidden sm:inline">|</span>
               <a href="mailto:support@tiruchendurmurugan.com" className="text-xs text-green-600 hover:underline">Contact Us</a>
-              <span className="text-gray-300 text-xs">|</span>
+              <span className="text-gray-300 text-xs hidden sm:inline">|</span>
               <a href="#about" className="text-xs text-green-600 hover:underline">About Us</a>
             </div>
             <p className="text-gray-400 text-xs pt-3 border-t border-gray-50 mt-3">
-              © {new Date().getFullYear()} Tiruchendur Murugan Pazhamudhir Solai. All rights reserved. • www.tiruchendurmuruganpazhamudhirsolai.com
+              © {new Date().getFullYear()} Tiruchendur Murugan Pazhamudhir Solai. All rights reserved.
             </p>
           </div>
         </footer>

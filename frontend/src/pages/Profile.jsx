@@ -91,7 +91,7 @@ const Profile = () => {
     : null;
 
   return (
-    <div className="min-h-screen pb-24 pt-8 px-4 sm:px-6 lg:px-8" style={{ background: '#f7fdf7' }}>
+    <div className="min-h-screen pb-24 pt-4 sm:pt-8 px-3 sm:px-4 lg:px-8" style={{ background: '#f7fdf7' }}>
       <div className="max-w-7xl mx-auto">
         
         {/* Top Navigation Back Link */}
@@ -104,11 +104,11 @@ const Profile = () => {
           </Link>
         </div>
 
-        {/* Dashboard Layout: Left Sidebar | Main Dashboard Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
+        {/* Dashboard Layout: Sidebar | Content */}
+        <div className="flex flex-col lg:grid lg:grid-cols-4 gap-4 sm:gap-8 items-start">
           
-          {/* Left Sidebar (Col 1) */}
-          <div className="lg:col-span-1">
+          {/* Left Sidebar — shown second on mobile, first on desktop */}
+          <div className="lg:col-span-1 order-2 lg:order-1">
             <DashboardSidebar
               userInfo={userInfo}
               totalOrders={orders.length}
@@ -119,8 +119,8 @@ const Profile = () => {
             />
           </div>
 
-          {/* Main Dashboard Content (Col 3) */}
-          <div className="lg:col-span-3">
+          {/* Main Content — shown first on mobile */}
+          <div className="lg:col-span-3 order-1 lg:order-2 w-full">
             {activeTab === 'dashboard' && (
               <DashboardOverviewTab
                 userInfo={userInfo}

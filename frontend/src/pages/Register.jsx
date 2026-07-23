@@ -376,13 +376,13 @@ const Register = () => {
           </div>
         </div>
 
-        {/* ─── RIGHT REGISTRATION SECTION (55% Width on Desktop) ────────── */}
-        <div className="w-full lg:w-[55%] flex items-center justify-center p-6 sm:p-10 md:p-12 h-full overflow-y-auto">
-          <div className="w-full max-w-[700px] py-6">
+        {/* ─── RIGHT REGISTRATION SECTION ────────── */}
+        <div className="w-full lg:w-[55%] flex items-center justify-center p-4 sm:p-6 md:p-10 lg:p-12 h-full overflow-y-auto">
+          <div className="w-full max-w-[700px] py-4 sm:py-6">
             
             {/* REGISTER STEP */}
             {step === 'register' && (
-              <div className="bg-white rounded-[24px] shadow-[0_8px_40px_rgba(0,0,0,0.06)] border border-gray-100 p-8 sm:p-12 transition-all duration-300 w-full">
+              <div className="bg-white rounded-[24px] shadow-[0_8px_40px_rgba(0,0,0,0.06)] border border-gray-100 p-5 sm:p-8 md:p-12 transition-all duration-300 w-full">
                 
                 {/* Header */}
                 <div className="text-center mb-8">

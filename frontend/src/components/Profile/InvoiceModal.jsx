@@ -17,8 +17,8 @@ const InvoiceModal = ({ order, userInfo, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fadeIn">
-      <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100 flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/50 backdrop-blur-sm animate-fadeIn">
+      <div className="bg-white rounded-t-3xl sm:rounded-3xl max-w-2xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100 flex flex-col">
         {/* Actions bar (hidden during print) */}
         <div className="p-4 border-b border-gray-100 flex items-center justify-between print:hidden">
           <h3 className="text-base font-bold text-gray-800">Tax Invoice / Bill</h3>
@@ -49,8 +49,8 @@ const InvoiceModal = ({ order, userInfo, onClose }) => {
           </div>
         </div>
 
-        {/* Invoice Printable Area - Supermarket Style */}
-        <div className="p-8 space-y-6 text-slate-800 bg-white print:p-0">
+        {/* Invoice Printable Area */}
+        <div className="p-4 sm:p-8 space-y-4 sm:space-y-6 text-slate-800 bg-white print:p-0 overflow-x-auto">
           {/* Header Section */}
           <div className="flex flex-col md:flex-row justify-between items-center border-b border-slate-200 pb-6 gap-4">
             <div className="flex items-center gap-4">

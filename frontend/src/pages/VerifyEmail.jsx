@@ -283,7 +283,7 @@ const VerifyEmail = () => {
               /* OTP Code Input Boxes */
               <form onSubmit={handleVerify} className="space-y-6">
                 
-                <div className="flex justify-between gap-2.5 max-w-sm mx-auto">
+                <div className="flex justify-between gap-1.5 sm:gap-2.5 max-w-sm mx-auto">
                   {otp.map((digit, idx) => (
                     <input
                       key={idx}
@@ -296,7 +296,7 @@ const VerifyEmail = () => {
                       onChange={(e) => handleOtpChange(idx, e.target.value)}
                       onKeyDown={(e) => handleOtpKeyDown(idx, e)}
                       onPaste={handleOtpPaste}
-                      className="w-11 h-14 sm:w-12 sm:h-15 text-center text-xl font-extrabold text-gray-900 bg-gray-50/50 border border-gray-200 rounded-xl focus:border-green-600 focus:bg-white focus:ring-1 focus:ring-green-500/20 focus:outline-none transition-all"
+                      className="w-10 h-14 sm:w-12 sm:h-15 text-center text-xl font-extrabold text-gray-900 bg-gray-50/50 border border-gray-200 rounded-xl focus:border-green-600 focus:bg-white focus:ring-1 focus:ring-green-500/20 focus:outline-none transition-all"
                     />
                   ))}
                 </div>

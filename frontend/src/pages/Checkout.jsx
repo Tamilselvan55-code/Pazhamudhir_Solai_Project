@@ -311,7 +311,7 @@ const Checkout = () => {
   return (
     <>
       {/* ── Page ──────────────────────────────────────────────────────────── */}
-      <div className="max-w-4xl mx-auto px-4 py-6 md:py-10 pb-28 grid md:grid-cols-2 gap-6 md:gap-8">
+      <div className="max-w-4xl mx-auto px-3 sm:px-4 py-4 sm:py-6 md:py-10 pb-28 grid md:grid-cols-2 gap-5 md:gap-8">
 
         {/* ══════════════ LEFT COLUMN — Delivery Details ══════════════════ */}
         <div className="space-y-5">

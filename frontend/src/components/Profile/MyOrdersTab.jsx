@@ -89,7 +89,7 @@ const MyOrdersTab = ({ orders, loading, onRefresh, onViewDetails, onDownloadInvo
   return (
     <div className="space-y-6 animate-fadeIn">
       {/* Header Controls */}
-      <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm space-y-4">
+      <div className="bg-white rounded-3xl p-4 sm:p-6 border border-gray-100 shadow-sm space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h2 className="text-xl font-bold text-gray-900">My Orders</h2>
@@ -163,8 +163,8 @@ const MyOrdersTab = ({ orders, loading, onRefresh, onViewDetails, onDownloadInvo
             return (
               <div key={order._id} className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all overflow-hidden">
                 {/* Order Top Banner */}
-                <div className="bg-gray-50/80 px-6 py-4 border-b border-gray-100 flex flex-wrap items-center justify-between gap-3 text-xs">
-                  <div className="flex items-center gap-4">
+                <div className="bg-gray-50/80 px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-100 flex flex-wrap items-center justify-between gap-2 sm:gap-3 text-xs">
+                  <div className="flex flex-wrap items-center gap-3 sm:gap-4">
                     <div>
                       <span className="text-gray-400 font-bold uppercase">Order ID</span>
                       <p className="font-extrabold text-gray-900 mt-0.5">{order.invoiceNumber || `#${order._id.slice(-6).toUpperCase()}`}</p>

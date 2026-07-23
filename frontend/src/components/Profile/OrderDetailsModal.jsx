@@ -52,8 +52,8 @@ const OrderDetailsModal = ({ order, onClose, onDownloadInvoice }) => {
   const timelineSteps = getTimelineSteps();
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fadeIn">
-      <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/50 backdrop-blur-sm animate-fadeIn">
+      <div className="bg-white rounded-t-3xl sm:rounded-3xl max-w-2xl w-full max-h-[92vh] sm:max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100">
         {/* Header */}
         <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-5 flex items-center justify-between z-10">
           <div className="flex items-center gap-3">
@@ -68,9 +68,9 @@ const OrderDetailsModal = ({ order, onClose, onDownloadInvoice }) => {
           <div className="flex items-center gap-2">
             <button
               onClick={() => onDownloadInvoice(order)}
-              className="px-3.5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold rounded-xl flex items-center gap-1.5 transition-colors"
+              className="px-2.5 sm:px-3.5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold rounded-xl flex items-center gap-1.5 transition-colors"
             >
-              <FileText className="w-4 h-4" /> Invoice
+              <FileText className="w-4 h-4" /> <span className="hidden sm:inline">Invoice</span>
             </button>
             <button
               onClick={onClose}
@@ -81,7 +81,7 @@ const OrderDetailsModal = ({ order, onClose, onDownloadInvoice }) => {
           </div>
         </div>
 
-        <div className="p-6 space-y-6">
+        <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
           {/* Status Badge & Summary */}
           <div className="flex flex-wrap items-center justify-between gap-4 bg-gray-50 p-4 rounded-2xl border border-gray-100">
             <div>

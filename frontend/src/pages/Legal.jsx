@@ -150,7 +150,7 @@ const Legal = () => {
   ];
 
   return (
-    <div className="pb-28 max-w-4xl mx-auto px-4 sm:px-6 pt-6">
+    <div className="pb-28 max-w-4xl mx-auto px-3 sm:px-6 pt-4 sm:pt-6">
       
       {/* Header Section */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8 mb-6 text-center">

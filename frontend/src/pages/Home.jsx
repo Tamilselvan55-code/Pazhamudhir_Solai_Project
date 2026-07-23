@@ -1,5 +1,6 @@
 import { API_BASE as config_API_BASE, API_URL as config_API_URL } from '../config/api';
 import React, { useState, useMemo, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import ProductCard from '../components/Product/ProductCard';
 import { ChevronRight, Search, X, Loader2 } from 'lucide-react';
 import axios from 'axios';
@@ -95,7 +96,7 @@ const ProductSection = ({ categoryObj, products, onSeeAll }) => {
   };
   if (!products.length) return null;
   return (
-    <section className="mb-8">
+    <section className="mb-8" id={categoryObj.id}>
       <div className={`${meta.banner} rounded-2xl px-4 py-3 mb-3 flex items-center justify-between shadow-sm`}>
         <div>
           <h2 className="text-white font-extrabold text-base flex items-center gap-2">
@@ -117,6 +118,8 @@ const ProductSection = ({ categoryObj, products, onSeeAll }) => {
 // ── Main Page ──────────────────────────────────────────────────────────────────
 const Home = () => {
   const settings = useSettingsStore((s) => s.settings);
+  const location = useLocation();
+  const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [products, setProducts] = useState([]);
@@ -235,11 +238,31 @@ const Home = () => {
     return meta;
   }, [categoriesList]);
 
+  useEffect(() => {
+    if (!loading && !categoriesLoading && products.length > 0 && showSections) {
+      const params = new URLSearchParams(location.search);
+      const targetId = params.get('scroll');
+
+      if (targetId) {
+        const element = document.getElementById(targetId);
+        if (element) {
+          setTimeout(() => {
+            element.scrollIntoView({
+              behavior: 'smooth',
+              block: 'start'
+            });
+            navigate("/", { replace: true });
+          }, 100);
+        }
+      }
+    }
+  }, [loading, categoriesLoading, products.length, showSections, location.search, navigate]);
+
   return (
-    <div className="pb-28 max-w-7xl mx-auto px-3 md:px-4">
+    <div className="pb-24 max-w-7xl mx-auto px-2 sm:px-3 md:px-4">
 
       {/* ── Hero ─────────────────────────────────────────────────────── */}
-      <div className="relative rounded-2xl overflow-hidden my-4 shadow-lg h-40 md:h-56">
+      <div className="relative rounded-2xl overflow-hidden my-3 sm:my-4 shadow-lg h-36 sm:h-40 md:h-56">
         <img 
           src={
             settings?.homepageBanner && settings.homepageBanner.trim() !== ''
@@ -252,38 +275,38 @@ const Home = () => {
           className="w-full h-full object-cover" 
         />
         <div 
-          className="absolute inset-0 flex flex-col justify-center px-5 md:px-10"
+          className="absolute inset-0 flex flex-col justify-center px-4 sm:px-5 md:px-10"
           style={{
             background: 'linear-gradient(90deg, rgba(var(--color-primary-rgb, 22, 163, 74), 0.9) 0%, rgba(var(--color-secondary-rgb, 129, 199, 132), 0.5) 70%, transparent 100%)'
           }}
         >
-          <span className="text-white text-[10px] md:text-xs font-bold uppercase tracking-widest mb-1 bg-black/25 px-2 py-0.5 rounded-full w-fit">
+          <span className="text-white text-[9px] sm:text-[10px] md:text-xs font-bold uppercase tracking-widest mb-1 bg-black/25 px-2 py-0.5 rounded-full w-fit max-w-[90%] truncate">
             Hyperlocal · {Number(settings?.deliveryRadiusKm || import.meta.env.VITE_DELIVERY_RADIUS_KM || 30)} KM Delivery ({settings?.deliveryTiming || 'Same Day'})
           </span>
-          <h1 className="text-xl md:text-3xl font-extrabold text-white leading-tight mb-1 mt-2">
+          <h1 className="text-lg sm:text-xl md:text-3xl font-extrabold text-white leading-tight mb-1 mt-1 sm:mt-2">
             {settings?.storeName || 'Fresh Groceries'} 🛒<br />
-            <span className="text-green-200 text-xs md:text-lg font-semibold">
+            <span className="text-green-200 text-[10px] sm:text-xs md:text-lg font-semibold line-clamp-1">
               {settings?.websiteName || 'Tiruchendur Murugan Pazhamudhir Solai'}
             </span>
           </h1>
-          <p className="text-white/80 text-[10px] md:text-xs max-w-md line-clamp-2">
+          <p className="text-white/80 text-[9px] sm:text-[10px] md:text-xs max-w-[85%] line-clamp-2">
             {settings?.storeDescription || 'Fresh fruits, vegetables, groceries and daily essentials.'}
           </p>
         </div>
       </div>
 
       {/* ── Page Search ──────────────────────────────────────────────── */}
-      <div className="relative mb-4">
-        <Search className="absolute left-4 top-3.5 text-gray-400 w-4 h-4" />
+      <div className="relative mb-3 sm:mb-4">
+        <Search className="absolute left-3 sm:left-4 top-3.5 text-gray-400 w-4 h-4" />
         <input
           type="text"
           value={searchQuery}
           onChange={e => setSearchQuery(e.target.value)}
-          placeholder="Search in English or Tamil (e.g. Tomato, Thakkali)..."
-          className="w-full bg-white border-2 border-gray-200 focus:border-green-500 rounded-2xl py-3 pl-10 pr-10 text-sm focus:outline-none shadow-sm transition-colors"
+          placeholder="Search products..."
+          className="w-full bg-white border-2 border-gray-200 focus:border-green-500 rounded-2xl py-3 pl-9 sm:pl-10 pr-10 text-sm focus:outline-none shadow-sm transition-colors"
         />
         {searchQuery && (
-          <button onClick={() => setSearchQuery('')} className="absolute right-4 top-3.5 text-gray-400 hover:text-gray-600">
+          <button onClick={() => setSearchQuery('')} className="absolute right-3 sm:right-4 top-3.5 text-gray-400 hover:text-gray-600">
             <X className="w-4 h-4" />
           </button>
         )}

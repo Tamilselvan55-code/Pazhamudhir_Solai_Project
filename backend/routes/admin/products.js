@@ -5,6 +5,7 @@ import prisma from '../../utils/prismaClient.js';
 import { formatMongoCompat, formatMongoCompatArray } from '../../utils/formatMongoCompat.js';
 import { productUpdateUpload } from './upload.js';
 import { createAndEmitNotification } from '../../utils/notificationHelper.js';
+import { handleCloudinaryUpload, deleteCloudinaryImage } from '../../middleware/cloudinaryUpload.js';
 
 const router = express.Router();
 
@@ -443,6 +444,59 @@ router.post('/products/bulk', async (req, res) => {
   } catch (error) {
     console.error('Bulk products update error:', error);
     res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// POST /api/admin/products/:id/upload-image - Upload product image to Cloudinary
+router.post('/products/:id/upload-image', protectAdmin, async (req, res, next) => {
+  try {
+    const product = await prisma.product.findUnique({ where: { id: req.params.id } });
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+    req.targetProduct = product;
+    next();
+  } catch (error) {
+    console.error('Check product error:', error);
+    return res.status(500).json({ message: 'Server error: ' + error.message });
+  }
+}, handleCloudinaryUpload('image'), async (req, res) => {
+  try {
+    const original = formatMongoCompat(req.targetProduct);
+
+    // Delete old Cloudinary image if it exists
+    if (original.image) {
+      await deleteCloudinaryImage(original.image);
+    }
+
+    const newImageUrl = req.file.path || req.file.secure_url;
+
+    const updatedProductRaw = await prisma.product.update({
+      where: { id: req.params.id },
+      data: {
+        image: newImageUrl,
+        images: [newImageUrl]
+      }
+    });
+
+    const updatedProduct = formatMongoCompat(updatedProductRaw);
+
+    await logAuditAndEmit(
+      req,
+      'Upload Product Image (Cloudinary)',
+      'Product',
+      updatedProduct._id,
+      updatedProduct.name,
+      JSON.stringify(original),
+      JSON.stringify(updatedProduct),
+      'product_update',
+      updatedProduct
+    );
+
+    return res.status(200).json(updatedProduct);
+  } catch (error) {
+    console.error('Upload product image to Cloudinary error:', error);
+    return res.status(500).json({ message: 'Server error: ' + error.message });
   }
 });
 
