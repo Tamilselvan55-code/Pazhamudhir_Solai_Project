@@ -521,7 +521,7 @@ const Reports = () => {
                           <div className="flex items-center gap-2.5">
                             {p.image ? (
                               <img
-                                src={`${config_API_URL}${p.image}`}
+                                src={p.image.startsWith('http') ? p.image : `${config_API_URL}${p.image}`}
                                 alt={p.name}
                                 className="w-8 h-8 rounded-lg object-cover border border-white/8 shrink-0"
                                 onError={e => { e.target.style.display = 'none'; }}

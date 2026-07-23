@@ -32,6 +32,9 @@ const Products = () => {
   const { adminAlert, adminConfirm, adminPrompt } = useModal();
   const jsonImportInputRef = useRef(null);
   const bulkImageInputRef = useRef(null);
+  const singleImageInputRef = useRef(null);
+  const [uploadTargetProductId, setUploadTargetProductId] = useState(null);
+  const [uploadingProductId, setUploadingProductId] = useState(null);
   const [products, setProducts] = useState([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -346,6 +349,100 @@ const Products = () => {
     }
   };
 
+  // Single Product Image Upload handlers
+  const handleTriggerChangeImage = (productId) => {
+    setUploadTargetProductId(productId);
+    if (singleImageInputRef.current) {
+      singleImageInputRef.current.value = '';
+      singleImageInputRef.current.click();
+    }
+  };
+
+  const handleProductImageUpload = async (e) => {
+    const file = e.target.files && e.target.files[0];
+    const targetId = uploadTargetProductId;
+    if (!file || !targetId) return;
+
+    e.target.value = '';
+
+    // Validate file type (only jpg, jpeg, png, webp)
+    const allowedExtensions = ['jpg', 'jpeg', 'png', 'webp'];
+    const fileExt = file.name.split('.').pop().toLowerCase();
+    const allowedMimeTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+
+    if (!allowedExtensions.includes(fileExt) || !allowedMimeTypes.includes(file.type)) {
+      const msg = 'Invalid file type. Only JPG, JPEG, PNG, and WEBP images are allowed.';
+      setError(msg);
+      adminAlert('error', 'Invalid File Type', msg);
+      return;
+    }
+
+    // Validate file size (10MB limit)
+    const maxSizeInBytes = 10 * 1024 * 1024;
+    if (file.size > maxSizeInBytes) {
+      const msg = 'File too large. Maximum size allowed is 10MB.';
+      setError(msg);
+      adminAlert('error', 'File Too Large', msg);
+      return;
+    }
+
+    setUploadingProductId(targetId);
+    try {
+      const formDataUpload = new FormData();
+      formDataUpload.append('image', file);
+
+      const { data } = await axios.post(
+        `${config_API_BASE}/admin/products/${targetId}/upload-image`,
+        formDataUpload,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            Authorization: `Bearer ${adminInfo.token}`
+          }
+        }
+      );
+
+      const timestamp = Date.now();
+      const rawImageUrl = data.image || '';
+      const versionedImageUrl = rawImageUrl
+        ? `${rawImageUrl}${rawImageUrl.includes('?') ? '&' : '?'}v=${timestamp}`
+        : rawImageUrl;
+
+      const updatedProductObj = {
+        ...data,
+        image: versionedImageUrl,
+        images: (data.images || []).map(img => (img === rawImageUrl ? versionedImageUrl : img))
+      };
+
+      setProducts(prevProducts =>
+        prevProducts.map(p => (p._id === data._id ? updatedProductObj : p))
+      );
+
+      if (currentProduct && currentProduct._id === data._id) {
+        setCurrentProduct(updatedProductObj);
+        setFormData(prev => ({
+          ...prev,
+          image: versionedImageUrl,
+          images: updatedProductObj.images
+        }));
+      }
+
+      setSuccessMsg('Product image updated successfully!');
+    } catch (err) {
+      let message = 'Image upload failed. Please try again.';
+      if (err.code === 'ERR_NETWORK' || !err.response) {
+        message = 'Network error. Please check your internet connection and try again.';
+      } else if (err.response?.data?.message) {
+        message = err.response.data.message;
+      }
+      setError(message);
+      adminAlert('error', 'Upload Failed', message);
+    } finally {
+      setUploadingProductId(null);
+      setUploadTargetProductId(null);
+    }
+  };
+
   // Export to CSV
   const handleExportCSV = () => {
     const activeProducts = products.filter(p => selectedIds.includes(p._id));
@@ -599,6 +696,13 @@ const Products = () => {
               onChange={handleBulkImageUpload}
               className="hidden"
             />
+            <input
+              type="file"
+              ref={singleImageInputRef}
+              accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+              onChange={handleProductImageUpload}
+              className="hidden"
+            />
           </div>
         </div>
 
@@ -786,12 +890,33 @@ const Products = () => {
                           />
                         </td>
                         <td className="py-3.5 px-4">
-                          <div className="w-11 h-11 rounded-xl bg-white border border-white/8 flex items-center justify-center overflow-hidden shrink-0 shadow-sm">
-                            {p.image ? (
-                              <img src={p.image} alt={p.name} className="w-full h-full object-contain" style={{ padding: '2px', borderRadius: '10px' }} />
-                            ) : (
-                              <ImageIcon className="w-5 h-5 text-[#94A3B8]" />
-                            )}
+                          <div className="flex flex-col items-start gap-1.5">
+                            <div className="w-11 h-11 rounded-xl bg-white border border-white/8 flex items-center justify-center overflow-hidden shrink-0 shadow-sm">
+                              {p.image ? (
+                                <img src={p.image} alt={p.name} className="w-full h-full object-contain" style={{ padding: '2px', borderRadius: '10px' }} />
+                              ) : (
+                                <ImageIcon className="w-5 h-5 text-[#94A3B8]" />
+                              )}
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleTriggerChangeImage(p._id)}
+                              disabled={uploadingProductId === p._id}
+                              className="text-[10px] font-bold text-[#22C55E] hover:text-[#16A34A] bg-[#22C55E]/10 hover:bg-[#22C55E]/20 border border-[#22C55E]/20 px-2 py-0.5 rounded-lg transition-all flex items-center gap-1 shrink-0 disabled:opacity-50"
+                              title="Change product image"
+                            >
+                              {uploadingProductId === p._id ? (
+                                <>
+                                  <Loader2 className="w-3 h-3 animate-spin text-[#22C55E]" />
+                                  <span>Uploading...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Upload className="w-3 h-3 text-[#22C55E]" />
+                                  <span>Change Image</span>
+                                </>
+                              )}
+                            </button>
                           </div>
                         </td>
                         <td className="py-3.5 px-4 font-bold text-white">

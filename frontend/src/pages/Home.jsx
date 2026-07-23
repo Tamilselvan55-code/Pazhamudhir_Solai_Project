@@ -176,9 +176,27 @@ const Home = () => {
     const handleCategoryUpdate = () => {
       fetchCategories();
     };
+    const handleProductUpdate = (e) => {
+      const updatedProd = e.detail;
+      if (!updatedProd || !updatedProd._id) return;
+      const timestamp = Date.now();
+      const rawImg = updatedProd.image || '';
+      const versionedImg = rawImg ? `${rawImg}${rawImg.includes('?') ? '&' : '?'}v=${timestamp}` : rawImg;
+
+      setProducts((prevProducts) =>
+        prevProducts.map((p) =>
+          p._id === updatedProd._id
+            ? { ...p, ...updatedProd, image: versionedImg || p.image }
+            : p
+        )
+      );
+    };
+
     window.addEventListener('socket_category_update', handleCategoryUpdate);
+    window.addEventListener('socket_product_update', handleProductUpdate);
     return () => {
       window.removeEventListener('socket_category_update', handleCategoryUpdate);
+      window.removeEventListener('socket_product_update', handleProductUpdate);
     };
   }, []);
 

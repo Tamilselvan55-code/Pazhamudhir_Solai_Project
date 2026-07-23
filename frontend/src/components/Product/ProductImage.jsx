@@ -1,5 +1,4 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { getProfessionalProductImage } from '../../utils/imageMapping';
 
 /**
  * Category-aware product image placeholders.
@@ -87,36 +86,36 @@ const ProductImage = ({
   const retriedRef = useRef(false);
   const imgRef = useRef(null);
 
-  // Automatically fetch the professional image mapped by name and category
-  const professionalSrc = getProfessionalProductImage(alt, category, src);
+  // Always display Product.image directly from backend; fallback to SVG placeholder if missing
+  const displaySrc = src || getPlaceholderForCategory(category);
   const placeholder = getPlaceholderForCategory(category);
 
-  // When props.src changes (e.g. pagination or filtered view), reset state
+  // When props.src changes, reset state
   useEffect(() => {
     setStatus('loading');
     retriedRef.current = false;
-  }, [professionalSrc]);
+  }, [src]);
 
   const handleLoad = useCallback(() => {
     setStatus('loaded');
   }, []);
 
   const handleError = useCallback(() => {
-    // Retry once with cache-busting
-    if (!retriedRef.current && professionalSrc) {
+    // Retry once with cache-busting parameter
+    if (!retriedRef.current && src) {
       retriedRef.current = true;
-      const separator = professionalSrc.includes('?') ? '&' : '?';
+      const separator = src.includes('?') ? '&' : '?';
       if (imgRef.current) {
-        imgRef.current.src = `${professionalSrc}${separator}_retry=1`;
+        imgRef.current.src = `${src}${separator}_retry=1`;
       }
     } else {
-      // After retry fails, show category placeholder
+      // After retry fails, show category SVG placeholder
       setStatus('error');
       if (imgRef.current) {
         imgRef.current.src = placeholder;
       }
     }
-  }, [professionalSrc, placeholder]);
+  }, [src, placeholder]);
 
   return (
     <div className="relative w-full h-full overflow-hidden" style={{ minHeight: size === 'sm' ? 24 : size === 'lg' ? 144 : 64 }}>
@@ -129,7 +128,7 @@ const ProductImage = ({
       )}
       <img
         ref={imgRef}
-        src={professionalSrc || placeholder}
+        src={displaySrc}
         alt={alt || 'Product'}
         loading="lazy"
         className={`w-full h-full object-${fit} ${className} transition-opacity duration-300 ${status === 'loaded' ? 'opacity-100' : 'opacity-0'}`}
