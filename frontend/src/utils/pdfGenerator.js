@@ -342,7 +342,8 @@ export const generateInvoicePDF = async (order, userInfo) => {
     const total = price * qty;
     const engName = item.name || item.product?.name || 'Grocery Item';
     const tamName = item.nameTamil || item.tamilName || item.product?.nameTamil || item.product?.tamilName;
-    const dummyString = tamName ? `${engName}\n(${tamName})` : engName;
+    // Add an extra newline for slightly increased row height (about 6-8px equivalent in PDF units)
+    const dummyString = tamName ? `${engName}\n\n(${tamName})` : engName;
     return [idx + 1, { content: dummyString, engName, tamName }, qty, price.toFixed(2), '0%', '0.00', total.toFixed(2)];
   });
 
@@ -384,17 +385,22 @@ export const generateInvoicePDF = async (order, userInfo) => {
     tableWidth: contentW,
     willDrawCell: (data) => {
       if (data.section === 'body' && data.column.index === 1) {
-        const isAlt = data.row.index % 2 !== 0;
-        data.cell.styles.textColor = isAlt ? [248, 250, 252] : [255, 255, 255];
+        // Prevent AutoTable from rendering the text natively to avoid duplicates
+        data.cell.text = [];
       }
     },
     didDrawCell: (data) => {
       if (data.section === 'body' && data.column.index === 1) {
         const cell = data.cell;
-        const eng = cell.raw.engName || '';
-        const tam = cell.raw.tamName || '';
+        let eng = cell.raw.engName || '';
+        let tam = cell.raw.tamName || '';
+
+        // If English name already contains the Tamil name in parentheses, clean it up
+        if (tam && eng.includes(`(${tam})`)) {
+          eng = eng.replace(`(${tam})`, '').trim();
+        }
         
-        let textY = cell.y + 5.5; // Start position
+        let textY = cell.y + 6; // Start position pushed slightly down
         const textX = cell.x + 3.5;
         const maxWidth = cell.width - 7;
         
@@ -409,8 +415,9 @@ export const generateInvoicePDF = async (order, userInfo) => {
         });
         
         if (tam) {
+          textY += 0.5; // Extra 3-4 px (approx 1-1.5mm) vertical spacing
           data.doc.setFont(tamilFont, "normal");
-          data.doc.setFontSize(7); // Slightly smaller font for Tamil
+          data.doc.setFontSize(7);
           data.doc.setTextColor(71, 85, 105);
           const tamSplit = data.doc.splitTextToSize(`(${tam})`, maxWidth);
           tamSplit.forEach(line => {
