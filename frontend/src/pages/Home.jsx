@@ -162,7 +162,7 @@ const Home = () => {
     const fetchProducts = async () => {
       try {
         const { data } = await axios.get(`${config_API_BASE}/products`);
-        setProducts(data);
+        setProducts(data?.products || (Array.isArray(data) ? data : []));
       } catch (err) {
         console.error('Error fetching products:', err);
         setError('Failed to load products');

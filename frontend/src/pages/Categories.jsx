@@ -87,7 +87,7 @@ const Categories = () => {
         
         // Remove 'all' if backend includes it, or just use as-is
         setCategories((catRes.data || []).filter(c => c.id !== 'all'));
-        setProducts(prodRes.data || []);
+        setProducts(prodRes.data?.products || (Array.isArray(prodRes.data) ? prodRes.data : []));
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {
