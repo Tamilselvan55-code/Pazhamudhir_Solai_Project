@@ -73,14 +73,38 @@ router.post('/', protect, checkMaintenanceAndFeature('disableOrderPlacement'), c
       });
     }
 
+    // ── Address completeness check: block GPS-only addresses ─────────────────
+    const isCoordString = (str) => {
+      if (!str || typeof str !== 'string') return false;
+      const s = str.trim();
+      return /^-?\d{1,3}\.\d{4,}$/.test(s) ||
+             /^-?\d{1,3}\.\d+[\s,]+-?\d{1,3}\.\d+$/.test(s) ||
+             /-?\d{1,3}\.\d{4,}[\s,]+-?\d{1,3}\.\d{4,}/.test(s);
+    };
+
+    const street = (shippingAddress.street || '').trim();
+    const fullAddr = (shippingAddress.fullAddress || '').trim();
+    const streetIsCoords = isCoordString(street);
+    const fullAddrIsCoords = isCoordString(fullAddr);
+    const hasValidStreet = street && !streetIsCoords;
+    const hasValidFull = fullAddr && !fullAddrIsCoords && fullAddr !== 'Address unavailable';
+
+    if (!hasValidStreet && !hasValidFull) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please complete your delivery address. Door number, street name, and area are required. GPS coordinates alone cannot be used as a delivery address.',
+        missingFields: ['street', 'fullAddress'],
+      });
+    }
+
     const addressWarnings = [];
-    if (!shippingAddress.street && !shippingAddress.fullAddress) addressWarnings.push('street/fullAddress');
     if (!shippingAddress.city) addressWarnings.push('city');
     if (!shippingAddress.state) addressWarnings.push('state');
     if (!shippingAddress.pincode) addressWarnings.push('pincode');
     if (addressWarnings.length > 0) {
       console.warn('[ORDER] Address missing optional fields:', addressWarnings.join(', '));
     }
+
 
     const settingsRaw = await prisma.storeSettings.findFirst();
     const settings = formatMongoCompat(settingsRaw) || {};

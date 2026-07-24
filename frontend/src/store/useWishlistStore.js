@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import axios from 'axios';
 import { API_BASE } from '../config/api';
 import useAuthStore from './useAuthStore';
@@ -47,12 +47,14 @@ export const useWishlistStore = create(
         const isWishlisted = get().isInWishlist(prodId);
         const currentItems = get().wishlistItems || [];
 
-        // Optimistic UI Update
+        // Optimistic UI Update — prevent duplicates when adding
         let nextItems = [];
         if (isWishlisted) {
           nextItems = currentItems.filter(item => (item._id !== prodId && item.id !== prodId));
         } else {
-          nextItems = [...currentItems, product];
+          // Only add if not already in list (prevent duplicates)
+          const alreadyThere = currentItems.some(item => item._id === prodId || item.id === prodId);
+          nextItems = alreadyThere ? currentItems : [...currentItems, { ...product, _id: product._id || product.id }];
         }
 
         set({ wishlistItems: nextItems });
@@ -86,7 +88,7 @@ export const useWishlistStore = create(
     }),
     {
       name: 'pazhamudhir-wishlist-storage',
-      getStorage: () => localStorage
+      storage: createJSONStorage(() => localStorage),
     }
   )
 );

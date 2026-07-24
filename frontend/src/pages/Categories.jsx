@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
-import { API_BASE as config_API_BASE } from '../config/api';
+import { API_BASE as config_API_BASE, UPLOADS_BASE } from '../config/api';
 import { Search, ChevronRight, PackageX } from 'lucide-react';
 
 const CATEGORY_BANNERS = {
@@ -20,14 +20,35 @@ const CATEGORY_BANNERS = {
   'rice': 'https://images.unsplash.com/photo-1586201375761-83865001e8ac?auto=format&fit=crop&w=800&q=80',
   'dry fruits': 'https://images.unsplash.com/photo-1599579183492-4f35836c2e39?auto=format&fit=crop&w=800&q=80',
   'beverages': 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&w=800&q=80',
+  'others': 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&w=800&q=80',
+  'groceries': 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=800&q=80',
+};
+
+/**
+ * Resolve a category image URL:
+ * - If image is a full http(s) URL → use as-is
+ * - If image starts with /uploads/ → prepend the backend base URL
+ * - Otherwise → fall back to name-based static banner
+ */
+const resolveImageUrl = (imageUrl) => {
+  if (!imageUrl || !imageUrl.trim()) return null;
+  const img = imageUrl.trim();
+  if (img.startsWith('http://') || img.startsWith('https://')) return img;
+  if (img.startsWith('/uploads/') || img.startsWith('uploads/')) {
+    const clean = img.startsWith('/') ? img : `/${img}`;
+    return `${UPLOADS_BASE.replace('/uploads', '')}${clean}`;
+  }
+  return img;
 };
 
 const getBannerImage = (cat) => {
+  // Priority 1: Admin-set image (resolve relative /uploads/ paths to full backend URL)
   if (cat?.image && cat.image.trim()) {
-    return cat.image.trim();
+    const resolved = resolveImageUrl(cat.image.trim());
+    if (resolved) return resolved;
   }
+  // Priority 2: Name-based static banner lookup
   const name = (cat?.name || '').toLowerCase();
-  
   if (name.includes('veg')) return CATEGORY_BANNERS['vegetables'];
   if (name.includes('fruit') && !name.includes('dry')) return CATEGORY_BANNERS['fruits'];
   if (name.includes('dairy') || name.includes('milk')) return CATEGORY_BANNERS['dairy'];
@@ -35,7 +56,7 @@ const getBannerImage = (cat) => {
   if (name.includes('snack') || name.includes('chip')) return CATEGORY_BANNERS['snacks'];
   if (name.includes('masala') || name.includes('spice')) return CATEGORY_BANNERS['masala'];
   if (name.includes('oil')) return CATEGORY_BANNERS['oils'];
-  if (name.includes('detergent') || name.includes('wash')) return CATEGORY_BANNERS['detergents'];
+  if (name.includes('detergent') || name.includes('wash') || name.includes('cleaner')) return CATEGORY_BANNERS['detergents'];
   if (name.includes('pickle')) return CATEGORY_BANNERS['pickles'];
   if (name.includes('coffee') || name.includes('tea')) return CATEGORY_BANNERS['coffee'];
   if (name.includes('personal') || name.includes('care') || name.includes('soap')) return CATEGORY_BANNERS['personal care'];
@@ -43,8 +64,10 @@ const getBannerImage = (cat) => {
   if (name.includes('rice') || name.includes('grain') || name.includes('dal')) return CATEGORY_BANNERS['rice'];
   if (name.includes('dry fruit') || name.includes('nut')) return CATEGORY_BANNERS['dry fruits'];
   if (name.includes('beverage') || name.includes('drink')) return CATEGORY_BANNERS['beverages'];
-  
-  return 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&w=800&q=80';
+  if (name.includes('other')) return CATEGORY_BANNERS['others'];
+  if (name.includes('grocer')) return CATEGORY_BANNERS['groceries'];
+  // Priority 3: Generic grocery fallback
+  return CATEGORY_BANNERS['others'];
 };
 
 const Categories = () => {
