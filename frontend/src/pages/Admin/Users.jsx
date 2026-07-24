@@ -1,6 +1,6 @@
 import { API_BASE as config_API_BASE, API_URL as config_API_URL } from '../../config/api';
 import React, { useState, useEffect, useCallback } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import {
   Users as UsersIcon, Search, Mail, Phone, Calendar, Loader2,
   Lock, Unlock, ShieldAlert, X, Eye, MapPin, Package, Clock, Trash2,
@@ -14,14 +14,22 @@ import { formatCurrency } from '../../utils/currency';
 
 const Users = () => {
   const { adminInfo } = useAuthStore();
+  const location = useLocation();
   const { adminAlert, adminConfirm, adminPrompt, toast } = useModal();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(() => new URLSearchParams(window.location.search).get('search') || '');
   const [verificationFilter, setVerificationFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+
+  useEffect(() => {
+    const q = new URLSearchParams(location.search).get('search');
+    if (q !== null) {
+      setSearchQuery(q);
+    }
+  }, [location.search]);
 
   useEffect(() => {
     setCurrentPage(1);

@@ -70,17 +70,37 @@ router.post('/validate-cart', async (req, res) => {
 
 router.get('/', async (req, res) => {
   try {
+    const { page = 1, limit = 50, category, search } = req.query;
+    const where = { isActive: true };
+    if (category) {
+      where.categorySlug = category;
+    }
+    if (search && search.trim()) {
+      where.OR = [
+        { name: { contains: search.trim(), mode: 'insensitive' } },
+        { nameTamil: { contains: search.trim(), mode: 'insensitive' } },
+        { tamilName: { contains: search.trim(), mode: 'insensitive' } }
+      ];
+    }
+    const total = await prisma.product.count({ where });
     const productsRaw = await prisma.product.findMany({
-      include: { category: { select: { name: true } } }
+      where,
+      include: { category: { select: { name: true } } },
+      orderBy: { createdAt: 'desc' },
+      skip: (Number(page) - 1) * Number(limit),
+      take: Number(limit)
     });
-    res.json(formatMongoCompat(productsRaw));
+    res.json({
+      products: formatMongoCompat(productsRaw),
+      total,
+      page: Number(page),
+      pages: Math.ceil(total / Number(limit))
+    });
   } catch (error) {
     console.error('Fetch products error:', error);
     res.status(500).json({
       success: false,
-      message: 'Server error fetching products',
-      error: error.message || String(error),
-      stack: error.stack
+      message: 'Server error fetching products'
     });
   }
 });
@@ -104,9 +124,7 @@ router.get('/:id', async (req, res) => {
     console.error('Fetch single product error:', error);
     res.status(500).json({
       success: false,
-      message: 'Server error fetching product details',
-      error: error.message || String(error),
-      stack: error.stack
+      message: 'Server error fetching product details'
     });
   }
 });

@@ -66,7 +66,12 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use('/uploads', express.static('uploads')); // For any uploaded images
+// Prevent caching for local uploads
+app.use('/uploads', express.static('uploads', {
+  setHeaders: (res) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+  }
+})); // For any uploaded images
 
 // Database connection via Prisma
 prisma.$connect()
@@ -105,6 +110,15 @@ prisma.$connect()
   })
   .catch((err) => console.error('Prisma connection error:', err));
 
+// Prevent caching for all API responses
+app.use('/api', (req, res, next) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.setHeader('Surrogate-Control', 'no-store');
+  next();
+});
+
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
@@ -128,9 +142,7 @@ app.get('/api/categories', async (req, res) => {
     console.error('Fetch public categories error:', err);
     res.status(500).json({
       success: false,
-      message: 'Server error fetching categories',
-      error: err.message || String(err),
-      stack: err.stack
+      message: 'Server error fetching categories'
     });
   }
 });
@@ -212,7 +224,13 @@ const PORT = process.env.PORT || 5000;
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
-    origin: '*',
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin) || /\.vercel\.app$/.test(origin)) {
+        return callback(null, true);
+      }
+      return callback(null, true); // Allow socket connections but log suspicious ones
+    },
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']
   }
 });

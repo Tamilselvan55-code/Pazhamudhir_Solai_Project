@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { formatDisplayAddress, formatDisplayAddressLines } from './addressFormatter';
 
 // Format Indian Rupee currency safely
 const formatCurrencyPdf = (value) => {
@@ -305,30 +306,15 @@ export const generateInvoicePDF = async (order, userInfo) => {
   const deliveryName = order.recipient?.name || userInfo?.fullName || 'Customer';
   deliveryLines.push({ text: deliveryName });
 
-  if (order.notes) {
-    const streetLines = doc.splitTextToSize(order.notes, cardW - 6);
-    streetLines.forEach(line => {
-      deliveryLines.push({ text: line });
+  const addrLines = formatDisplayAddressLines(order.shippingAddress, order.notes);
+  addrLines.forEach(line => {
+    const splitLine = doc.splitTextToSize(line, cardW - 6);
+    splitLine.forEach(sub => {
+      deliveryLines.push({ text: sub });
     });
-  }
+  });
 
-  const cityPart = order.shippingAddress?.city || '';
-  const statePart = order.shippingAddress?.state || '';
-  const pinPart = order.shippingAddress?.pincode || '';
-  
-  let locLine = '';
-  if (cityPart) locLine += cityPart;
-  if (statePart) locLine += (locLine ? ', ' : '') + statePart;
-  if (pinPart) locLine += (locLine ? ' - ' : '') + pinPart;
-
-  if (locLine) {
-    const locLines = doc.splitTextToSize(locLine, cardW - 6);
-    locLines.forEach(line => {
-      deliveryLines.push({ text: line });
-    });
-  }
-
-  drawCard(c3X, curY, cardW, "DELIVERY ADDRESS", deliveryLines.slice(0, 4));
+  drawCard(c3X, curY, cardW, "DELIVERY ADDRESS", deliveryLines.slice(0, 5));
 
   curY += cardH + 3;
 

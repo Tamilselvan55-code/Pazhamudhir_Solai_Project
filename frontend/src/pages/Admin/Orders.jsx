@@ -1,6 +1,6 @@
 import { API_BASE as config_API_BASE, API_URL as config_API_URL } from '../../config/api';
 import React, { useState, useEffect, useCallback } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import {
   ShoppingCart, Search, Loader2, RefreshCw, Banknote,
   CheckCircle, Clock, Package, MapPin, Phone, User,
@@ -12,6 +12,7 @@ import axios from 'axios';
 import useModal from '../../hooks/useModal';
 import { formatCurrency } from '../../utils/currency';
 import { generateInvoicePDF } from '../../utils/pdfGenerator';
+import { formatDisplayAddress } from '../../utils/addressFormatter';
 
 const API_BASE = `${config_API_BASE}/admin`;
 
@@ -87,19 +88,22 @@ const OrderRow = ({ order, token, onUpdated }) => {
   // Thermal/Standard invoice printing utility
   const printInvoice = () => {
     const printWindow = window.open('', '_blank');
-    const itemsHtml = order.orderItems.map(item => `
-      <tr>
-        <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: left;">${item.name}</td>
-        <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
-        <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">${formatCurrency(item.price)}</td>
-        <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">${formatCurrency(item.price * item.quantity)}</td>
-      </tr>
-    `).join('');
+    const items = Array.isArray(order.orderItems) ? order.orderItems : [];
+    const itemsHtml = items.length === 0
+      ? `<tr><td colspan="4" style="padding: 12px; text-align: center; color: #888;">No Items Found</td></tr>`
+      : items.map(item => `
+        <tr>
+          <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: left;">${item.name || item.product?.name || 'Item'}</td>
+          <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity || 1}</td>
+          <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">${formatCurrency(item.price || 0)}</td>
+          <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">${formatCurrency((item.price || 0) * (item.quantity || 1))}</td>
+        </tr>
+      `).join('');
 
     printWindow.document.write(`
       <html>
         <head>
-          <title>Tiruchendur Murugan Pazhamudhir Solai Invoice - ${order.invoiceNumber}</title>
+          <title>Tiruchendur Murugan Pazhamudhir Solai Invoice - ${order.invoiceNumber || order._id}</title>
           <style>
             body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 25px; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #eee; }
             .header { text-align: center; border-bottom: 2px dashed #16a34a; padding-bottom: 15px; margin-bottom: 15px; }
@@ -117,7 +121,7 @@ const OrderRow = ({ order, token, onUpdated }) => {
             <h2 style="margin: 0; color: #16a34a;">Tiruchendur Murugan Pazhamudhir Solai</h2>
             <p style="margin: 5px 0 0 0; font-size: 12px; color: #666;">Hyperlocal Groceries Delivery Portal</p>
             <hr style="border: 0; border-top: 1px solid #eee; margin: 12px 0;" />
-            <p style="margin: 0; font-size: 12px; font-weight: bold;">Invoice No: ${order.invoiceNumber}</p>
+            <p style="margin: 0; font-size: 12px; font-weight: bold;">Invoice No: ${order.invoiceNumber || order._id}</p>
             <p style="margin: 2px 0 0 0; font-size: 11px; color: #888;">Placed At: ${new Date(order.createdAt).toLocaleString('en-IN')}</p>
           </div>
           <div class="details">
@@ -127,7 +131,7 @@ const OrderRow = ({ order, token, onUpdated }) => {
                 <td style="text-align: right;"><strong>Phone:</strong> +91 ${order.user?.phoneNumber || order.recipient?.phone || '—'}</td>
               </tr>
               <tr>
-                <td colspan="2"><strong>Delivery Location:</strong> ${order.shippingAddress?.fullAddress || '—'}</td>
+                <td colspan="2"><strong>Delivery Location:</strong> ${formatDisplayAddress(order.shippingAddress, order.notes)}</td>
               </tr>
               <tr>
                 <td colspan="2"><strong>Distance from Store:</strong> ${order.shippingAddress?.distanceFromStore || '—'} km</td>
@@ -148,7 +152,7 @@ const OrderRow = ({ order, token, onUpdated }) => {
             </tbody>
           </table>
           <div class="total">
-            <p style="margin: 4px 0;">Total Amount: ${formatCurrency(order.totalPrice)}</p>
+            <p style="margin: 4px 0;">Total Amount: ${formatCurrency(order.totalPrice || 0)}</p>
             <p style="font-size: 11px; font-weight: normal; margin: 2px 0;">Payment Mode: CASH ON DELIVERY (COD)</p>
             <p style="font-size: 11px; font-weight: bold; margin: 2px 0; color: #16a34a;">Payment Status: ${order.paymentStatus === 'Paid' ? 'PAID' : 'PENDING'}</p>
             <p style="font-size: 11px; font-weight: bold; margin: 2px 0; color: #16a34a;">Current Status: ${order.status}</p>
@@ -319,13 +323,8 @@ const OrderRow = ({ order, token, onUpdated }) => {
                 <MapPin className="w-3.5 h-3.5 text-[#22C55E]" /> Delivery Address
               </p>
               <p className="text-xs text-white leading-relaxed font-medium">
-                {order.shippingAddress?.fullAddress || '—'}
+                {formatDisplayAddress(order.shippingAddress, order.notes)}
               </p>
-              {order.shippingAddress?.city && (
-                <p className="text-[11px] text-[#94A3B8]">
-                  {[order.shippingAddress.city, order.shippingAddress.state, order.shippingAddress.pincode].filter(Boolean).join(', ')}
-                </p>
-              )}
               {order.shippingAddress?.distanceFromStore != null && (
                 <p className="text-[11px] font-semibold text-cyan-400">
                   📍 {order.shippingAddress.distanceFromStore} km from store
@@ -356,15 +355,19 @@ const OrderRow = ({ order, token, onUpdated }) => {
                 <Package className="w-3.5 h-3.5 text-[#22C55E]" /> Items Ordered
               </p>
               <div className="space-y-1.5 max-h-32 overflow-y-auto admin-scroll">
-                {order.orderItems?.map((item, i) => (
-                  <div key={i} className="flex justify-between text-xs text-gray-200">
-                    <span className="truncate mr-2 font-medium">{item.name} × {item.quantity}</span>
-                    <span className="font-bold text-white shrink-0">{formatCurrency(item.price * item.quantity)}</span>
-                  </div>
-                ))}
+                {(!order.orderItems || order.orderItems.length === 0) ? (
+                  <p className="text-xs text-[#94A3B8] py-2 italic font-semibold">No Items Found</p>
+                ) : (
+                  order.orderItems.map((item, i) => (
+                    <div key={i} className="flex justify-between text-xs text-gray-200">
+                      <span className="truncate mr-2 font-medium">{item.name || item.product?.name || 'Item'} × {item.quantity || 1}</span>
+                      <span className="font-bold text-white shrink-0">{formatCurrency((item.price || 0) * (item.quantity || 1))}</span>
+                    </div>
+                  ))
+                )}
               </div>
               <div className="border-t border-white/8 pt-2 flex justify-between text-xs font-black text-white mt-2">
-                <span>Total</span><span className="text-[#22C55E]">{formatCurrency(order.totalPrice)}</span>
+                <span>Total</span><span className="text-[#22C55E]">{formatCurrency(order.totalPrice || 0)}</span>
               </div>
             </div>
           </div>
@@ -444,13 +447,21 @@ const OrderRow = ({ order, token, onUpdated }) => {
 /* ═══════════════════════════════════════════════════════════════════════════ */
 const Orders = () => {
   const { adminInfo } = useAuthStore();
+  const location = useLocation();
 
   const [orders,        setOrders]        = useState([]);
   const [loading,       setLoading]       = useState(true);
   const [error,         setError]         = useState('');
-  const [searchQuery,   setSearchQuery]   = useState('');
+  const [searchQuery,   setSearchQuery]   = useState(() => new URLSearchParams(window.location.search).get('search') || '');
   const [statusFilter,  setStatusFilter]  = useState('');
   const [payFilter,     setPayFilter]     = useState('');
+
+  useEffect(() => {
+    const q = new URLSearchParams(location.search).get('search');
+    if (q !== null) {
+      setSearchQuery(q);
+    }
+  }, [location.search]);
   
   // Date Filters
   const [startDate,     setStartDate]     = useState('');

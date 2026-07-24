@@ -7,6 +7,8 @@ import useModal from '../../hooks/useModal';
 import { formatCurrency } from '../../utils/currency';
 import ProductImage from '../Product/ProductImage';
 
+import { formatDisplayAddress } from '../../utils/addressFormatter';
+
 const API_BASE = config_API_BASE;
 
 const getStatusBadge = (status) => {
@@ -209,7 +211,7 @@ const MyOrdersTab = ({ orders, loading, onRefresh, onViewDetails, onDownloadInvo
                     </div>
                     {order.shippingAddress && (
                       <p className="text-xs text-gray-500 mt-2 truncate">
-                        📍 <span className="font-semibold text-gray-700">Delivery:</span> {order.shippingAddress.fullAddress || order.shippingAddress.street}
+                        📍 <span className="font-semibold text-gray-700">Delivery:</span> {formatDisplayAddress(order.shippingAddress, order.notes)}
                       </p>
                     )}
                   </div>

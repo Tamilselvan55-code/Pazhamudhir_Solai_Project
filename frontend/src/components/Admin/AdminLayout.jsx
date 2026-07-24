@@ -81,10 +81,7 @@ const QuickSearch = ({ adminInfo }) => {
     return () => document.removeEventListener('keydown', handler);
   }, []);
 
-  // Quick search loaded console log (Requirement 8)
-  useEffect(() => {
-    console.log('✓ Quick search loaded');
-  }, []);
+  // Quick search initialized
 
   const performSearch = useCallback(async (q) => {
     if (!q || !q.trim()) { setResults(null); setIsOpen(false); return; }
@@ -117,18 +114,56 @@ const QuickSearch = ({ adminInfo }) => {
 
   const getFlatItems = () => {
     if (!results) return [];
-    const products = (results.products || []).map(p => ({ ...p, _type: 'product', path: `/admin/products?search=${encodeURIComponent(p.name)}` }));
-    const users = (results.users || []).map(u => ({ ...u, _type: 'user', path: '/admin/users' }));
-    const orders = (results.orders || []).map(o => ({ ...o, _type: 'order', path: '/admin/orders' }));
-    const categories = (results.categories || []).map(c => ({ ...c, _type: 'category', path: '/admin/categories' }));
-    const offers = (results.offers || []).map(f => ({ ...f, _type: 'offer', path: '/admin/offers' }));
-    
+    const products = (results.products || []).map(p => ({
+      ...p,
+      _type: 'Product',
+      title: p.name || p.productName || 'Product',
+      subtitle: p.categorySlug ? `Category: ${p.categorySlug}` : `Price: ₹${p.price || 0}`,
+      path: `/admin/products?search=${encodeURIComponent(p.name || p.productName || p.id)}`
+    }));
+    const users = (results.users || []).map(u => ({
+      ...u,
+      _type: 'Customer',
+      title: u.fullName || u.name || 'Customer',
+      subtitle: [u.phoneNumber, u.email].filter(Boolean).join(' • ') || 'Customer Record',
+      path: `/admin/users?search=${encodeURIComponent(u.phoneNumber || u.fullName || u.email || u.id)}`
+    }));
+    const orders = (results.orders || []).map(o => ({
+      ...o,
+      _type: 'Order',
+      title: o.invoiceNumber || `Order #${o.id?.slice(-8)}`,
+      subtitle: o.user?.fullName ? `Customer: ${o.user.fullName}` : `Total: ₹${o.totalPrice || 0}`,
+      path: `/admin/orders?search=${encodeURIComponent(o.invoiceNumber || o.id)}`
+    }));
+    const categories = (results.categories || []).map(c => ({
+      ...c,
+      _type: 'Category',
+      title: c.name || c.categoryName || 'Category',
+      subtitle: c.tamilName ? `Tamil: ${c.tamilName}` : 'Category Record',
+      path: `/admin/categories?search=${encodeURIComponent(c.name || c.categoryName || c.id)}`
+    }));
+    const offers = (results.offers || []).map(f => ({
+      ...f,
+      _type: 'Offer / Banner',
+      title: f.title || f.offerTitle || 'Offer / Banner',
+      subtitle: f.couponCode ? `Coupon: ${f.couponCode}` : `Discount: ${f.discountPercentage || 0}%`,
+      path: `/admin/offers?search=${encodeURIComponent(f.title || f.couponCode || f.id)}`
+    }));
+    const notifications = (results.notifications || []).map(n => ({
+      ...n,
+      _type: 'Notification',
+      title: n.title || 'Notification',
+      subtitle: n.message || 'Notification Event',
+      path: '/admin/notifications'
+    }));
+
     return [
       ...products,
       ...users,
       ...orders,
       ...categories,
-      ...offers
+      ...offers,
+      ...notifications
     ];
   };
 
@@ -148,21 +183,23 @@ const QuickSearch = ({ adminInfo }) => {
   const handleResultClick = (path) => { navigate(path); setIsOpen(false); setQuery(''); setResults(null); };
 
   const typeColors = {
-    product: 'text-emerald-400 bg-emerald-400/10',
-    user: 'text-cyan-400 bg-cyan-400/10',
-    order: 'text-violet-400 bg-violet-400/10',
-    category: 'text-orange-400 bg-orange-400/10',
-    offer: 'text-pink-400 bg-pink-400/10',
+    Product: 'text-emerald-400 bg-emerald-400/10',
+    Customer: 'text-cyan-400 bg-cyan-400/10',
+    Order: 'text-violet-400 bg-violet-400/10',
+    Category: 'text-orange-400 bg-orange-400/10',
+    'Offer / Banner': 'text-pink-400 bg-pink-400/10',
+    Notification: 'text-amber-400 bg-amber-400/10',
   };
   const getColor = (t) => typeColors[t] || 'text-gray-400 bg-gray-400/10';
 
   const TypeIcon = ({ type }) => {
     const cls = 'w-4 h-4 shrink-0';
-    if (type === 'product')  return <Package className={cls} />;
-    if (type === 'user')     return <UserIcon className={cls} />;
-    if (type === 'order')    return <ShoppingCart className={cls} />;
-    if (type === 'category') return <Layers className={cls} />;
-    if (type === 'offer')    return <Gift className={cls} />;
+    if (type === 'Product')        return <Package className={cls} />;
+    if (type === 'Customer')       return <UserIcon className={cls} />;
+    if (type === 'Order')          return <ShoppingCart className={cls} />;
+    if (type === 'Category')       return <Layers className={cls} />;
+    if (type === 'Offer / Banner') return <Gift className={cls} />;
+    if (type === 'Notification')   return <Bell className={cls} />;
     return <Search className={cls} />;
   };
 
@@ -178,7 +215,7 @@ const QuickSearch = ({ adminInfo }) => {
           onChange={handleInputChange}
           onFocus={() => { if (query.trim() && results) setIsOpen(true); }}
           onKeyDown={handleKeyDownInput}
-          placeholder="Quick search..."
+          placeholder="Quick search (⌘K)..."
           autoComplete="off"
           spellCheck={false}
           className={`h-[42px] pl-10 pr-12 rounded-[14px] text-xs font-semibold bg-white/4 border text-white placeholder-[#94A3B8] transition-all duration-200 focus:outline-none focus:border-[#22C55E] ${isOpen ? 'w-80 border-[#22C55E]/60' : 'w-60 border-white/8'}`}
@@ -189,7 +226,7 @@ const QuickSearch = ({ adminInfo }) => {
       </div>
 
       {isOpen && (
-        <div className="absolute right-0 w-[400px] max-h-[520px] overflow-y-auto bg-[#081A38] border border-white/10 rounded-[20px] shadow-2xl shadow-black/60 z-[999] admin-scroll" style={{ top: 'calc(100% + 10px)' }}>
+        <div className="absolute right-0 w-[420px] max-h-[520px] overflow-y-auto bg-[#081A38] border border-white/10 rounded-[20px] shadow-2xl shadow-black/60 z-[999] admin-scroll" style={{ top: 'calc(100% + 10px)' }}>
           {error && (
             <div className="flex items-center gap-3 px-5 py-4 text-xs text-red-400 font-semibold">
               <AlertCircle className="w-4 h-4 shrink-0" />{error}
@@ -197,14 +234,14 @@ const QuickSearch = ({ adminInfo }) => {
           )}
           {isLoading && !error && (
             <div className="flex items-center gap-3 px-5 py-5 text-xs text-[#94A3B8] font-semibold">
-              <Loader2 className="w-4 h-4 animate-spin text-[#22C55E]" />Searching...
+              <Loader2 className="w-4 h-4 animate-spin text-[#22C55E]" />Searching across all modules...
             </div>
           )}
           {!isLoading && !error && results && totalCount === 0 && (
             <div className="px-5 py-8 text-center">
               <Search className="w-8 h-8 text-[#94A3B8] mx-auto mb-2 opacity-50" />
-              <p className="text-xs font-semibold text-[#94A3B8]">No matching records found.</p>
-              <p className="text-[10px] text-[#4B5563] mt-1">Try a different keyword</p>
+              <p className="text-xs font-bold text-white">No matching records found</p>
+              <p className="text-[10px] text-[#94A3B8] mt-1">Try a different name, ID, phone number or invoice number</p>
             </div>
           )}
           {!isLoading && !error && results && totalCount > 0 && (
@@ -217,7 +254,6 @@ const QuickSearch = ({ adminInfo }) => {
               </div>
               <div className="divide-y divide-white/4">
                 {flatItems.map((item, idx) => {
-                  const displayName = item.productName || item.name || item.categoryName || item.offerTitle || item.invoiceNumber || 'Record';
                   const isHL = activeIdx === idx;
                   return (
                     <button
@@ -227,24 +263,29 @@ const QuickSearch = ({ adminInfo }) => {
                         e.preventDefault();
                         handleResultClick(item.path);
                       }}
-                      className={`w-full flex items-center justify-between gap-4 px-5 py-3.5 text-left transition-all duration-200 ${
-                        isHL ? 'bg-white/8' : 'hover:bg-white/4'
+                      className={`w-full flex items-center justify-between gap-4 px-5 py-3 text-left transition-all duration-200 ${
+                        isHL ? 'bg-white/10' : 'hover:bg-white/4'
                       }`}
                     >
-                      <div className="flex items-center gap-3.5 min-w-0">
+                      <div className="flex items-center gap-3.5 min-w-0 flex-1">
                         <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${getColor(item._type)}`}>
                           <TypeIcon type={item._type} />
                         </div>
-                        <div className="min-w-0">
-                          <p className="text-xs font-bold text-white truncate max-w-[220px]">
-                            {displayName}
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-bold text-white truncate">
+                            {item.title}
                           </p>
-                          <span className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider block mt-0.5">
-                            {item._type}
-                          </span>
+                          <p className="text-[11px] text-[#94A3B8] truncate mt-0.5 font-medium">
+                            {item.subtitle}
+                          </p>
                         </div>
                       </div>
-                      <ChevronRight className="w-4 h-4 text-[#94A3B8] opacity-60 shrink-0" />
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${getColor(item._type)}`}>
+                          {item._type}
+                        </span>
+                        <ChevronRight className="w-4 h-4 text-[#94A3B8] opacity-60" />
+                      </div>
                     </button>
                   );
                 })}

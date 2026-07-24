@@ -46,7 +46,7 @@ router.get('/dashboard-stats', async (req, res) => {
       prisma.order.count({ where: { status: 'Cancelled', createdAt: { gte: startOfToday } } }),
       prisma.order.count({ where: { status: 'Cancelled' } }),
       prisma.order.findMany({
-        include: { user: true },
+        include: { user: true, orderItems: { include: { product: true } } },
         orderBy: { createdAt: 'desc' },
         take: 5
       }),

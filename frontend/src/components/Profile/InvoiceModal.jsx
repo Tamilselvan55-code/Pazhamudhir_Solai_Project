@@ -2,6 +2,7 @@ import React from 'react';
 import { X, Printer, Download } from 'lucide-react';
 import { formatCurrency } from '../../utils/currency';
 import { generateInvoicePDF } from '../../utils/pdfGenerator';
+import { formatDisplayAddress, formatDisplayAddressLines } from '../../utils/addressFormatter';
 
 const InvoiceModal = ({ order, userInfo, onClose }) => {
   if (!order) return null;
@@ -120,10 +121,9 @@ const InvoiceModal = ({ order, userInfo, onClose }) => {
                 <span>📍</span> DELIVERY ADDRESS
               </div>
               <div className="p-3 text-slate-700 leading-relaxed font-medium">
-                {order.shippingAddress?.fullAddress || order.shippingAddress?.street || 'Standard Delivery / Store Pickup'}
-                <div className="text-slate-500 mt-0.5">
-                  {[order.shippingAddress?.city, order.shippingAddress?.state, order.shippingAddress?.pincode].filter(Boolean).join(', ')}
-                </div>
+                {formatDisplayAddressLines(order.shippingAddress, order.notes).map((line, idx) => (
+                  <div key={idx}>{line}</div>
+                ))}
               </div>
             </div>
 

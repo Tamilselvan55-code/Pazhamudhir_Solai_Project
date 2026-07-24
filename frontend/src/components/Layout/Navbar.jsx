@@ -1,8 +1,9 @@
-import React from 'react';
-import { ShoppingCart, User, LogIn, LogOut } from 'lucide-react';
+import React, { useEffect } from 'react';
+import { ShoppingCart, User, LogIn, LogOut, Heart } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import useCartStore from '../../store/useCartStore';
 import useAuthStore from '../../store/useAuthStore';
+import useWishlistStore from '../../store/useWishlistStore';
 import { showGuestToast } from '../../hooks/useGuestGuard';
 import Logo from './Logo';
 import useSettingsStore from '../../store/useSettingsStore';
@@ -10,8 +11,15 @@ import NotificationBell from './NotificationBell';
 
 const Navbar = ({ toggleCart }) => {
   const totalItems = useCartStore((state) => state.getTotalItems());
+  const { wishlistItems, fetchWishlist } = useWishlistStore();
   const { userInfo, logout } = useAuthStore();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (userInfo) {
+      fetchWishlist();
+    }
+  }, [userInfo, fetchWishlist]);
 
   const handleLogout = () => {
     logout();
@@ -29,6 +37,7 @@ const Navbar = ({ toggleCart }) => {
   };
 
   const settings = useSettingsStore((s) => s.settings);
+  const wishlistCount = wishlistItems ? wishlistItems.length : 0;
 
   return (
     <>
@@ -68,6 +77,31 @@ const Navbar = ({ toggleCart }) => {
 
         {/* Desktop Actions */}
         <div className="hidden md:flex items-center gap-5">
+          {/* Wishlist Button */}
+          {userInfo && (
+            <Link
+              to="/profile?tab=wishlist"
+              className="relative flex items-center gap-1.5 text-gray-700 hover:text-red-500 transition-colors"
+              style={{ padding: '6px 10px', borderRadius: 10, background: 'rgba(239,68,68,0.06)' }}
+            >
+              <Heart size={20} className="text-red-500 fill-red-500/20" />
+              <span className="text-sm font-medium">Wishlist</span>
+              {wishlistCount > 0 && (
+                <span style={{
+                  position: 'absolute', top: -4, right: -4,
+                  background: 'linear-gradient(135deg, #ef4444, #dc2626)',
+                  color: '#fff', fontSize: 10, fontWeight: 700,
+                  borderRadius: '50%', width: 19, height: 19,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  border: '2px solid #fff',
+                  boxShadow: '0 1px 4px rgba(0,0,0,0.2)',
+                }}>
+                  {wishlistCount}
+                </span>
+              )}
+            </Link>
+          )}
+
           {/* Cart Button */}
           <button
             id="navbar-cart-btn"
@@ -173,6 +207,29 @@ const Navbar = ({ toggleCart }) => {
               }}
             >
               <LogIn size={13} /> Login
+            </Link>
+          )}
+
+          {/* Mobile Wishlist */}
+          {userInfo && (
+            <Link
+              to="/profile?tab=wishlist"
+              className="relative p-2 text-gray-700 hover:text-red-500 transition-colors"
+              style={{ borderRadius: 10, background: 'rgba(239,68,68,0.06)' }}
+            >
+              <Heart size={20} className="text-red-500 fill-red-500/20" />
+              {wishlistCount > 0 && (
+                <span style={{
+                  position: 'absolute', top: -1, right: -1,
+                  background: 'linear-gradient(135deg, #ef4444, #dc2626)',
+                  color: '#fff', fontSize: 9, fontWeight: 700,
+                  borderRadius: '50%', width: 17, height: 17,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  border: '2px solid #fff',
+                }}>
+                  {wishlistCount}
+                </span>
+              )}
             </Link>
           )}
 

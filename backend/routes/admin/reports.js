@@ -8,7 +8,7 @@ const router = express.Router();
 router.get('/reports', async (req, res) => {
   try {
     const [ordersRaw, productsRaw, usersRaw] = await Promise.all([
-      prisma.order.findMany({ include: { user: { select: { fullName: true } } }, orderBy: { createdAt: 'desc' } }),
+      prisma.order.findMany({ include: { user: { select: { fullName: true } }, orderItems: true }, orderBy: { createdAt: 'desc' } }),
       prisma.product.findMany({ orderBy: { name: 'asc' } }),
       prisma.user.findMany({ where: { isAdmin: false }, orderBy: { createdAt: 'desc' } }),
     ]);
@@ -26,7 +26,7 @@ router.get('/reports', async (req, res) => {
     const productReport = productsRaw.map(p => ({
       name: p.name || 'Unnamed',
       nameTamil: p.nameTamil || '',
-      category: p.category || 'General',
+      category: p.categorySlug || 'General',
       price: Number(p.price) || 0,
       stock: Number(p.stock) || 0,
       isActive: p.isActive ? 'Active' : 'Inactive',

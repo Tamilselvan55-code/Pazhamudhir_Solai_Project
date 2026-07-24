@@ -6,12 +6,21 @@ import App from './App.jsx'
 import './index.css'
 import axios from 'axios'
 
-// Add a global Axios request interceptor to rewrite hardcoded localhost backend URLs in production
+// Add a global Axios request interceptor to rewrite hardcoded localhost backend URLs in production and prevent GET caching
 axios.interceptors.request.use((config) => {
   const targetBackend = config_API_URL;
   if (config.url && config.url.startsWith(config_API_URL)) {
     config.url = config.url.replace(config_API_URL, targetBackend);
   }
+
+  // Prevent browser caching for all API GET requests
+  if (config.method === 'get') {
+    config.headers = config.headers || {};
+    config.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate';
+    config.headers['Pragma'] = 'no-cache';
+    config.headers['Expires'] = '0';
+  }
+
   return config;
 }, (error) => {
   return Promise.reject(error);

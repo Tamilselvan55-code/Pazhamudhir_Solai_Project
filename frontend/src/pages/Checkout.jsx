@@ -38,6 +38,21 @@ const Checkout = () => {
   const [fullName,       setFullName]       = useState(userInfo?.fullName || userInfo?.name || '');
   const [phoneNumber,    setPhoneNumber]    = useState(userInfo?.phoneNumber || '');
   const [addressDetails, setAddressDetails] = useState('');
+  const [savedAddresses, setSavedAddresses] = useState([]);
+
+  useEffect(() => {
+    if (userInfo?.token) {
+      axios.get(`${API_BASE}/auth/addresses`, { headers: { Authorization: `Bearer ${userInfo.token}` } })
+        .then(res => {
+          if (res.data?.success) {
+            setSavedAddresses(res.data.addresses || []);
+          } else if (Array.isArray(res.data)) {
+            setSavedAddresses(res.data);
+          }
+        })
+        .catch(err => console.error("Failed to fetch saved addresses", err));
+    }
+  }, [userInfo?.token]);
 
   /* ── Payment — COD only ─────────────────────────────────────────────────── */
   const paymentMethod = 'COD';
@@ -103,7 +118,13 @@ const Checkout = () => {
   const isCartNotEmpty = sanitizedItems.length > 0;
   const isNameEntered = fullName.trim() !== '';
   const isPhoneEntered = phoneNumber.trim() !== '';
-  const isAddressEntered = addressDetails.trim() !== '';
+
+  const isCoordsFull = /^-?\d{1,3}\.\d+[\s,]+-?\d{1,3}\.\d+/.test((fullAddress || '').trim()) || /-?\d{1,3}\.\d{4,}[\s,]+-?\d{1,3}\.\d{4,}/.test((fullAddress || '').trim());
+  const cleanBaseAddress = isCoordsFull ? '' : (fullAddress || '').trim();
+  const hasStructuredAddress = addressDetails.trim() !== '' || cleanBaseAddress !== '';
+  const defaultSaved = savedAddresses.find(a => a.isDefault) || savedAddresses[0];
+
+  const isAddressEntered = hasStructuredAddress || !!defaultSaved;
   const isTotalGreaterThanZero = totalToPay > 0;
 
   const formValid =
@@ -250,6 +271,44 @@ const Checkout = () => {
     setOrderLoading(true);
 
     try {
+      const isCoords = /^-?\d{1,3}\.\d+[\s,]+-?\d{1,3}\.\d+/.test((fullAddress || '').trim()) || /-?\d{1,3}\.\d{4,}[\s,]+-?\d{1,3}\.\d{4,}/.test((fullAddress || '').trim());
+      const baseAddr = isCoords ? '' : (fullAddress || '').trim();
+
+      let finalStreet = addressDetails?.trim() || baseAddr;
+      let finalFull = finalStreet;
+      let finalCity = city || '';
+      let finalState = state || '';
+      let finalPincode = pincode || '';
+
+      if (!finalStreet || /^-?\d{1,3}\.\d+[\s,]+-?\d{1,3}\.\d+/.test(finalStreet)) {
+        const defAddr = savedAddresses.find(a => a.isDefault) || savedAddresses[0];
+        if (defAddr) {
+          finalStreet = defAddr.street || defAddr.fullAddress || defAddr.label || '';
+          finalFull = defAddr.fullAddress || finalStreet;
+          finalCity = defAddr.city || finalCity;
+          finalState = defAddr.state || finalState;
+          finalPincode = defAddr.pincode || finalPincode;
+        } else {
+          setOrderError('Please complete your delivery address. We cannot use GPS coordinates alone.');
+          setOrderLoading(false);
+          return;
+        }
+      } else {
+        const addressParts = [
+          addressDetails?.trim(),
+          baseAddr,
+          city?.trim(),
+          state?.trim(),
+          pincode?.trim()
+        ].filter(Boolean);
+
+        const uniqueAddressParts = addressParts.filter((part, idx, self) => 
+          !/^-?\d{1,3}\.\d+/.test(part) && !/-?\d{1,3}\.\d{4,}/.test(part) && self.indexOf(part) === idx
+        );
+
+        finalFull = uniqueAddressParts.join(', ') || finalStreet;
+      }
+
       const payload = {
         user:         userInfo._id,
         orderItems:   sanitizedItems.map(item => ({
@@ -265,10 +324,11 @@ const Checkout = () => {
         paymentMethod,
         notes:        addressDetails,
         shippingAddress: {
-          fullAddress:       fullAddress,
-          city:              city,
-          state:             state,
-          pincode:           pincode,
+          street:            finalStreet,
+          fullAddress:       finalFull,
+          city:              finalCity,
+          state:             finalState,
+          pincode:           finalPincode,
           lat:               userLocation?.lat,
           lon:               userLocation?.lon,
           distanceFromStore: distanceKm,

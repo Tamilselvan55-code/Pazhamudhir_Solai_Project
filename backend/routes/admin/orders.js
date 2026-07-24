@@ -3,6 +3,7 @@ import { protectAdmin } from '../../middleware/adminAuth.js';
 import prisma from '../../utils/prismaClient.js';
 import { formatMongoCompat, formatMongoCompatArray } from '../../utils/formatMongoCompat.js';
 import { createAndEmitNotification } from '../../utils/notificationHelper.js';
+import { formatOrderWithDeliveryAddress } from '../../utils/formatOrderAddress.js';
 
 const router = express.Router();
 
@@ -31,14 +32,19 @@ router.get('/orders', async (req, res) => {
     const total = await prisma.order.count({ where });
     const ordersRaw = await prisma.order.findMany({
       where,
-      include: { user: { select: { fullName: true, phoneNumber: true, email: true } } },
+      include: {
+        user: { select: { fullName: true, phoneNumber: true, email: true, addresses: true } },
+        orderItems: { include: { product: true } }
+      },
       orderBy: { createdAt: 'desc' },
       skip: (Number(page) - 1) * Number(limit),
       take: Number(limit)
     });
 
+    const formatted = ordersRaw.map(o => formatOrderWithDeliveryAddress(o));
+
     res.json({
-      orders: formatMongoCompatArray(ordersRaw),
+      orders: formatMongoCompatArray(formatted),
       total,
       page: Number(page),
       pages: Math.ceil(total / Number(limit))
@@ -53,10 +59,14 @@ router.get('/orders/:id', async (req, res) => {
   try {
     const orderRaw = await prisma.order.findUnique({
       where: { id: req.params.id },
-      include: { user: { select: { fullName: true, phoneNumber: true, email: true } }, orderItems: true }
+      include: {
+        user: { select: { fullName: true, phoneNumber: true, email: true, addresses: true } },
+        orderItems: { include: { product: true } }
+      }
     });
     if (!orderRaw) return res.status(404).json({ message: 'Order not found' });
-    res.json(formatMongoCompat(orderRaw));
+    const formatted = formatOrderWithDeliveryAddress(orderRaw);
+    res.json(formatMongoCompat(formatted));
   } catch (error) {
     res.status(500).json({ message: 'Server error' });
   }
@@ -72,7 +82,7 @@ router.patch('/orders/:id/status', async (req, res) => {
 
     const orderRaw = await prisma.order.findUnique({
       where: { id: req.params.id },
-      include: { orderItems: true, user: true }
+      include: { user: true, orderItems: { include: { product: true } } }
     });
     if (!orderRaw) return res.status(404).json({ success: false, message: 'Order not found' });
 
@@ -134,7 +144,7 @@ router.patch('/orders/:id/status', async (req, res) => {
     const updatedOrderRaw = await prisma.order.update({
       where: { id: req.params.id },
       data: updateData,
-      include: { user: true, orderItems: true }
+      include: { user: true, orderItems: { include: { product: true } } }
     });
 
     const io = req.app.get('io');

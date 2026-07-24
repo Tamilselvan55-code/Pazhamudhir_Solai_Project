@@ -23,7 +23,10 @@ const CATEGORY_BANNERS = {
 };
 
 const getBannerImage = (cat) => {
-  const name = cat.name.toLowerCase();
+  if (cat?.image && cat.image.trim()) {
+    return cat.image.trim();
+  }
+  const name = (cat?.name || '').toLowerCase();
   
   if (name.includes('veg')) return CATEGORY_BANNERS['vegetables'];
   if (name.includes('fruit') && !name.includes('dry')) return CATEGORY_BANNERS['fruits'];
@@ -41,7 +44,6 @@ const getBannerImage = (cat) => {
   if (name.includes('dry fruit') || name.includes('nut')) return CATEGORY_BANNERS['dry fruits'];
   if (name.includes('beverage') || name.includes('drink')) return CATEGORY_BANNERS['beverages'];
   
-  if (cat.image) return cat.image;
   return 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&w=800&q=80';
 };
 
@@ -61,8 +63,8 @@ const Categories = () => {
         ]);
         
         // Remove 'all' if backend includes it, or just use as-is
-        setCategories(catRes.data.filter(c => c.id !== 'all'));
-        setProducts(prodRes.data);
+        setCategories((catRes.data || []).filter(c => c.id !== 'all'));
+        setProducts(prodRes.data || []);
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {
@@ -71,6 +73,33 @@ const Categories = () => {
     };
     fetchData();
     window.scrollTo(0, 0);
+
+    const handleCategoryUpdate = (e) => {
+      const updatedCat = e.detail;
+      if (!updatedCat) {
+        fetchData();
+        return;
+      }
+
+      if (updatedCat.deleted) {
+        setCategories((prev) => prev.filter(c => c.id !== updatedCat._id && c._id !== updatedCat._id));
+        return;
+      }
+
+      const timestamp = Date.now();
+      const rawImg = updatedCat.image || '';
+      const versionedImg = rawImg ? `${rawImg}${rawImg.includes('?') ? '&' : '?'}v=${timestamp}` : rawImg;
+      const catWithVersion = { ...updatedCat, image: versionedImg };
+
+      setCategories((prev) => {
+        const catId = updatedCat._id || updatedCat.id;
+        const exists = prev.some(c => c.id === catId || c._id === catId);
+        if (exists) {
+          return prev.map(c => (c.id === catId || c._id === catId) ? { ...c, ...catWithVersion } : c);
+        }
+        return [...prev, catWithVersion];
+      });
+    };
 
     const handleProductUpdate = (e) => {
       const updatedProd = e.detail;
@@ -88,8 +117,12 @@ const Categories = () => {
       );
     };
 
+    window.addEventListener('category_update', handleCategoryUpdate);
+    window.addEventListener('socket_category_update', handleCategoryUpdate);
     window.addEventListener('socket_product_update', handleProductUpdate);
     return () => {
+      window.removeEventListener('category_update', handleCategoryUpdate);
+      window.removeEventListener('socket_category_update', handleCategoryUpdate);
       window.removeEventListener('socket_product_update', handleProductUpdate);
     };
   }, []);

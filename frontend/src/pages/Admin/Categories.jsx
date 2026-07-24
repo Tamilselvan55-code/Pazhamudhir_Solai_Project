@@ -1,5 +1,6 @@
 import { API_BASE as config_API_BASE, API_URL as config_API_URL } from '../../config/api';
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Tags, Plus, Search, Edit2, Trash2, Eye, EyeOff, Loader2, ShieldAlert } from 'lucide-react';
 import AdminLayout from '../../components/Admin/AdminLayout';
 import useAuthStore from '../../store/useAuthStore';
@@ -8,11 +9,19 @@ import useModal from '../../hooks/useModal';
 
 const Categories = () => {
   const { adminInfo } = useAuthStore();
+  const location = useLocation();
   const { adminAlert, adminConfirm } = useModal();
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(() => new URLSearchParams(window.location.search).get('search') || '');
+
+  useEffect(() => {
+    const q = new URLSearchParams(location.search).get('search');
+    if (q !== null) {
+      setSearchQuery(q);
+    }
+  }, [location.search]);
 
   // Modal state
   const [modalOpen, setModalOpen] = useState(false);

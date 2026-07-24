@@ -5,6 +5,7 @@ import { isWithinDeliveryRadius, logDeliveryDecision } from '../utils/distance.j
 import { createAndEmitNotification } from '../utils/notificationHelper.js';
 import { protect } from '../middleware/auth.js';
 import { checkMaintenanceAndFeature } from '../middleware/maintenanceAndFeature.js';
+import { sanitizeAndFormatAddress, formatOrderWithDeliveryAddress } from '../utils/formatOrderAddress.js';
 
 const router = express.Router();
 
@@ -243,24 +244,21 @@ router.post('/', protect, checkMaintenanceAndFeature('disableOrderPlacement'), c
     const randomDigits = Math.floor(100 + Math.random() * 900);
     const invoiceNo = `${settings.invoicePrefix || 'INV-'}${year}-${ts}${randomDigits}`;
 
+    const dbUser = await prisma.user.findUnique({
+      where: { id: userId },
+      include: { addresses: true }
+    });
+    const defaultUserAddress = dbUser?.addresses?.find(a => a.isDefault) || dbUser?.addresses?.[0] || null;
+    const addressSnapshot = sanitizeAndFormatAddress(shippingAddress, defaultUserAddress, dbUser, recipient);
+
     let createdOrderRaw;
     try {
       createdOrderRaw = await prisma.order.create({
         data: {
           userId,
           invoiceNumber: invoiceNo,
-          shippingAddress: {
-            street:            shippingAddress.street || shippingAddress.fullAddress || '',
-            fullAddress:       shippingAddress.fullAddress || '',
-            city:              shippingAddress.city || '',
-            state:             shippingAddress.state || '',
-            pincode:           shippingAddress.pincode || '',
-            lat:               shippingAddress.lat,
-            lon:               shippingAddress.lon,
-            distanceFromStore: shippingAddress.distanceFromStore,
-            deliveryAvailable: shippingAddress.deliveryAvailable,
-          },
-          recipient: recipient || { isForAnotherPerson: false, name: '', phone: '' },
+          shippingAddress: addressSnapshot,
+          recipient: recipient || { isForAnotherPerson: false, name: dbUser?.fullName || '', phone: dbUser?.phoneNumber || '' },
           totalPrice: computedTotalPrice,
           deliveryFee,
           gstAmount,
@@ -435,7 +433,8 @@ router.get('/myorders/:userId', async (req, res) => {
       orderBy: { createdAt: 'desc' },
       include: { orderItems: { include: { product: true } } }
     });
-    res.json(formatMongoCompat(ordersRaw));
+    const formatted = ordersRaw.map(o => formatOrderWithDeliveryAddress(o));
+    res.json(formatMongoCompat(formatted));
   } catch (error) {
     console.error('[ORDER] Fetch orders error:', error);
     res.status(500).json({ success: false, message: error.message || 'Failed to fetch orders' });
@@ -449,9 +448,10 @@ router.get('/user/myorders', protect, async (req, res) => {
     const ordersRaw = await prisma.order.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
-      include: { orderItems: { include: { product: true } } }
+      include: { orderItems: { include: { product: true } }, user: { include: { addresses: true } } }
     });
-    res.json(formatMongoCompat(ordersRaw));
+    const formatted = ordersRaw.map(o => formatOrderWithDeliveryAddress(o));
+    res.json(formatMongoCompat(formatted));
   } catch (error) {
     console.error('[ORDER] Fetch user orders error:', error);
     res.status(500).json({ success: false, message: error.message || 'Failed to fetch user orders' });
@@ -464,10 +464,11 @@ router.get('/detail/:id', async (req, res) => {
     if (!isValidUuid(req.params.id)) return res.status(404).json({ message: 'Order not found' });
     const orderRaw = await prisma.order.findUnique({
       where: { id: req.params.id },
-      include: { orderItems: { include: { product: true } }, user: true }
+      include: { orderItems: { include: { product: true } }, user: { include: { addresses: true } } }
     });
     if (!orderRaw) return res.status(404).json({ message: 'Order not found' });
-    res.json(formatMongoCompat(orderRaw));
+    const formatted = formatOrderWithDeliveryAddress(orderRaw);
+    res.json(formatMongoCompat(formatted));
   } catch (error) {
     console.error('[ORDER] Fetch order detail error:', error);
     res.status(500).json({ success: false, message: error.message || 'Failed to fetch order detail' });

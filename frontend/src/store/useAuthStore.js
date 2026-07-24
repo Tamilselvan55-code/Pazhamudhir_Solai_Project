@@ -4,6 +4,8 @@ import axios from 'axios';
 
 import { API_BASE } from '../config/api';
 
+import { useWishlistStore } from './useWishlistStore';
+
 const API = `${API_BASE}/auth`;
 const ADMIN_API = `${API_BASE}/admin/auth`;
 
@@ -101,7 +103,10 @@ const useAuthStore = create(
       },
 
       // ── Logout ────────────────────────────────────────────────────────────
-      logout: () => set({ userInfo: null, error: null }),
+      logout: () => {
+        useWishlistStore.getState().clearWishlist();
+        set({ userInfo: null, error: null });
+      },
       adminLogout: () => set({ adminInfo: null, error: null }),
 
       clearError: () => set({ error: null }),

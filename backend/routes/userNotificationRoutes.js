@@ -172,6 +172,24 @@ router.patch('/notifications/read-all', protect, async (req, res) => {
   }
 });
 
+router.delete('/notifications/clear-all', protect, async (req, res) => {
+  try {
+    const userId = (req.user._id || req.user.id).toString();
+    await prisma.notification.deleteMany({ where: { userId, role: 'customer' } });
+
+    const io = req.app.get('io');
+    if (io) {
+      const roomName = `user:${userId}`;
+      io.to(roomName).emit('customer:notification:unreadCount', { count: 0 });
+    }
+
+    res.json({ success: true, message: 'All notifications cleared' });
+  } catch (error) {
+    console.error('Clear all notifications error:', error);
+    res.status(500).json({ message: 'Server error: ' + error.message });
+  }
+});
+
 router.delete('/notifications/:id', protect, async (req, res) => {
   try {
     const userId = (req.user._id || req.user.id).toString();
@@ -194,24 +212,6 @@ router.delete('/notifications/:id', protect, async (req, res) => {
     res.json({ success: true, message: 'Notification deleted successfully' });
   } catch (error) {
     console.error('Delete notification error:', error);
-    res.status(500).json({ message: 'Server error: ' + error.message });
-  }
-});
-
-router.delete('/notifications/clear-all', protect, async (req, res) => {
-  try {
-    const userId = (req.user._id || req.user.id).toString();
-    await prisma.notification.deleteMany({ where: { userId, role: 'customer' } });
-
-    const io = req.app.get('io');
-    if (io) {
-      const roomName = `user:${userId}`;
-      io.to(roomName).emit('customer:notification:unreadCount', { count: 0 });
-    }
-
-    res.json({ success: true, message: 'All notifications cleared' });
-  } catch (error) {
-    console.error('Clear all notifications error:', error);
     res.status(500).json({ message: 'Server error: ' + error.message });
   }
 });

@@ -83,6 +83,7 @@ const matchesCategory = (product, catObj) => {
   if (catObj.id === 'biscuits' && (pCat.includes('biscuit') || pCat.includes('cookie'))) return true;
   if (catObj.id === 'snacks' && pCat.includes('snack')) return true;
   if (catObj.id === 'pickles' && pCat.includes('pickle')) return true;
+  if (catObj.id === 'rice' && (pCat.includes('rice') || pCat.includes('grain') || pCat.includes('dal'))) return true;
   return false;
 };
 
@@ -144,7 +145,8 @@ const Home = () => {
           name: cat.name,
           tamilName: cat.tamilName || (meta ? meta.tamTitle : ''),
           emoji,
-          color
+          color,
+          image: cat.image || ''
         };
       });
 
@@ -192,9 +194,11 @@ const Home = () => {
       );
     };
 
+    window.addEventListener('category_update', handleCategoryUpdate);
     window.addEventListener('socket_category_update', handleCategoryUpdate);
     window.addEventListener('socket_product_update', handleProductUpdate);
     return () => {
+      window.removeEventListener('category_update', handleCategoryUpdate);
       window.removeEventListener('socket_category_update', handleCategoryUpdate);
       window.removeEventListener('socket_product_update', handleProductUpdate);
     };

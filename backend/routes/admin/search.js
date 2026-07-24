@@ -1,113 +1,130 @@
 import express from 'express';
 import prisma from '../../utils/prismaClient.js';
-import { formatMongoCompat, formatMongoCompatArray } from '../../utils/formatMongoCompat.js';
+import { formatMongoCompatArray } from '../../utils/formatMongoCompat.js';
 
 const router = express.Router();
+
+const isUuid = (str) =>
+  /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(str);
 
 router.get('/search', async (req, res) => {
   try {
     const query = req.query.q || '';
     const trimmed = query.trim();
+
     if (!trimmed) {
-      return res.json({ products: [], orders: [], users: [], categories: [], offers: [] });
+      return res.json({
+        products: [],
+        orders: [],
+        users: [],
+        categories: [],
+        offers: [],
+        notifications: []
+      });
     }
 
-    const [productsRaw, ordersRaw, usersRaw, categoriesRaw, offersRaw] = await Promise.all([
-      prisma.product.findMany({
-        where: {
-          OR: [
-            { name: { contains: trimmed, mode: 'insensitive' } },
-            { nameTamil: { contains: trimmed, mode: 'insensitive' } },
-            { tamilName: { contains: trimmed, mode: 'insensitive' } },
-            { englishName: { contains: trimmed, mode: 'insensitive' } },
-            { description: { contains: trimmed, mode: 'insensitive' } },
-            { category: { contains: trimmed, mode: 'insensitive' } },
-            { sku: { contains: trimmed, mode: 'insensitive' } }
-          ]
-        },
-        take: 5
-      }),
-      prisma.order.findMany({
-        where: {
-          OR: [
-            { invoiceNumber: { contains: trimmed, mode: 'insensitive' } }
-            // Recipient name/phone would require JSON querying or separate fields. Using invoiceNumber for quick search.
-          ]
-        },
-        include: { user: true },
-        take: 5
-      }),
-      prisma.user.findMany({
-        where: {
-          OR: [
-            { fullName: { contains: trimmed, mode: 'insensitive' } },
-            { email: { contains: trimmed, mode: 'insensitive' } },
-            { phoneNumber: { contains: trimmed, mode: 'insensitive' } }
-          ]
-        },
-        take: 5
-      }),
-      prisma.category.findMany({
-        where: {
-          OR: [
-            { name: { contains: trimmed, mode: 'insensitive' } },
-            { tamilName: { contains: trimmed, mode: 'insensitive' } },
-            { description: { contains: trimmed, mode: 'insensitive' } }
-          ]
-        },
-        take: 5
-      }),
-      prisma.offer.findMany({
-        where: {
-          OR: [
-            { title: { contains: trimmed, mode: 'insensitive' } },
-            { description: { contains: trimmed, mode: 'insensitive' } },
-            { promoCode: { contains: trimmed, mode: 'insensitive' } }
-          ]
-        },
-        take: 5
-      })
-    ]);
+    const uuidMatch = isUuid(trimmed) ? trimmed : null;
 
-    const mappedProducts = productsRaw.map(p => ({
-      _id: p.id,
-      productName: p.name,
-      categoryName: p.category,
-      image: p.image
-    }));
+    // 1. Products Query
+    const productOr = [
+      { name: { contains: trimmed, mode: 'insensitive' } },
+      { nameTamil: { contains: trimmed, mode: 'insensitive' } },
+      { tamilName: { contains: trimmed, mode: 'insensitive' } },
+      { englishName: { contains: trimmed, mode: 'insensitive' } },
+      { description: { contains: trimmed, mode: 'insensitive' } },
+      { categorySlug: { contains: trimmed, mode: 'insensitive' } },
+      { sku: { contains: trimmed, mode: 'insensitive' } }
+    ];
+    if (uuidMatch) productOr.push({ id: uuidMatch });
 
-    const mappedUsers = usersRaw.map(u => ({
-      _id: u.id,
-      name: u.fullName,
-      email: u.email,
-      phoneNumber: u.phoneNumber
-    }));
+    // 2. Orders Query
+    const orderOr = [
+      { invoiceNumber: { contains: trimmed, mode: 'insensitive' } },
+      { user: { fullName: { contains: trimmed, mode: 'insensitive' } } },
+      { user: { phoneNumber: { contains: trimmed, mode: 'insensitive' } } },
+      { user: { email: { contains: trimmed, mode: 'insensitive' } } }
+    ];
+    if (uuidMatch) orderOr.push({ id: uuidMatch });
 
-    const mappedOrders = ordersRaw.map(o => ({
-      _id: o.id,
-      invoiceNumber: o.invoiceNumber || o.id.toString().slice(-8).toUpperCase()
-    }));
+    // 3. Customers / Users Query
+    const userOr = [
+      { fullName: { contains: trimmed, mode: 'insensitive' } },
+      { email: { contains: trimmed, mode: 'insensitive' } },
+      { phoneNumber: { contains: trimmed, mode: 'insensitive' } }
+    ];
+    if (uuidMatch) userOr.push({ id: uuidMatch });
 
-    const mappedCategories = categoriesRaw.map(c => ({
-      _id: c.id,
-      categoryName: c.name
-    }));
+    // 4. Categories Query
+    const categoryOr = [
+      { name: { contains: trimmed, mode: 'insensitive' } },
+      { tamilName: { contains: trimmed, mode: 'insensitive' } },
+      { description: { contains: trimmed, mode: 'insensitive' } }
+    ];
+    if (uuidMatch) categoryOr.push({ id: uuidMatch });
 
-    const mappedOffers = offersRaw.map(f => ({
-      _id: f.id,
-      offerTitle: f.title
-    }));
+    // 5. Offers Query
+    const offerOr = [
+      { title: { contains: trimmed, mode: 'insensitive' } },
+      { description: { contains: trimmed, mode: 'insensitive' } },
+      { couponCode: { contains: trimmed, mode: 'insensitive' } }
+    ];
+    if (uuidMatch) offerOr.push({ id: uuidMatch });
+
+    // 6. Admin Notifications Query
+    const notifOr = [
+      { title: { contains: trimmed, mode: 'insensitive' } },
+      { message: { contains: trimmed, mode: 'insensitive' } }
+    ];
+    if (uuidMatch) notifOr.push({ id: uuidMatch });
+
+    const [productsRaw, ordersRaw, usersRaw, categoriesRaw, offersRaw, notifsRaw] =
+      await Promise.all([
+        prisma.product.findMany({
+          where: { OR: productOr },
+          take: 5
+        }),
+        prisma.order.findMany({
+          where: { OR: orderOr },
+          include: { user: { select: { fullName: true, phoneNumber: true, email: true } } },
+          take: 5
+        }),
+        prisma.user.findMany({
+          where: { OR: userOr },
+          select: { id: true, fullName: true, phoneNumber: true, email: true },
+          take: 10
+        }),
+        prisma.category.findMany({
+          where: { OR: categoryOr },
+          take: 10
+        }),
+        prisma.offer.findMany({
+          where: { OR: offerOr },
+          take: 10
+        }),
+        prisma.notification.findMany({
+          where: { OR: notifOr },
+          take: 10
+        })
+      ]);
 
     res.json({
-      products: mappedProducts,
-      orders: mappedOrders,
-      users: mappedUsers,
-      categories: mappedCategories,
-      offers: mappedOffers
+      products: formatMongoCompatArray(productsRaw),
+      orders: formatMongoCompatArray(ordersRaw),
+      users: formatMongoCompatArray(usersRaw),
+      categories: formatMongoCompatArray(categoriesRaw),
+      offers: formatMongoCompatArray(offersRaw),
+      notifications: formatMongoCompatArray(notifsRaw)
     });
   } catch (error) {
     console.error('Quick Search Error:', error);
-    res.json({ products: [], orders: [], users: [], categories: [], offers: [] });
+    res.json({
+      products: [],
+      orders: [],
+      users: [],
+      categories: [],
+      offers: [],
+      notifications: []
+    });
   }
 });
 

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import useLocationStore, { getDeliveryRadius } from '../../store/useLocationStore';
 import { MapPin, AlertTriangle } from 'lucide-react';
 import clsx from 'clsx';
@@ -6,7 +6,7 @@ import clsx from 'clsx';
 const LocationBanner = () => {
   const { userLocation, isEligible, distanceKm, error, loading, requestLocation } = useLocationStore();
 
-  React.useEffect(() => {
+  useEffect(() => {
     // Only auto-request if we haven't checked yet
     if (!userLocation && !error) {
       requestLocation();

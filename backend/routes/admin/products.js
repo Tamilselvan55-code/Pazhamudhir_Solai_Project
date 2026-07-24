@@ -6,31 +6,9 @@ import { formatMongoCompat, formatMongoCompatArray } from '../../utils/formatMon
 import { productUpdateUpload } from './upload.js';
 import { createAndEmitNotification } from '../../utils/notificationHelper.js';
 import { handleCloudinaryUpload, deleteCloudinaryImage } from '../../middleware/cloudinaryUpload.js';
+import { logAuditAndEmit } from '../../utils/auditHelper.js';
 
 const router = express.Router();
-
-const logAuditAndEmit = async (req, action, targetType, targetId, targetName, oldValue, newValue, eventName, eventData) => {
-  try {
-    const adminName = req.admin ? req.admin.name : 'System Admin';
-    await prisma.auditLog.create({
-      data: {
-        adminName,
-        action,
-        targetType,
-        targetId: String(targetId || ''),
-        targetName: String(targetName || ''),
-        oldValue: oldValue ? String(oldValue) : null,
-        newValue: newValue ? String(newValue) : null
-      }
-    });
-    const io = req.app.get('io');
-    if (io && eventName) {
-      io.emit(eventName, eventData);
-    }
-  } catch (err) {
-    console.error('AuditLog helper error:', err);
-  }
-};
 
 router.get('/products', async (req, res) => {
   try {
@@ -86,35 +64,47 @@ router.get('/products', async (req, res) => {
 
 router.post('/products', async (req, res) => {
   try {
-    const { name, category } = req.body;
-    
-    if (req.body.category && typeof req.body.category === 'string') {
-      req.body.categorySlug = req.body.category;
+    const { name, nameTamil, tamilName, englishName, sku, price, category, unit, stock, description, offerTag, isTrending, isBestSeller, isFeatured, isActive, discount, image, images } = req.body;
+
+    // Resolve category relation
+    let categoryId = null;
+    const categorySlug = typeof category === 'string' ? category : 'others';
+    if (typeof category === 'string' && category.trim()) {
       const catRec = await prisma.category.findFirst({
-        where: { name: { equals: req.body.category, mode: 'insensitive' } }
+        where: { name: { equals: category, mode: 'insensitive' } }
       });
-      if (catRec) {
-        req.body.category = { connect: { id: catRec.id } };
-      } else {
-        delete req.body.category;
-      }
+      if (catRec) categoryId = catRec.id;
     }
 
-    const exists = await prisma.product.findFirst({ where: { name, categorySlug: typeof category === 'string' ? category : undefined } });
+    const exists = await prisma.product.findFirst({ where: { name, categorySlug } });
     if (exists) {
       return res.status(409).json({ message: 'Product name already exists in this category.' });
     }
 
-    const newProductRaw = await prisma.product.create({
-      data: {
-        ...req.body,
-        stock: req.body.stock ? Number(req.body.stock) : 0,
-        inStock: (req.body.stock ? Number(req.body.stock) : 0) > 0,
-        price: req.body.price ? Number(req.body.price) : 0,
-        discount: req.body.discount ? Number(req.body.discount) : 0
-      }
-    });
+    const productData = {
+      name: name || '',
+      nameTamil: nameTamil || '',
+      tamilName: tamilName || '',
+      englishName: englishName || '',
+      sku: sku || '',
+      price: price ? Number(price) : 0,
+      categorySlug,
+      categoryId: categoryId || undefined,
+      unit: unit || '1 kg',
+      stock: stock ? Number(stock) : 0,
+      inStock: (stock ? Number(stock) : 0) > 0,
+      description: description || '',
+      offerTag: offerTag || '',
+      isTrending: isTrending === true || isTrending === 'true',
+      isBestSeller: isBestSeller === true || isBestSeller === 'true',
+      isFeatured: isFeatured === true || isFeatured === 'true',
+      isActive: isActive !== false && isActive !== 'false',
+      discount: discount ? Number(discount) : 0,
+      image: image || '',
+      images: Array.isArray(images) ? images : []
+    };
 
+    const newProductRaw = await prisma.product.create({ data: productData });
     const createdProduct = formatMongoCompat(newProductRaw);
 
     await logAuditAndEmit(req, 'Create Product', 'Product', createdProduct._id, createdProduct.name, null, JSON.stringify(createdProduct), 'product_update', createdProduct);
@@ -127,7 +117,7 @@ router.post('/products', async (req, res) => {
           await createAndEmitNotification(io, {
             userId: user.id,
             title: 'New Product Added',
-            message: `Check out our new product: "${createdProduct.name}" in category "${createdProduct.category}".`,
+            message: `Check out our new product: "${createdProduct.name}" in category "${categorySlug}".`,
             type: 'general',
             role: 'customer',
             actionUrl: '/'
@@ -252,7 +242,7 @@ router.put('/products/:id', productUpdateUpload, async (req, res) => {
 
         if (isBackInStock || isPriceDropped) {
           const users = await prisma.user.findMany({
-            where: { wishlist: { has: req.params.id }, isBlocked: { not: true } },
+            where: { wishlist: { some: { productId: req.params.id } }, isBlocked: { not: true } },
             select: { id: true }
           });
           const io = req.app.get('io');
@@ -297,33 +287,39 @@ router.post('/products/:id/duplicate', async (req, res) => {
     if (!originalRaw) return res.status(404).json({ message: 'Product not found' });
     const original = formatMongoCompat(originalRaw);
 
-    let duplicateName = `${original.name} (Copy)`;
-    let nameExists = await prisma.product.findFirst({ where: { name: duplicateName, categorySlug: original.category } });
+    const categorySlug = originalRaw.categorySlug || original.categorySlug || (typeof original.category === 'string' ? original.category : 'others');
+
+    let duplicateName = `${originalRaw.name} (Copy)`;
+    let nameExists = await prisma.product.findFirst({ where: { name: duplicateName, categorySlug } });
     let counter = 1;
     while (nameExists) {
-      duplicateName = `${original.name} (Copy ${counter})`;
-      nameExists = await prisma.product.findFirst({ where: { name: duplicateName, categorySlug: original.category } });
+      duplicateName = `${originalRaw.name} (Copy ${counter})`;
+      nameExists = await prisma.product.findFirst({ where: { name: duplicateName, categorySlug } });
       counter++;
     }
 
     const duplicatedRaw = await prisma.product.create({
       data: {
         name: duplicateName,
-        nameTamil: original.nameTamil ? `${original.nameTamil} (நகல்)` : '',
-        tamilName: (original.nameTamil || original.tamilName) ? `${original.nameTamil || original.tamilName} (நகல்)` : '',
-        price: original.price,
-        categorySlug: original.category,
+        nameTamil: originalRaw.nameTamil ? `${originalRaw.nameTamil} (நகல்)` : '',
+        tamilName: (originalRaw.nameTamil || originalRaw.tamilName) ? `${originalRaw.nameTamil || originalRaw.tamilName} (நகல்)` : '',
+        englishName: originalRaw.englishName || '',
+        sku: originalRaw.sku ? `${originalRaw.sku}-COPY` : '',
+        price: originalRaw.price,
+        categorySlug,
         categoryId: originalRaw.categoryId || undefined,
-        image: original.image,
-        images: original.images || [],
-        inStock: original.inStock,
-        stock: original.stock,
-        unit: original.unit,
-        description: original.description,
-        isActive: original.isActive,
-        isFeatured: original.isFeatured,
-        discount: original.discount,
-        offerTag: original.offerTag
+        image: originalRaw.image || '',
+        images: originalRaw.images || [],
+        inStock: originalRaw.inStock,
+        stock: originalRaw.stock,
+        unit: originalRaw.unit || '1 kg',
+        description: originalRaw.description || '',
+        isActive: originalRaw.isActive,
+        isFeatured: originalRaw.isFeatured || false,
+        isTrending: originalRaw.isTrending || false,
+        isBestSeller: originalRaw.isBestSeller || false,
+        discount: originalRaw.discount || 0,
+        offerTag: originalRaw.offerTag || ''
       }
     });
     
@@ -334,7 +330,7 @@ router.post('/products/:id/duplicate', async (req, res) => {
     res.status(201).json(saved);
   } catch (error) {
     console.error('Duplicate product error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Server error: ' + error.message });
   }
 });
 

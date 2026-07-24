@@ -299,10 +299,18 @@ model StoreSettings {
 model Offer {
   id                 String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   title              String
+  description        String?  @default("")
+  discountType       String   @default("percentage") // percentage, flat, bogo, free_delivery
   discountPercentage Float
+  maxDiscountAmount  Float?   @default(0)
   minOrderValue      Float    @default(0)
+  couponCode         String?  @default("")
+  applicableType     String   @default("all") // all, category, product
+  applicableCategory String?  @default("")
+  applicableProduct  String?  @default("")
   validFrom          DateTime
   validUntil         DateTime
+  isActive           Boolean  @default(true)
   status             String   @default("Active")
   bannerImage        String?  @default("")
   createdAt          DateTime @default(now())
@@ -316,8 +324,8 @@ model AuditLog {
   targetType String
   targetId   String?
   targetName String?
-  oldValue   Json?
-  newValue   Json?
+  oldValue   String?
+  newValue   String?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 }

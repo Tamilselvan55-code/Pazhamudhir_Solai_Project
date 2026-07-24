@@ -2,6 +2,7 @@ import React from 'react';
 import { X, Package, Calendar, CreditCard, MapPin, CheckCircle, Clock, Truck, AlertCircle, FileText } from 'lucide-react';
 import { formatCurrency } from '../../utils/currency';
 import ProductImage from '../Product/ProductImage';
+import { formatDisplayAddress, formatDisplayAddressLines } from '../../utils/addressFormatter';
 
 const getStatusBadge = (status) => {
   const colors = {
@@ -185,14 +186,11 @@ const OrderDetailsModal = ({ order, onClose, onDownloadInvoice }) => {
               <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                 <MapPin className="w-4 h-4 text-green-600" /> Delivery Address
               </h4>
-              <p className="text-sm font-semibold text-gray-800 leading-relaxed">
-                {order.shippingAddress.fullAddress || order.shippingAddress.street}
-              </p>
-              {(order.shippingAddress.city || order.shippingAddress.state || order.shippingAddress.pincode) && (
-                <p className="text-xs text-gray-600 mt-1">
-                  {[order.shippingAddress.city, order.shippingAddress.state, order.shippingAddress.pincode].filter(Boolean).join(', ')}
-                </p>
-              )}
+              <div className="text-sm font-semibold text-gray-800 leading-relaxed">
+                {formatDisplayAddressLines(order.shippingAddress, order.notes).map((line, idx) => (
+                  <div key={idx}>{line}</div>
+                ))}
+              </div>
             </div>
           )}
         </div>

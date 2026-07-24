@@ -56,8 +56,8 @@ router.get('/profile', protectAdmin, async (req, res) => {
 
 // @route   POST /api/admin/auth/seed
 // @desc    Seed initial Super Admin
-// @access  Public (Should be disabled or protected in production!)
-router.post('/seed', async (req, res) => {
+// @access  Private (Super Admin only)
+router.post('/seed', protectAdmin, requireSuperAdmin, async (req, res) => {
   try {
     const adminEmail = process.env.ADMIN_EMAIL || 'thiruchendurmurugan192@gmail.com';
     const adminPassword = process.env.ADMIN_PASSWORD || 'Admin@123';

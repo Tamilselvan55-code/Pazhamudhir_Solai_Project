@@ -41,11 +41,18 @@ const Products = () => {
   const [pages, setPages] = useState(1);
 
   // Filters & Search
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(() => new URLSearchParams(window.location.search).get('search') || '');
   const [category, setCategory] = useState('');
   const [stockStatus, setStockStatus] = useState('');
   const [activeStatus, setActiveStatus] = useState('');
   const [sort, setSort] = useState('newest');
+
+  useEffect(() => {
+    const q = new URLSearchParams(location.search).get('search');
+    if (q !== null) {
+      setSearch(q);
+    }
+  }, [location.search]);
 
   // Loading state
   const [loading, setLoading] = useState(false);

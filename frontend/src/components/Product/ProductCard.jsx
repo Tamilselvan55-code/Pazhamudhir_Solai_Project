@@ -1,6 +1,7 @@
 import React from 'react';
-import { Plus, Minus } from 'lucide-react';
+import { Plus, Minus, Heart } from 'lucide-react';
 import useCartStore from '../../store/useCartStore';
+import useWishlistStore from '../../store/useWishlistStore';
 import useModal from '../../hooks/useModal';
 import useGuestGuard from '../../hooks/useGuestGuard';
 import { formatCurrency } from '../../utils/currency';
@@ -8,17 +9,39 @@ import ProductImage from './ProductImage';
 
 const ProductCard = ({ product }) => {
   const { cartItems, addToCart, updateQuantity } = useCartStore();
-  const { userConfirm } = useModal();
+  const { isInWishlist, toggleWishlist } = useWishlistStore();
+  const { userConfirm, toast } = useModal();
   const { requireAuth } = useGuestGuard();
+  
+  const [isAnimatingHeart, setIsAnimatingHeart] = React.useState(false);
 
   const cartItem = cartItems.find(item => item.product === product._id);
   const quantity = cartItem ? cartItem.quantity : 0;
   const isInStock = product.inStock !== false;
+  const isWishlisted = isInWishlist(product._id);
 
   // Guard: only add to cart if user is logged in
   const handleAddToCart = () => {
     if (!requireAuth('Please log in to add products to your cart.')) return;
     addToCart(product);
+  };
+
+  const handleToggleWishlist = async (e) => {
+    e.stopPropagation();
+    if (!requireAuth('Please log in to add products to your wishlist.')) return;
+    
+    // Start animation
+    setIsAnimatingHeart(true);
+    setTimeout(() => setIsAnimatingHeart(false), 300);
+
+    const result = await toggleWishlist(product);
+    if (result && result.success) {
+      if (result.action === 'added') {
+        toast('Wishlist Updated', `❤️ ${product.name} added to wishlist!`);
+      } else {
+        toast('Wishlist Updated', `💔 ${product.name} removed from wishlist.`);
+      }
+    }
   };
 
   return (
@@ -33,6 +56,21 @@ const ProductCard = ({ product }) => {
           size="lg"
           className="w-full h-full object-contain object-center group-hover:scale-105 transition-transform duration-300 mix-blend-multiply"
         />
+
+        {/* Wishlist Heart Button */}
+        <button
+          onClick={handleToggleWishlist}
+          aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+          className={`absolute top-2 right-2 p-1.5 rounded-full bg-white/80 backdrop-blur-sm border border-gray-100 shadow-sm transition-all duration-250 z-10 ${
+            isAnimatingHeart ? 'scale-125' : 'hover:bg-white active:scale-90'
+          }`}
+        >
+          <Heart
+            className={`w-4 h-4 transition-all duration-250 ${
+              isWishlisted ? 'text-red-500 fill-red-500' : 'text-gray-400 hover:text-red-500'
+            } ${isAnimatingHeart ? 'scale-110' : 'scale-100'}`}
+          />
+        </button>
 
         {/* Offer badge */}
         {product.offerTag && (

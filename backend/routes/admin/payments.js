@@ -3,31 +3,9 @@ import { protectAdmin } from '../../middleware/adminAuth.js';
 import prisma from '../../utils/prismaClient.js';
 import { formatMongoCompat, formatMongoCompatArray } from '../../utils/formatMongoCompat.js';
 import { createAndEmitNotification } from '../../utils/notificationHelper.js';
+import { logAuditAndEmit } from '../../utils/auditHelper.js';
 
 const router = express.Router();
-
-const logAuditAndEmit = async (req, action, targetType, targetId, targetName, oldValue, newValue, eventName, eventData) => {
-  try {
-    const adminName = req.admin ? req.admin.name : 'System Admin';
-    await prisma.auditLog.create({
-      data: {
-        adminName,
-        action,
-        targetType,
-        targetId: String(targetId || ''),
-        targetName: String(targetName || ''),
-        oldValue: oldValue ? String(oldValue) : null,
-        newValue: newValue ? String(newValue) : null
-      }
-    });
-    const io = req.app.get('io');
-    if (io && eventName) {
-      io.emit(eventName, eventData);
-    }
-  } catch (err) {
-    console.error('AuditLog helper error:', err);
-  }
-};
 
 router.get('/payments', async (req, res) => {
   try {
@@ -39,7 +17,7 @@ router.get('/payments', async (req, res) => {
     }
     const ordersRaw = await prisma.order.findMany({
       where,
-      include: { user: true },
+      include: { user: true, orderItems: { include: { product: true } } },
       orderBy: { createdAt: 'desc' }
     });
     
