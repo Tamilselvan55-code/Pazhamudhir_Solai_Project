@@ -82,7 +82,7 @@ const Categories = () => {
       try {
         const [catRes, prodRes] = await Promise.all([
           axios.get(`${config_API_BASE}/categories`),
-          axios.get(`${config_API_BASE}/products`)
+          axios.get(`${config_API_BASE}/products?limit=1000`)
         ]);
         
         // Remove 'all' if backend includes it, or just use as-is

@@ -161,7 +161,7 @@ const Home = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const { data } = await axios.get(`${config_API_BASE}/products`);
+        const { data } = await axios.get(`${config_API_BASE}/products?limit=1000`);
         setProducts(data?.products || (Array.isArray(data) ? data : []));
       } catch (err) {
         console.error('Error fetching products:', err);
@@ -259,6 +259,10 @@ const Home = () => {
     });
     return meta;
   }, [categoriesList]);
+
+  console.log('PRODUCTS:', products);
+  console.log('IS_ARRAY:', Array.isArray(products));
+  console.log('LENGTH:', products?.length);
 
   useEffect(() => {
     if (!loading && !categoriesLoading && products.length > 0 && showSections) {
