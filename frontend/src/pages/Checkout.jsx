@@ -37,8 +37,19 @@ const Checkout = () => {
   /* ── Address form ───────────────────────────────────────────────────────── */
   const [fullName,       setFullName]       = useState(userInfo?.fullName || userInfo?.name || '');
   const [phoneNumber,    setPhoneNumber]    = useState(userInfo?.phoneNumber || '');
-  const [addressDetails, setAddressDetails] = useState('');
+  const [doorNo, setDoorNo] = useState('');
+  const [street, setStreet] = useState('');
+  const [area, setArea] = useState('');
+  const [manualCity, setManualCity] = useState('');
+  const [manualState, setManualState] = useState('');
+  const [manualPincode, setManualPincode] = useState('');
   const [savedAddresses, setSavedAddresses] = useState([]);
+
+  useEffect(() => {
+    if (city) setManualCity(city);
+    if (state) setManualState(state);
+    if (pincode) setManualPincode(pincode);
+  }, [city, state, pincode]);
 
   useEffect(() => {
     if (userInfo?.token) {
@@ -119,12 +130,7 @@ const Checkout = () => {
   const isNameEntered = fullName.trim() !== '';
   const isPhoneEntered = phoneNumber.trim() !== '';
 
-  const isCoordsFull = /^-?\d{1,3}\.\d+[\s,]+-?\d{1,3}\.\d+/.test((fullAddress || '').trim()) || /-?\d{1,3}\.\d{4,}[\s,]+-?\d{1,3}\.\d{4,}/.test((fullAddress || '').trim());
-  const cleanBaseAddress = isCoordsFull ? '' : (fullAddress || '').trim();
-  const hasStructuredAddress = addressDetails.trim() !== '' || cleanBaseAddress !== '';
-  const defaultSaved = savedAddresses.find(a => a.isDefault) || savedAddresses[0];
-
-  const isAddressEntered = hasStructuredAddress || !!defaultSaved;
+  const isAddressEntered = !!(doorNo.trim() && street.trim() && area.trim() && manualCity.trim() && manualState.trim() && manualPincode.trim());
   const isTotalGreaterThanZero = totalToPay > 0;
 
   const formValid =
@@ -271,42 +277,10 @@ const Checkout = () => {
     setOrderLoading(true);
 
     try {
-      const isCoords = /^-?\d{1,3}\.\d+[\s,]+-?\d{1,3}\.\d+/.test((fullAddress || '').trim()) || /-?\d{1,3}\.\d{4,}[\s,]+-?\d{1,3}\.\d{4,}/.test((fullAddress || '').trim());
-      const baseAddr = isCoords ? '' : (fullAddress || '').trim();
-
-      let finalStreet = addressDetails?.trim() || baseAddr;
-      let finalFull = finalStreet;
-      let finalCity = city || '';
-      let finalState = state || '';
-      let finalPincode = pincode || '';
-
-      if (!finalStreet || /^-?\d{1,3}\.\d+[\s,]+-?\d{1,3}\.\d+/.test(finalStreet)) {
-        const defAddr = savedAddresses.find(a => a.isDefault) || savedAddresses[0];
-        if (defAddr) {
-          finalStreet = defAddr.street || defAddr.fullAddress || defAddr.label || '';
-          finalFull = defAddr.fullAddress || finalStreet;
-          finalCity = defAddr.city || finalCity;
-          finalState = defAddr.state || finalState;
-          finalPincode = defAddr.pincode || finalPincode;
-        } else {
-          setOrderError('Please complete your delivery address. We cannot use GPS coordinates alone.');
-          setOrderLoading(false);
-          return;
-        }
-      } else {
-        const addressParts = [
-          addressDetails?.trim(),
-          baseAddr,
-          city?.trim(),
-          state?.trim(),
-          pincode?.trim()
-        ].filter(Boolean);
-
-        const uniqueAddressParts = addressParts.filter((part, idx, self) => 
-          !/^-?\d{1,3}\.\d+/.test(part) && !/-?\d{1,3}\.\d{4,}/.test(part) && self.indexOf(part) === idx
-        );
-
-        finalFull = uniqueAddressParts.join(', ') || finalStreet;
+      if (!doorNo.trim() || !street.trim() || !area.trim() || !manualCity.trim() || !manualState.trim() || !manualPincode.trim()) {
+        setOrderError('Please complete your full delivery address including Door No, Street, Area, City, State, and Pincode.');
+        setOrderLoading(false);
+        return;
       }
 
       const payload = {
@@ -322,13 +296,15 @@ const Checkout = () => {
         })),
         totalPrice:   totalToPay,
         paymentMethod,
-        notes:        addressDetails,
+        notes:        '',
         shippingAddress: {
-          street:            finalStreet,
-          fullAddress:       finalFull,
-          city:              finalCity,
-          state:             finalState,
-          pincode:           finalPincode,
+          doorNo:            doorNo.trim(),
+          street:            street.trim(),
+          area:              area.trim(),
+          city:              manualCity.trim(),
+          state:             manualState.trim(),
+          pincode:           manualPincode.trim(),
+          fullAddress:       `${doorNo.trim()}, ${street.trim()}, ${area.trim()}, ${manualCity.trim()}, ${manualState.trim()} - ${manualPincode.trim()}`,
           lat:               userLocation?.lat,
           lon:               userLocation?.lon,
           distanceFromStore: distanceKm,
@@ -407,12 +383,51 @@ const Checkout = () => {
               />
             </div>
 
-            <textarea
-              placeholder="House No, Street, Landmark"
-              rows={2}
-              value={addressDetails}
-              onChange={(e) => setAddressDetails(e.target.value)}
-              className="w-full border-2 border-gray-200 rounded-xl px-3.5 py-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-green-500 transition-colors resize-none"
+            <div className="grid grid-cols-2 gap-3">
+              <input
+                type="text"
+                placeholder="Door No / House No"
+                value={doorNo}
+                onChange={(e) => setDoorNo(e.target.value)}
+                className="w-full border-2 border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-green-500 transition-colors"
+              />
+              <input
+                type="text"
+                placeholder="Street / Road"
+                value={street}
+                onChange={(e) => setStreet(e.target.value)}
+                className="w-full border-2 border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-green-500 transition-colors"
+              />
+            </div>
+            <input
+              type="text"
+              placeholder="Area / Locality / Landmark"
+              value={area}
+              onChange={(e) => setArea(e.target.value)}
+              className="w-full border-2 border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-green-500 transition-colors"
+            />
+            <div className="grid grid-cols-2 gap-3">
+              <input
+                type="text"
+                placeholder="City"
+                value={manualCity}
+                onChange={(e) => setManualCity(e.target.value)}
+                className="w-full border-2 border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-green-500 transition-colors"
+              />
+              <input
+                type="text"
+                placeholder="State"
+                value={manualState}
+                onChange={(e) => setManualState(e.target.value)}
+                className="w-full border-2 border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-green-500 transition-colors"
+              />
+            </div>
+            <input
+              type="text"
+              placeholder="Pincode"
+              value={manualPincode}
+              onChange={(e) => setManualPincode(e.target.value)}
+              className="w-full border-2 border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-green-500 transition-colors"
             />
           </div>
         </div>
@@ -549,10 +564,10 @@ const Checkout = () => {
                 <p className="text-xs text-orange-700 font-medium">Please enter your phone number.</p>
               </div>
             )}
-            {isCartNotEmpty && isDeliveryAvailable && isNameEntered && isPhoneEntered && !isAddressEntered && (
+            {isCartNotEmpty && isDeliveryAvailable && isNameEntered && isPhoneEntered && (!doorNo || !street || !area || !manualCity || !manualState || !manualPincode) && (
               <div className="flex items-start gap-2.5 p-3.5 rounded-xl bg-orange-50 border border-orange-200 text-left">
                 <Info className="w-4 h-4 text-orange-500 shrink-0 mt-0.5" />
-                <p className="text-xs text-orange-700 font-medium">Please enter your address.</p>
+                <p className="text-xs text-orange-700 font-medium">Please enter your complete delivery address.</p>
               </div>
             )}
             {!isMinOrderSatisfied && (

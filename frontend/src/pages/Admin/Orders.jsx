@@ -12,6 +12,7 @@ import axios from 'axios';
 import useModal from '../../hooks/useModal';
 import { formatCurrency } from '../../utils/currency';
 import { generateInvoicePDF } from '../../utils/pdfGenerator';
+import { generateEnterpriseAdminInvoicePDF } from '../../utils/adminPdfGenerator';
 import { formatDisplayAddress } from '../../utils/addressFormatter';
 
 const API_BASE = `${config_API_BASE}/admin`;
@@ -431,11 +432,11 @@ const OrderRow = ({ order, token, onUpdated }) => {
               <Printer className="w-3.5 h-3.5 text-[#22C55E]" /> Print Invoice
             </button>
             <button
-              onClick={() => generateInvoicePDF(order)}
+              onClick={() => generateEnterpriseAdminInvoicePDF(order, adminInfo)}
               className="flex items-center gap-1.5 h-[40px] px-4 bg-white/6 hover:bg-white/10 border border-white/8 rounded-xl text-xs font-bold text-white transition-colors shadow-sm"
-              title="Download PDF Invoice"
+              title="Download Admin PDF Invoice"
             >
-              <FileText className="w-3.5 h-3.5 text-[#22C55E]" /> Download PDF Bill
+              <FileText className="w-3.5 h-3.5 text-[#22C55E]" /> Download Enterprise PDF
             </button>
           </div>
         </div>

@@ -13,6 +13,11 @@ const formatCurrencyPdf = (value) => {
   }).format(num);
 };
 
+const capitalizeAddressLine = (str) => {
+  if (typeof str !== 'string') return str;
+  return str.toLowerCase().replace(/\b[a-z]/g, char => char.toUpperCase());
+};
+
 // Convert Number to Words (Indian Numbering System)
 const numberToWordsINR = (num) => {
   const n = Math.round(Number(num) || 0);
@@ -199,39 +204,40 @@ export const generateInvoicePDF = async (order, userInfo) => {
   let curY = 10;
 
   if (logoDataUrl) {
-    doc.addImage(logoDataUrl, 'PNG', pageCenter - 9, curY, 18, 18);
+    doc.addImage(logoDataUrl, 'PNG', pageCenter - 12, curY, 24, 24);
   } else {
     doc.setFillColor(...darkGreen);
-    doc.circle(pageCenter, curY + 9, 8, 'F');
+    doc.circle(pageCenter, curY + 12, 11, 'F');
     doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(9);
-    doc.text("TM", pageCenter, curY + 11, { align: "center" });
+    doc.setFontSize(11);
+    doc.text("TM", pageCenter, curY + 14, { align: "center" });
   }
-  curY += 21;
+  curY += 27;
 
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(15);
+  doc.setFontSize(16);
   doc.setTextColor(...darkGreen);
   doc.text("TIRUCHENDUR MURUGAN PAZHAMUDHIR SOLAI", pageCenter, curY, { align: "center" });
+  curY += 5;
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8.5);
+  doc.setTextColor(...darkText);
+  doc.text("Fresh Fruits \u2022 Vegetables \u2022 Grocery \u2022 Dairy Products", pageCenter, curY, { align: "center" });
   curY += 4.5;
 
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(8);
-  doc.setTextColor(...darkText);
-  doc.text("Grocery & Fresh Vegetables Store", pageCenter, curY, { align: "center" });
-  curY += 3.5;
-
   doc.setFontSize(7);
   doc.setTextColor(...greyText);
   doc.text("Sriperumbudur, Tamil Nadu - 602105  |  +91 94443 62453  |  contact@tmstore.com", pageCenter, curY, { align: "center" });
-  curY += 3;
+  curY += 3.5;
 
   // Divider
   doc.setDrawColor(200, 210, 220);
   doc.setLineWidth(0.35);
   doc.line(leftM, curY, rightM, curY);
-  curY += 3;
+  curY += 3.5;
 
   // ── 2. Info Cards — 3 equal-width, same height, perfectly aligned ──
   const cardGap = 4;
@@ -262,53 +268,63 @@ export const generateInvoicePDF = async (order, userInfo) => {
     lines.forEach((ln, i) => {
       const ly = y + 9.5 + i * 3.8;
       if (ln.badge) {
+        doc.setTextColor(100, 116, 139); // Slate 500 for labels
         doc.text(ln.label, x + 3, ly);
+        doc.text(":", x + 16.5, ly);
         doc.setFillColor(...ln.badgeColor);
-        const badgeW = Math.min(24, w - 30);
-        doc.roundedRect(x + 26, ly - 2.6, badgeW, 3.8, 1, 1, 'F');
+        const badgeW = Math.min(24, w - 24);
+        doc.roundedRect(x + 19, ly - 2.6, badgeW, 3.8, 1, 1, 'F');
         doc.setFont("helvetica", "bold");
         doc.setFontSize(6);
         doc.setTextColor(255, 255, 255);
-        doc.text(ln.badgeText, x + 26 + badgeW / 2, ly, { align: "center" });
+        doc.text(ln.badgeText, x + 19 + badgeW / 2, ly, { align: "center" });
         doc.setFont("helvetica", "normal");
         doc.setFontSize(7);
-        doc.setTextColor(...darkText);
       } else if (ln.label) {
+        doc.setTextColor(100, 116, 139);
         doc.text(ln.label, x + 3, ly);
-        doc.text(ln.value, x + 25, ly);
+        doc.text(":", x + 16.5, ly);
+        doc.setTextColor(...darkText);
+        doc.text(ln.value, x + 19, ly);
       } else {
+        doc.setTextColor(...darkText);
         doc.text(ln.text, x + 3, ly);
       }
     });
   };
 
-  const custName = order.recipient?.name || userInfo?.fullName || 'Tamilselvane';
-  const custPhone = order.recipient?.phone || userInfo?.phoneNumber || '8056705542';
-  const custEmail = userInfo?.email || 'tamilselvane748@gmail.com';
+  const custName = order.recipient?.name || userInfo?.fullName || 'Customer';
+  const custPhone = order.recipient?.phone || userInfo?.phoneNumber || 'N/A';
+  const paymentMethod = order.paymentMethod || order.paymentInfo?.method || 'Cash / Online';
 
   const c1X = leftM;
   const c2X = c1X + cardW + cardGap;
   const c3X = c2X + cardW + cardGap;
 
   drawCard(c1X, curY, cardW, "CUSTOMER DETAILS", [
-    { label: "Name  :", value: custName },
-    { label: "Phone :", value: custPhone },
-    { label: "Email :", value: custEmail }
+    { label: "Name", value: custName.length > 20 ? custName.substring(0, 18) + '..' : custName },
+    { label: "Phone", value: custPhone },
+    { label: "Pay Mode", value: paymentMethod }
   ]);
 
   drawCard(c2X, curY, cardW, "INVOICE DETAILS", [
-    { label: "Invoice :", value: invoiceNo },
-    { label: "Date    :", value: orderDateStr },
-    { label: "Status  :", badge: true, badgeText: order.status || "Accepted", badgeColor: darkGreen }
+    { label: "Invoice No", value: invoiceNo },
+    { label: "Date", value: orderDateStr },
+    { label: "Status", badge: true, badgeText: order.status || "Accepted", badgeColor: darkGreen }
   ]);
 
   const deliveryLines = [];
   const deliveryName = order.recipient?.name || userInfo?.fullName || 'Customer';
-  deliveryLines.push({ text: deliveryName });
+  deliveryLines.push({ text: capitalizeAddressLine(deliveryName) });
 
   const addrLines = formatDisplayAddressLines(order.shippingAddress, order.notes);
   addrLines.forEach(line => {
-    const splitLine = doc.splitTextToSize(line, cardW - 6);
+    // Filter out raw GPS coordinates for cleaner presentation
+    if (/^-?\d+\.\d+,\s*-?\d+\.\d+$/.test(line.trim())) return;
+    if (line.toLowerCase().includes('lat:') || line.toLowerCase().includes('lng:')) return;
+    
+    const capLine = capitalizeAddressLine(line);
+    const splitLine = doc.splitTextToSize(capLine, cardW - 6);
     splitLine.forEach(sub => {
       deliveryLines.push({ text: sub });
     });
@@ -326,8 +342,8 @@ export const generateInvoicePDF = async (order, userInfo) => {
     const total = price * qty;
     const engName = item.name || item.product?.name || 'Grocery Item';
     const tamName = item.nameTamil || item.tamilName || item.product?.nameTamil || item.product?.tamilName;
-    const displayName = tamName ? `${engName}\n(${tamName})` : engName;
-    return [idx + 1, displayName, qty, price.toFixed(2), '0%', '0.00', total.toFixed(2)];
+    const dummyString = tamName ? `${engName}\n(${tamName})` : engName;
+    return [idx + 1, { content: dummyString, engName, tamName }, qty, price.toFixed(2), '0%', '0.00', total.toFixed(2)];
   });
 
   autoTable(doc, {
@@ -340,16 +356,16 @@ export const generateInvoicePDF = async (order, userInfo) => {
       textColor: 255,
       font: 'helvetica',
       fontStyle: 'bold',
-      fontSize: 7.5,
+      fontSize: 8,
       halign: 'center',
-      cellPadding: 2
+      cellPadding: 3.5
     },
     alternateRowStyles: { fillColor: [248, 250, 252] },
     bodyStyles: { font: tamilFont },
     styles: {
       font: 'helvetica',
-      fontSize: 7.5,
-      cellPadding: 2,
+      fontSize: 8,
+      cellPadding: 3.5, // Improved spacing
       textColor: darkText,
       valign: 'middle',
       lineWidth: 0.2,
@@ -365,7 +381,45 @@ export const generateInvoicePDF = async (order, userInfo) => {
       6: { halign: 'right',  cellWidth: 26 }
     },
     margin: { left: leftM, right: leftM },
-    tableWidth: contentW
+    tableWidth: contentW,
+    willDrawCell: (data) => {
+      if (data.section === 'body' && data.column.index === 1) {
+        const isAlt = data.row.index % 2 !== 0;
+        data.cell.styles.textColor = isAlt ? [248, 250, 252] : [255, 255, 255];
+      }
+    },
+    didDrawCell: (data) => {
+      if (data.section === 'body' && data.column.index === 1) {
+        const cell = data.cell;
+        const eng = cell.raw.engName || '';
+        const tam = cell.raw.tamName || '';
+        
+        let textY = cell.y + 5.5; // Start position
+        const textX = cell.x + 3.5;
+        const maxWidth = cell.width - 7;
+        
+        data.doc.setFont("helvetica", "bold");
+        data.doc.setFontSize(8);
+        data.doc.setTextColor(...darkText);
+        
+        const engSplit = data.doc.splitTextToSize(eng, maxWidth);
+        engSplit.forEach(line => {
+          data.doc.text(line, textX, textY);
+          textY += 4;
+        });
+        
+        if (tam) {
+          data.doc.setFont(tamilFont, "normal");
+          data.doc.setFontSize(7); // Slightly smaller font for Tamil
+          data.doc.setTextColor(71, 85, 105);
+          const tamSplit = data.doc.splitTextToSize(`(${tam})`, maxWidth);
+          tamSplit.forEach(line => {
+            data.doc.text(line, textX, textY);
+            textY += 3.5;
+          });
+        }
+      }
+    }
   });
 
   // ── 4. Order Summary + QR (same horizontal line, matched heights) ──
@@ -384,14 +438,19 @@ export const generateInvoicePDF = async (order, userInfo) => {
   doc.roundedRect(leftM, endY, qrBoxW, sectionH, 2, 2, 'FD');
 
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(6.5);
+  doc.setFontSize(7);
   doc.setTextColor(...darkGreen);
-  doc.text("SCAN & PAY", leftM + qrBoxW / 2, endY + 4.5, { align: "center" });
+  doc.text("SCAN & PAY", leftM + qrBoxW / 2, endY + 4, { align: "center" });
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(5.5);
+  doc.setTextColor(...greyText);
+  doc.text("For instant payment", leftM + qrBoxW / 2, endY + 6.5, { align: "center" });
 
   // QR code centered in box
   const qrSize = 22;
   const qrX = leftM + (qrBoxW - qrSize) / 2 - 1;
-  const qrY = endY + 6.5;
+  const qrY = endY + 8.5;
   doc.setFillColor(255, 255, 255);
   doc.setDrawColor(220, 225, 230);
   doc.roundedRect(qrX, qrY, qrSize + 2, qrSize + 2, 1, 1, 'FD');
@@ -431,39 +490,45 @@ export const generateInvoicePDF = async (order, userInfo) => {
 
   // TOTAL PAYABLE label + amount pill
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(10);
+  doc.setFontSize(11);
   doc.setTextColor(...darkGreen);
-  doc.text("TOTAL PAYABLE", sumX, dotY + 5.5);
+  doc.text("TOTAL PAYABLE", sumX, dotY + 6);
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(6.5);
   doc.setTextColor(...greyText);
-  doc.text(`(${numberToWordsINR(totalPayable)})`, sumX, dotY + 9.5);
+  doc.text(`(${numberToWordsINR(totalPayable)})`, sumX, dotY + 10);
 
-  // Total pill — right-aligned, vertically centered with label
-  const pillW = 38;
-  const pillH = 9;
+  // Total pill — right-aligned, visually highlighted
+  const pillW = 46;
+  const pillH = 11;
   const pillX = valX - pillW;
-  const pillY = dotY + 2;
+  const pillY = dotY + 1.5;
   doc.setFillColor(...darkGreen);
   doc.roundedRect(pillX, pillY, pillW, pillH, 2, 2, 'F');
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(11);
+  doc.setFontSize(12.5);
   doc.setTextColor(255, 255, 255);
   doc.text(`Rs. ${totalPayable.toFixed(2)}`, pillX + pillW / 2, pillY + pillH / 2 + 1.5, { align: "center" });
 
   // ── 5. Footer Bar — positioned right below content, no gap ──
   const footerY = Math.max(endY + sectionH + 4, dotY + 14);
-  const barH = 7;
 
+  // Professional thank-you message above footer
+  doc.setFont("helvetica", "italic");
+  doc.setFontSize(8.5);
+  doc.setTextColor(...brandGreen);
+  doc.text("Thank you for shopping with Tiruchendur Murugan Pazhamudhir Solai!", pageCenter, footerY - 4.5, { align: "center" });
+
+  const barH = 7.5;
   doc.setFillColor(...darkGreen);
   doc.rect(0, footerY, 210, barH, 'F');
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(6);
+  doc.setFontSize(6.5);
   doc.setTextColor(255, 255, 255);
-  doc.text("Computer-generated bill \u2014 no signature required.", leftM, footerY + barH / 2 + 1);
-  doc.text("Thank you for shopping with us!", pageCenter, footerY + barH / 2 + 1, { align: "center" });
-  doc.text("Page 1 of 1", rightM, footerY + barH / 2 + 1, { align: "right" });
+  doc.text("This is a computer-generated invoice.", leftM, footerY + barH / 2 + 1.5);
+  doc.text("Fresh Quality Guaranteed", pageCenter, footerY + barH / 2 + 1.5, { align: "center" });
+  doc.text("Page 1 of 1", rightM, footerY + barH / 2 + 1.5, { align: "right" });
 
   doc.save(`Invoice_${invoiceNo}.pdf`);
 };
