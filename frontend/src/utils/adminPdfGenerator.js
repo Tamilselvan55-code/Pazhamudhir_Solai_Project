@@ -420,8 +420,7 @@ export const generateEnterpriseAdminInvoicePDF = async (order, adminInfo) => {
     margin: { left: leftM, right: leftM },
     didParseCell: (data) => {
       if (data.section === 'body' && data.column.index === 2) {
-        data.cell.styles.font = ["helvetica", tamilFont, "helvetica"];
-        data.cell.styles.fontStyle = ["bold", "normal", "normal"];
+        data.cell.styles.font = tamilFont;
       }
     },
     didDrawCell: (data) => {
