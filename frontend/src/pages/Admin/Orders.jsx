@@ -52,6 +52,7 @@ const ORDER_STATUSES = ['Pending', 'Accepted', 'Out for Delivery', 'Delivered', 
 /* ── Order Row ────────────────────────────────────────────────────────────── */
 const OrderRow = ({ order, token, onUpdated }) => {
   const { adminAlert, toast } = useModal();
+  const { adminInfo } = useAuthStore();
   const [expanded,       setExpanded]       = useState(false);
   const [statusUpdating, setStatusUpdating] = useState(false);
   const [error,          setError]          = useState('');
