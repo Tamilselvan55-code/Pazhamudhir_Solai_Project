@@ -158,8 +158,8 @@ router.put('/settings', async (req, res) => {
         action: 'Update System Settings',
         targetType: 'System',
         targetName: 'StoreSettings',
-        oldValue: 'Previous Configuration',
-        newValue: 'Updated Configuration'
+        oldValue: JSON.stringify('Previous Configuration'),
+        newValue: JSON.stringify('Updated Configuration')
       }
     });
 

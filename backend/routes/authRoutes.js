@@ -528,8 +528,8 @@ router.post('/login', checkMaintenanceAndFeature('disableCustomerLogin'), async 
             targetType: 'User',
             targetId: String(user.id),
             targetName: user.fullName,
-            oldValue: { attempts: user.loginAttempts },
-            newValue: `Locked until ${lockTime.toISOString()}`
+            oldValue: JSON.stringify({ attempts: user.loginAttempts }),
+            newValue: JSON.stringify(`Locked until ${lockTime.toISOString()}`)
           }
         });
 

@@ -10,13 +10,13 @@ export const logAuditAndEmit = async (req, action, targetType, targetId, targetN
     const adminName = req.admin ? req.admin.name : 'System Admin';
     await prisma.auditLog.create({
       data: {
-        adminName,
+        adminName: (req.admin && req.admin.name) ? req.admin.name : 'System Admin',
         action,
         targetType,
         targetId: targetId ? String(targetId) : null,
         targetName: targetName ? String(targetName) : null,
-        oldValue: oldValue != null ? (typeof oldValue === 'string' ? oldValue : JSON.stringify(oldValue)) : null,
-        newValue: newValue != null ? (typeof newValue === 'string' ? newValue : JSON.stringify(newValue)) : null
+        oldValue: oldValue != null ? JSON.stringify(oldValue) : null,
+        newValue: newValue != null ? JSON.stringify(newValue) : null
       }
     });
     const io = req.app.get('io');

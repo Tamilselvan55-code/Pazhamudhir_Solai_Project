@@ -45,7 +45,7 @@ router.post('/staff', async (req, res) => {
     const staffObj = formatMongoCompat(newStaffRaw);
     delete staffObj.password;
 
-    const adminName = req.admin ? req.admin.name : 'System Admin';
+    const adminName = (req.admin && req.admin.name) ? req.admin.name : 'System Admin';
     await prisma.auditLog.create({
       data: {
         adminName,
@@ -93,7 +93,7 @@ router.put('/staff/:id', async (req, res) => {
     const staffObj = formatMongoCompat(updatedRaw);
     delete staffObj.password;
 
-    const adminName = req.admin ? req.admin.name : 'System Admin';
+    const adminName = (req.admin && req.admin.name) ? req.admin.name : 'System Admin';
     await prisma.auditLog.create({
       data: {
         adminName,
@@ -127,7 +127,7 @@ router.delete('/staff/:id', async (req, res) => {
 
     await prisma.admin.delete({ where: { id } });
 
-    const adminName = req.admin ? req.admin.name : 'System Admin';
+    const adminName = (req.admin && req.admin.name) ? req.admin.name : 'System Admin';
     await prisma.auditLog.create({
       data: {
         adminName,

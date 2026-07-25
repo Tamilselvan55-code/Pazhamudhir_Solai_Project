@@ -101,7 +101,7 @@ router.delete('/users/:id', async (req, res) => {
 
     await prisma.notification.deleteMany({ where: { userId: userId } });
 
-    const adminName = req.admin ? req.admin.name : 'System Admin';
+    const adminName = (req.admin && req.admin.name) ? req.admin.name : 'System Admin';
     await prisma.auditLog.create({
       data: {
         adminName,

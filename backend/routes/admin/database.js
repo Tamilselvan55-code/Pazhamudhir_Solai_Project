@@ -71,7 +71,7 @@ router.post('/database/backup', async (req, res) => {
 
     fs.writeFileSync(filepath, JSON.stringify(payload, null, 2), 'utf-8');
 
-    const adminName = req.admin ? req.admin.name : 'System Admin';
+    const adminName = (req.admin && req.admin.name) ? req.admin.name : 'System Admin';
     await prisma.auditLog.create({
       data: {
         adminName,
@@ -183,7 +183,7 @@ router.post('/database/backups/restore/:filename', async (req, res) => {
 
     await executeRestore(backupPayload);
 
-    const adminName = req.admin ? req.admin.name : 'System Admin';
+    const adminName = (req.admin && req.admin.name) ? req.admin.name : 'System Admin';
     await prisma.auditLog.create({
       data: {
         adminName,
@@ -221,7 +221,7 @@ router.post('/database/backups/upload-restore', productUpdateUpload, async (req,
 
     fs.unlinkSync(file.path);
 
-    const adminName = req.admin ? req.admin.name : 'System Admin';
+    const adminName = (req.admin && req.admin.name) ? req.admin.name : 'System Admin';
     await prisma.auditLog.create({
       data: {
         adminName,
@@ -290,7 +290,7 @@ router.post('/database/database-import', productUpdateUpload, async (req, res) =
 
     fs.unlinkSync(file.path);
 
-    const adminName = req.admin ? req.admin.name : 'System Admin';
+    const adminName = (req.admin && req.admin.name) ? req.admin.name : 'System Admin';
     await prisma.auditLog.create({
       data: {
         adminName,
@@ -332,7 +332,7 @@ router.post('/database/optimize', async (req, res) => {
     // PostgreSQL does not require manual index syncing in Prisma (migrations handle it).
     details.push('Rebuilt database indexes and synchronized unique constraint constraints via Prisma schema.');
 
-    const adminName = req.admin ? req.admin.name : 'System Admin';
+    const adminName = (req.admin && req.admin.name) ? req.admin.name : 'System Admin';
     await prisma.auditLog.create({
       data: {
         adminName,
