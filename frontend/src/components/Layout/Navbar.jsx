@@ -129,7 +129,7 @@ const Navbar = ({ toggleCart }) => {
           {/* Notification Bell */}
           {userInfo && <NotificationBell />}
 
-          {/* Profile / Logout */}
+          {/* Profile */}
           {userInfo ? (
             <div className="flex items-center gap-4">
               <Link
@@ -146,14 +146,6 @@ const Navbar = ({ toggleCart }) => {
                 </div>
                 <span>{userInfo.fullName || userInfo.name || userInfo.phoneNumber}</span>
               </Link>
-
-              <button
-                onClick={handleLogout}
-                className="flex items-center gap-1.5 text-gray-400 hover:text-red-500 transition-colors text-sm"
-              >
-                <LogOut size={15} />
-                <span>Logout</span>
-              </button>
             </div>
           ) : (
             <Link
@@ -189,9 +181,6 @@ const Navbar = ({ toggleCart }) => {
                   <User size={14} style={{ color: '#15803d' }} />
                 </div>
               </Link>
-              <button onClick={handleLogout} className="text-gray-400 hover:text-red-500 transition-colors">
-                <LogOut size={17} />
-              </button>
             </div>
           ) : (
             <Link

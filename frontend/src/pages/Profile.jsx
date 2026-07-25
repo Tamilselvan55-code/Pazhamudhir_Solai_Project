@@ -2,7 +2,7 @@ import { API_BASE as config_API_BASE, API_URL as config_API_URL } from '../confi
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, Navigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
-import { ArrowLeft, ShoppingBag, Settings } from 'lucide-react';
+import { ArrowLeft, ShoppingBag, Settings, LogOut } from 'lucide-react';
 import useAuthStore from '../store/useAuthStore';
 
 import DashboardSidebar from '../components/Profile/DashboardSidebar';
@@ -197,6 +197,17 @@ const Profile = () => {
 
             {activeTab === 'settings' && <AccountSettingsTab onLogout={handleLogout} />}
           </div>
+        </div>
+
+        {/* Mobile Logout Button (Moved from Header) */}
+        <div className="lg:hidden mt-8 mb-4">
+          <button 
+            onClick={handleLogout}
+            className="w-full flex items-center justify-center gap-2 py-3.5 bg-red-50 text-red-600 rounded-2xl font-bold shadow-sm border border-red-100 hover:bg-red-100 transition-colors"
+          >
+            <LogOut size={18} />
+            Logout
+          </button>
         </div>
       </div>
 
