@@ -48,12 +48,12 @@ const ProductCard = ({ product }) => {
     <div className="w-full bg-white rounded-[16px] border border-[#ECECEC] shadow-sm overflow-hidden flex flex-col relative sm:transition-all sm:duration-200 sm:hover:shadow-md sm:group sm:border-gray-100 sm:overflow-visible">
       
       {/* 1. Image Section */}
-      <div className="h-[80px] w-full flex justify-center items-center relative sm:w-full sm:h-[140px] md:h-[160px] lg:h-[180px] sm:bg-white sm:p-[12px]">
+      <div className="h-[72px] w-full flex justify-center items-center relative sm:w-full sm:h-[140px] md:h-[160px] lg:h-[180px] sm:bg-white sm:p-[12px]">
         <ProductImage
           src={product.image}
           alt={product.name}
           category={product.category}
-          className="w-[72px] h-[72px] object-contain shrink-0 mix-blend-multiply sm:w-full sm:h-full sm:object-center sm:group-hover:scale-105 sm:transition-transform sm:duration-300"
+          className="w-[68px] h-[68px] object-contain shrink-0 mix-blend-multiply sm:w-full sm:h-full sm:object-center sm:group-hover:scale-105 sm:transition-transform sm:duration-300"
         />
 
         {/* Wishlist Heart Button */}
@@ -103,7 +103,7 @@ const ProductCard = ({ product }) => {
       </div>
 
       {/* 2. Content Section */}
-      <div className="px-[8px] pt-[4px] flex flex-col sm:p-[8px] sm:px-2 sm:pb-0 sm:p-2.5 sm:bg-white">
+      <div className="px-[8px] pt-[2px] flex flex-col sm:p-[8px] sm:px-2 sm:pb-0 sm:p-2.5 sm:bg-white">
         {/* Name (English) - Natural flow */}
         <h3 className="text-[13px] font-bold line-clamp-2 text-gray-800 leading-[18px] sm:h-auto sm:text-xs">
           {product.name}
