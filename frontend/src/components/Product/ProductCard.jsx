@@ -45,28 +45,28 @@ const ProductCard = ({ product }) => {
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col transition-all duration-200 hover:shadow-lg hover:-translate-y-1 group">
-      {/* Image */}
-      <div className="relative w-full h-[110px] sm:h-[140px] md:h-[160px] lg:h-[180px] flex items-center justify-center bg-white overflow-hidden p-[8px] sm:p-[12px]" style={{ borderRadius: '12px 12px 0 0' }}>
+    <div className="bg-white rounded-[16px] shadow-sm p-[10px] flex flex-col transition-all duration-300 hover:shadow-md hover:-translate-y-1 group min-h-[220px]">
+      {/* Image Container */}
+      <div className="relative w-full h-[100px] flex items-center justify-center bg-white mb-2">
         <ProductImage
           src={product.image}
           alt={product.name}
           category={product.category}
           fit="contain"
           size="lg"
-          className="w-full h-full object-contain object-center group-hover:scale-105 transition-transform duration-300 mix-blend-multiply"
+          className="w-[90%] h-[100px] object-contain group-hover:scale-105 transition-transform duration-300 mix-blend-multiply"
         />
 
-        {/* Wishlist Heart Button */}
+        {/* Wishlist Button */}
         <button
           onClick={handleToggleWishlist}
           aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
-          className={`absolute top-2 right-2 p-1.5 rounded-full bg-white/80 backdrop-blur-sm border border-gray-100 shadow-sm transition-all duration-250 z-10 ${
-            isAnimatingHeart ? 'scale-125' : 'hover:bg-white active:scale-90'
+          className={`absolute top-0 right-0 w-[32px] h-[32px] flex items-center justify-center rounded-full bg-white shadow transition-all duration-250 z-10 ${
+            isAnimatingHeart ? 'scale-125' : 'hover:bg-gray-50 active:scale-90'
           }`}
         >
           <Heart
-            className={`w-4 h-4 transition-all duration-250 ${
+            className={`w-[16px] h-[16px] transition-all duration-250 ${
               isWishlisted ? 'text-red-500 fill-red-500' : 'text-gray-400 hover:text-red-500'
             } ${isAnimatingHeart ? 'scale-110' : 'scale-100'}`}
           />
@@ -74,29 +74,29 @@ const ProductCard = ({ product }) => {
 
         {/* Offer badge */}
         {product.offerTag && (
-          <span className="absolute top-2 left-2 bg-red-500 text-white text-[9px] font-extrabold px-2 py-0.5 rounded-full shadow-md tracking-wide">
+          <span className="absolute top-0 left-0 bg-red-500 text-white text-[9px] font-extrabold px-2 py-0.5 rounded-full shadow-md tracking-wide z-10">
             {product.offerTag}
           </span>
         )}
 
         {/* Best seller */}
         {product.isBestSeller && !product.offerTag && (
-          <span className="absolute top-2 left-2 bg-amber-500 text-white text-[9px] font-extrabold px-2 py-0.5 rounded-full shadow-md">
+          <span className="absolute top-0 left-0 bg-amber-500 text-white text-[9px] font-extrabold px-2 py-0.5 rounded-full shadow-md z-10">
             ⭐ BEST
           </span>
         )}
 
         {/* Trending */}
         {product.isTrending && !product.offerTag && !product.isBestSeller && (
-          <span className="absolute top-2 left-2 bg-purple-500 text-white text-[9px] font-extrabold px-2 py-0.5 rounded-full shadow-md">
+          <span className="absolute top-0 left-0 bg-purple-500 text-white text-[9px] font-extrabold px-2 py-0.5 rounded-full shadow-md z-10">
             🔥 TREND
           </span>
         )}
 
         {/* Out of stock overlay */}
         {!isInStock && (
-          <div className="absolute inset-0 bg-white/75 flex items-center justify-center">
-            <span className="text-xs font-bold text-gray-500 bg-white px-3 py-1 rounded-full border border-gray-200">
+          <div className="absolute inset-0 bg-white/75 flex items-center justify-center z-20">
+            <span className="text-xs font-bold text-gray-500 bg-white px-3 py-1 rounded-full border border-gray-200 shadow-sm">
               Out of Stock
             </span>
           </div>
@@ -104,30 +104,30 @@ const ProductCard = ({ product }) => {
       </div>
 
       {/* Info */}
-      <div className="p-2.5 flex flex-col flex-1">
+      <div className="flex flex-col flex-1">
         {/* Name (English) */}
-        <h3 className="text-xs font-bold text-gray-800 leading-tight">{product.name}</h3>
+        <h3 className="text-[14px] font-bold text-gray-800 leading-tight line-clamp-2 mb-1">{product.name}</h3>
         {/* Tamil name */}
         {(product.tamilName || product.nameTamil) && (
-          <span className="text-[11px] text-green-700 font-semibold">{product.tamilName || product.nameTamil}</span>
+          <span className="text-[13px] text-green-700 truncate block mb-1">
+            {product.tamilName || product.nameTamil}
+          </span>
         )}
-        <span className="text-[10px] text-gray-400 mt-0.5 mb-2">{product.unit}</span>
+        <span className="text-[12px] text-gray-500 block mb-2">{product.unit}</span>
 
-        <div className="mt-auto flex items-center justify-between gap-1">
-          <div>
-            <span className="text-sm font-extrabold text-gray-900">{formatCurrency(product.price)}</span>
-          </div>
+        <div className="mt-auto flex items-center justify-between">
+          <span className="text-[22px] font-bold text-gray-900">{formatCurrency(product.price)}</span>
 
           {quantity === 0 ? (
             <button
               onClick={handleAddToCart}
               disabled={!isInStock}
-              className="bg-green-600 text-white text-[10px] font-bold px-3 py-1.5 rounded-xl shadow hover:bg-green-700 active:scale-95 transition-all flex items-center gap-1 disabled:bg-gray-300"
+              className="bg-green-600 text-white text-[13px] font-bold h-[34px] w-[75px] rounded-full shadow-sm hover:bg-green-700 active:scale-95 transition-all flex items-center justify-center gap-1 disabled:bg-gray-300"
             >
-              <Plus className="w-3 h-3" /> ADD
+              <Plus className="w-4 h-4" /> ADD
             </button>
           ) : (
-            <div className="flex items-center bg-green-600 text-white rounded-xl shadow overflow-hidden">
+            <div className="flex items-center bg-green-600 text-white rounded-full shadow-sm h-[34px] min-w-[75px] justify-between px-1">
               <button
                 onClick={async () => {
                   if (quantity <= 1) {
@@ -137,16 +137,16 @@ const ProductCard = ({ product }) => {
                     updateQuantity(product._id, quantity - 1);
                   }
                 }}
-                className="p-1.5 hover:bg-green-700 active:bg-green-800 transition-colors"
+                className="p-1.5 rounded-full hover:bg-green-700 active:bg-green-800 transition-colors"
               >
-                <Minus className="w-3 h-3" />
+                <Minus className="w-4 h-4" />
               </button>
-              <span className="px-2 text-xs font-bold min-w-[1.5rem] text-center">{quantity}</span>
+              <span className="px-1 text-[13px] font-bold text-center">{quantity}</span>
               <button
                 onClick={() => updateQuantity(product._id, quantity + 1)}
-                className="p-1.5 hover:bg-green-700 active:bg-green-800 transition-colors"
+                className="p-1.5 rounded-full hover:bg-green-700 active:bg-green-800 transition-colors"
               >
-                <Plus className="w-3 h-3" />
+                <Plus className="w-4 h-4" />
               </button>
             </div>
           )}
