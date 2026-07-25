@@ -45,16 +45,15 @@ const ProductCard = ({ product }) => {
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col h-full relative transition-all duration-200 hover:shadow-md group overflow-hidden sm:overflow-visible">
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col w-full h-[215px] sm:h-full relative transition-all duration-200 hover:shadow-md group overflow-hidden sm:overflow-visible">
       {/* Image Container */}
-      <div className="relative w-full aspect-square sm:h-[140px] md:h-[160px] lg:h-[180px] sm:aspect-auto flex items-center justify-center bg-white p-2 sm:p-[12px]">
+      <div className="h-[95px] flex-none flex items-center justify-center p-[8px] sm:relative sm:w-full sm:h-[140px] md:h-[160px] lg:h-[180px] sm:flex-auto sm:bg-white sm:p-[12px]">
         <ProductImage
           src={product.image}
           alt={product.name}
           category={product.category}
           fit="contain"
-          size="lg"
-          className="w-full h-full object-contain object-center group-hover:scale-105 transition-transform duration-300 mix-blend-multiply"
+          className="w-[90px] h-[90px] sm:w-full sm:h-full object-contain object-center group-hover:scale-105 transition-transform duration-300 mix-blend-multiply"
         />
 
         {/* Wishlist Heart Button */}
@@ -104,7 +103,7 @@ const ProductCard = ({ product }) => {
       </div>
 
       {/* Info Container */}
-      <div className="px-2 pb-2 sm:p-2.5 flex flex-col flex-1 bg-white">
+      <div className="flex-none sm:flex-1 flex flex-col px-2 pb-2 sm:p-2.5 bg-white">
         {/* Name (English) */}
         <h3 className="text-[12px] sm:text-xs font-bold text-gray-800 leading-tight line-clamp-2">{product.name}</h3>
         
@@ -116,7 +115,8 @@ const ProductCard = ({ product }) => {
         )}
         <span className="text-[10px] text-gray-400 mt-0.5 mb-2">{product.unit}</span>
 
-        <div className="mt-auto flex items-center justify-between gap-1">
+        {/* Bottom Row */}
+        <div className="flex items-center justify-between gap-1 sm:mt-auto">
           <span className="text-[15px] sm:text-sm font-extrabold text-black sm:text-gray-900 truncate">
             {formatCurrency(product.price)}
           </span>
