@@ -45,27 +45,27 @@ const ProductCard = ({ product }) => {
   };
 
   return (
-    <div className="w-full h-[210px] bg-white rounded-[16px] border border-[#ECECEC] shadow-sm overflow-hidden flex flex-col relative transition-all duration-200 hover:shadow-md group sm:h-full sm:border-gray-100 sm:overflow-visible">
+    <div className="w-full h-[210px] bg-white rounded-[16px] border border-[#ECECEC] shadow-sm overflow-hidden flex flex-col relative sm:transition-all sm:duration-200 sm:hover:shadow-md sm:group sm:h-full sm:border-gray-100 sm:overflow-visible">
       {/* Image Container */}
       <div className="h-[95px] p-[8px] flex justify-center items-center sm:relative sm:w-full sm:h-[140px] md:h-[160px] lg:h-[180px] sm:bg-white sm:p-[12px] sm:flex-auto">
         <ProductImage
           src={product.image}
           alt={product.name}
           category={product.category}
-          className="w-[90px] h-[90px] object-contain shrink-0 sm:w-full sm:h-full sm:object-center group-hover:scale-105 transition-transform duration-300 mix-blend-multiply"
+          className="w-[90px] h-[90px] object-contain shrink-0 mix-blend-multiply sm:w-full sm:h-full sm:object-center sm:group-hover:scale-105 sm:transition-transform sm:duration-300"
         />
 
         {/* Wishlist Heart Button */}
         <button
           onClick={handleToggleWishlist}
           aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
-          className={`absolute top-[8px] right-[8px] w-[30px] h-[30px] bg-white rounded-full shadow-sm flex items-center justify-center z-10 sm:top-2 sm:right-2 sm:p-1.5 sm:w-[32px] sm:h-[32px] sm:bg-white/80 sm:backdrop-blur-sm sm:border sm:border-gray-100 sm:shadow-sm transition-all duration-250 ${
-            isAnimatingHeart ? 'scale-125' : 'hover:bg-gray-50 active:scale-90'
+          className={`absolute top-[8px] right-[8px] w-[30px] h-[30px] bg-white rounded-full shadow-sm flex items-center justify-center z-10 sm:top-2 sm:right-2 sm:p-1.5 sm:w-[32px] sm:h-[32px] sm:bg-white/80 sm:backdrop-blur-sm sm:border sm:border-gray-100 sm:shadow-sm sm:transition-all sm:duration-250 ${
+            isAnimatingHeart ? 'scale-125' : 'sm:hover:bg-gray-50 sm:active:scale-90'
           }`}
         >
           <Heart
-            className={`w-4 h-4 transition-all duration-250 ${
-              isWishlisted ? 'text-red-500 fill-red-500' : 'text-gray-400 hover:text-red-500'
+            className={`w-4 h-4 sm:transition-all sm:duration-250 ${
+              isWishlisted ? 'text-red-500 fill-red-500' : 'text-gray-400 sm:hover:text-red-500'
             } ${isAnimatingHeart ? 'scale-110' : 'scale-100'}`}
           />
         </button>
@@ -124,7 +124,7 @@ const ProductCard = ({ product }) => {
              <button
               onClick={handleAddToCart}
               disabled={!isInStock}
-              className="bg-[#009245] h-[34px] w-[70px] rounded-full text-white text-[11px] font-bold flex items-center justify-center shrink-0 shadow-sm hover:bg-green-700 active:scale-95 transition-all gap-1 sm:bg-green-600 sm:text-[10px] sm:h-auto sm:w-auto sm:px-3 sm:py-1.5 sm:rounded-xl disabled:bg-gray-300"
+              className="bg-[#009245] h-[34px] w-[70px] rounded-full text-white text-[11px] font-bold flex items-center justify-center shrink-0 shadow-sm gap-1 sm:hover:bg-green-700 sm:active:scale-95 sm:transition-all sm:bg-green-600 sm:text-[10px] sm:h-auto sm:w-auto sm:px-3 sm:py-1.5 sm:rounded-xl disabled:bg-gray-300"
             >
               + ADD
             </button>
@@ -139,14 +139,14 @@ const ProductCard = ({ product }) => {
                     updateQuantity(product._id, quantity - 1);
                   }
                 }}
-                className="w-[24px] h-full flex items-center justify-center hover:bg-green-700 active:bg-green-800 transition-colors sm:w-auto sm:h-auto sm:p-1.5"
+                className="w-[24px] h-full flex items-center justify-center sm:hover:bg-green-700 sm:active:bg-green-800 sm:transition-colors sm:w-auto sm:h-auto sm:p-1.5"
               >
                 <Minus className="w-3 h-3 sm:w-3 sm:h-3" strokeWidth={3} />
               </button>
               <span className="text-[11px] font-bold text-center flex-1 sm:text-xs">{quantity}</span>
               <button
                 onClick={() => updateQuantity(product._id, quantity + 1)}
-                className="w-[24px] h-full flex items-center justify-center hover:bg-green-700 active:bg-green-800 transition-colors sm:w-auto sm:h-auto sm:p-1.5"
+                className="w-[24px] h-full flex items-center justify-center sm:hover:bg-green-700 sm:active:bg-green-800 sm:transition-colors sm:w-auto sm:h-auto sm:p-1.5"
               >
                 <Plus className="w-3 h-3 sm:w-3 sm:h-3" strokeWidth={3} />
               </button>
