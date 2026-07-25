@@ -45,22 +45,22 @@ const ProductCard = ({ product }) => {
   };
 
   return (
-    <div className="w-full min-h-[175px] sm:min-h-0 bg-white rounded-[16px] border border-[#ECECEC] shadow-sm overflow-hidden flex flex-col relative sm:transition-all sm:duration-200 sm:hover:shadow-md sm:group sm:border-gray-100 sm:overflow-visible">
+    <div className="w-full h-full bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden flex flex-col relative sm:transition-all sm:duration-200 sm:hover:shadow-md sm:group sm:overflow-visible">
       
-      {/* 1. Image Section */}
-      <div className="h-[75px] mb-[6px] p-[6px] flex justify-center items-center sm:relative sm:w-full sm:h-[140px] md:h-[160px] lg:h-[180px] sm:bg-white sm:p-[12px] sm:mb-0">
+      {/* 1. Image Section (Fluid aspect ratio) */}
+      <div className="w-full aspect-square p-2 flex justify-center items-center relative sm:w-full sm:h-[140px] md:h-[160px] lg:h-[180px] sm:aspect-auto sm:p-[12px]">
         <ProductImage
           src={product.image}
           alt={product.name}
           category={product.category}
-          className="w-[72px] h-[72px] object-contain shrink-0 mix-blend-multiply sm:w-full sm:h-full sm:object-center sm:group-hover:scale-105 sm:transition-transform sm:duration-300"
+          className="w-full h-full object-contain shrink-0 mix-blend-multiply sm:object-center sm:group-hover:scale-105 sm:transition-transform sm:duration-300"
         />
 
         {/* Wishlist Heart Button */}
         <button
           onClick={handleToggleWishlist}
           aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
-          className={`absolute top-[8px] right-[8px] w-[28px] h-[28px] bg-white rounded-full shadow-sm flex items-center justify-center z-10 sm:top-2 sm:right-2 sm:p-1.5 sm:w-[32px] sm:h-[32px] sm:bg-white/80 sm:backdrop-blur-sm sm:border sm:border-gray-100 sm:shadow-sm sm:transition-all sm:duration-250 ${
+          className={`absolute top-2 right-2 w-7 h-7 bg-white/90 backdrop-blur-sm rounded-full shadow-sm flex items-center justify-center z-10 sm:p-1.5 sm:w-[32px] sm:h-[32px] sm:bg-white/80 sm:border sm:border-gray-100 sm:transition-all sm:duration-250 ${
             isAnimatingHeart ? 'scale-125' : 'sm:hover:bg-gray-50 sm:active:scale-90'
           }`}
         >
@@ -73,21 +73,21 @@ const ProductCard = ({ product }) => {
 
         {/* Offer badge */}
         {product.offerTag && (
-          <span className="absolute top-[8px] left-[8px] sm:top-2 sm:left-2 bg-red-500 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded-full shadow-md tracking-wide">
+          <span className="absolute top-2 left-2 sm:top-2 sm:left-2 bg-red-500 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded-full shadow-md tracking-wide">
             {product.offerTag}
           </span>
         )}
 
         {/* Best seller */}
         {product.isBestSeller && !product.offerTag && (
-          <span className="absolute top-[8px] left-[8px] sm:top-2 sm:left-2 bg-amber-500 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded-full shadow-md">
+          <span className="absolute top-2 left-2 sm:top-2 sm:left-2 bg-amber-500 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded-full shadow-md">
             ⭐ BEST
           </span>
         )}
 
         {/* Trending */}
         {product.isTrending && !product.offerTag && !product.isBestSeller && (
-          <span className="absolute top-[8px] left-[8px] sm:top-2 sm:left-2 bg-purple-500 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded-full shadow-md">
+          <span className="absolute top-2 left-2 sm:top-2 sm:left-2 bg-purple-500 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded-full shadow-md">
             🔥 TREND
           </span>
         )}
@@ -103,22 +103,22 @@ const ProductCard = ({ product }) => {
       </div>
 
       {/* 2. Content Section */}
-      <div className="px-[8px] flex flex-col sm:p-[8px] sm:px-2 sm:pb-0 sm:p-2.5 sm:bg-white">
+      <div className="px-2 pt-1 flex flex-col sm:p-[8px] sm:px-2 sm:pb-0 sm:p-2.5 sm:bg-white">
         {/* Name (English) */}
-        <h3 className="text-[13px] font-bold line-clamp-2 text-gray-800 leading-tight sm:text-xs">{product.name}</h3>
+        <h3 className="text-[11px] font-bold line-clamp-2 text-gray-800 leading-tight sm:text-xs">{product.name}</h3>
         
         {/* Tamil name */}
         {(product.tamilName || product.nameTamil) && (
-          <span className="text-[11px] text-[#009245] font-semibold truncate mt-[1px] sm:text-green-700 sm:font-bold">
+          <span className="text-[10px] text-[#009245] font-bold truncate mt-0.5 sm:text-green-700">
             {product.tamilName || product.nameTamil}
           </span>
         )}
-        <span className="text-[10px] text-gray-500 sm:text-gray-400">{product.unit}</span>
+        <span className="text-[9px] text-gray-500 mt-0.5 sm:text-gray-400">{product.unit}</span>
       </div>
 
       {/* 3. Bottom Row */}
-      <div className="mt-auto px-[8px] pb-[8px] pt-[6px] flex justify-between items-center sm:gap-1 sm:p-2.5 sm:pt-2 sm:bg-white">
-        <span className="text-[16px] font-bold text-black truncate leading-none sm:text-sm sm:text-gray-900">
+      <div className="mt-auto px-2 pb-2 pt-1.5 flex justify-between items-center sm:gap-1 sm:p-2.5 sm:pt-2 sm:bg-white">
+        <span className="text-[13px] font-bold text-black truncate leading-none sm:text-sm sm:text-gray-900">
           {formatCurrency(product.price)}
         </span>
 
@@ -126,12 +126,12 @@ const ProductCard = ({ product }) => {
             <button
             onClick={handleAddToCart}
             disabled={!isInStock}
-            className="bg-[#009245] h-[34px] w-[70px] rounded-full text-white text-[11px] font-bold flex items-center justify-center shrink-0 shadow-sm gap-1 sm:hover:bg-green-700 sm:active:scale-95 sm:transition-all sm:bg-green-600 sm:text-[10px] sm:h-auto sm:w-auto sm:px-3 sm:py-1.5 sm:rounded-xl disabled:bg-gray-300"
+            className="bg-[#009245] h-[26px] px-2.5 rounded-md text-white text-[10px] font-bold flex items-center justify-center shrink-0 shadow-sm gap-1 sm:hover:bg-green-700 sm:active:scale-95 sm:transition-all sm:bg-green-600 sm:text-[10px] sm:h-auto sm:w-auto sm:px-3 sm:py-1.5 sm:rounded-xl disabled:bg-gray-300"
           >
             + ADD
           </button>
         ) : (
-          <div className="bg-[#009245] h-[34px] w-[70px] rounded-full text-white flex items-center justify-between overflow-hidden shadow-sm shrink-0 sm:bg-green-600 sm:w-auto sm:h-auto sm:rounded-xl">
+          <div className="bg-[#009245] h-[26px] rounded-md text-white flex items-center justify-between overflow-hidden shadow-sm shrink-0 sm:bg-green-600 sm:w-auto sm:h-auto sm:rounded-xl">
             <button
               onClick={async () => {
                 if (quantity <= 1) {
@@ -141,16 +141,16 @@ const ProductCard = ({ product }) => {
                   updateQuantity(product._id, quantity - 1);
                 }
               }}
-              className="w-[24px] h-full flex items-center justify-center sm:hover:bg-green-700 sm:active:bg-green-800 sm:transition-colors sm:w-auto sm:h-auto sm:p-1.5"
+              className="w-6 h-full flex items-center justify-center sm:hover:bg-green-700 sm:active:bg-green-800 sm:transition-colors sm:w-auto sm:h-auto sm:p-1.5"
             >
-              <Minus className="w-3 h-3 sm:w-3 sm:h-3" strokeWidth={3} />
+              <Minus className="w-2.5 h-2.5 sm:w-3 sm:h-3" strokeWidth={3} />
             </button>
-            <span className="text-[11px] font-bold text-center flex-1 sm:text-xs">{quantity}</span>
+            <span className="text-[10px] font-bold text-center flex-1 px-1 sm:text-xs">{quantity}</span>
             <button
               onClick={() => updateQuantity(product._id, quantity + 1)}
-              className="w-[24px] h-full flex items-center justify-center sm:hover:bg-green-700 sm:active:bg-green-800 sm:transition-colors sm:w-auto sm:h-auto sm:p-1.5"
+              className="w-6 h-full flex items-center justify-center sm:hover:bg-green-700 sm:active:bg-green-800 sm:transition-colors sm:w-auto sm:h-auto sm:p-1.5"
             >
-              <Plus className="w-3 h-3 sm:w-3 sm:h-3" strokeWidth={3} />
+              <Plus className="w-2.5 h-2.5 sm:w-3 sm:h-3" strokeWidth={3} />
             </button>
           </div>
         )}
