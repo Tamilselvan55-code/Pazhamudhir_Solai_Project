@@ -45,7 +45,7 @@ const ProductCard = ({ product }) => {
   };
 
   return (
-    <div className="w-full bg-white rounded-[16px] border border-[#ECECEC] shadow-sm overflow-hidden flex flex-col relative sm:transition-all sm:duration-200 sm:hover:shadow-md sm:group sm:h-full sm:border-gray-100 sm:overflow-visible">
+    <div className="w-full bg-white rounded-[16px] border border-[#ECECEC] shadow-sm overflow-hidden flex flex-col relative sm:transition-all sm:duration-200 sm:hover:shadow-md sm:group sm:border-gray-100 sm:overflow-visible">
       
       {/* 1. Image Section */}
       <div className="h-[80px] w-full flex justify-center items-center relative sm:w-full sm:h-[140px] md:h-[160px] lg:h-[180px] sm:bg-white sm:p-[12px]">
@@ -104,13 +104,13 @@ const ProductCard = ({ product }) => {
 
       {/* 2. Content Section */}
       <div className="px-[8px] pt-[4px] flex flex-col sm:p-[8px] sm:px-2 sm:pb-0 sm:p-2.5 sm:bg-white">
-        {/* Name (English) - Reserve exactly 2 lines (18px line-height * 2 = 36px) */}
-        <h3 className="h-[36px] text-[13px] font-bold line-clamp-2 text-gray-800 leading-[18px] sm:h-auto sm:text-xs">
+        {/* Name (English) - Natural flow */}
+        <h3 className="text-[13px] font-bold line-clamp-2 text-gray-800 leading-[18px] sm:h-auto sm:text-xs">
           {product.name}
         </h3>
         
-        {/* Tamil name - Reserve exactly 1 line (16px) */}
-        <span className="h-[16px] text-[11px] text-[#009245] font-bold truncate mt-[2px] leading-[16px] sm:h-auto sm:text-green-700">
+        {/* Tamil name - Natural flow */}
+        <span className="text-[11px] text-[#009245] font-bold truncate mt-[2px] leading-[16px] sm:h-auto sm:text-green-700">
           {product.tamilName || product.nameTamil || ' '}
         </span>
 
@@ -121,7 +121,7 @@ const ProductCard = ({ product }) => {
       </div>
 
       {/* 3. Bottom Row */}
-      <div className="px-[8px] pb-[8px] pt-[6px] flex justify-between items-center sm:gap-1 sm:mt-auto sm:p-2.5 sm:pt-2 sm:bg-white">
+      <div className="px-[8px] pb-[8px] pt-[6px] flex justify-between items-center sm:gap-1 sm:p-2.5 sm:pt-2 sm:bg-white">
         <span className="text-[16px] font-bold text-black truncate leading-none sm:text-sm sm:text-gray-900">
           {formatCurrency(product.price)}
         </span>
@@ -145,14 +145,14 @@ const ProductCard = ({ product }) => {
                   updateQuantity(product._id, quantity - 1);
                 }
               }}
-              className="w-[24px] h-full flex items-center justify-center sm:hover:bg-green-700 sm:active:bg-green-800 sm:transition-colors sm:w-auto sm:h-auto sm:p-1.5"
+              className="w-[24px] py-[10px] flex items-center justify-center sm:hover:bg-green-700 sm:active:bg-green-800 sm:transition-colors sm:w-auto sm:h-auto sm:p-1.5"
             >
               <Minus className="w-3 h-3 sm:w-3 sm:h-3" strokeWidth={3} />
             </button>
             <span className="text-[11px] font-bold text-center flex-1 px-1 sm:text-xs">{quantity}</span>
             <button
               onClick={() => updateQuantity(product._id, quantity + 1)}
-              className="w-[24px] h-full flex items-center justify-center sm:hover:bg-green-700 sm:active:bg-green-800 sm:transition-colors sm:w-auto sm:h-auto sm:p-1.5"
+              className="w-[24px] py-[10px] flex items-center justify-center sm:hover:bg-green-700 sm:active:bg-green-800 sm:transition-colors sm:w-auto sm:h-auto sm:p-1.5"
             >
               <Plus className="w-3 h-3 sm:w-3 sm:h-3" strokeWidth={3} />
             </button>
