@@ -103,8 +103,6 @@ const Profile = () => {
             {/* Info */}
             <div className="flex flex-col justify-center">
               <h1 className="text-lg sm:text-2xl font-bold leading-tight">{userInfo?.fullName || userInfo?.name || 'Valued Customer'}</h1>
-              <p className="text-green-50 text-[13px] sm:text-sm font-medium mt-1 opacity-90">{userInfo?.email}</p>
-              <p className="text-green-100 text-[13px] sm:text-sm font-light mt-0.5 opacity-80">+91 {userInfo?.phoneNumber}</p>
             </div>
           </div>
           
