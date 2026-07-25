@@ -45,27 +45,27 @@ const ProductCard = ({ product }) => {
   };
 
   return (
-    <div className="w-full bg-white rounded-[16px] border border-[#ECECEC] shadow-sm overflow-hidden flex flex-col relative sm:transition-all sm:duration-200 sm:hover:shadow-md sm:group sm:border-gray-100 sm:overflow-visible">
+    <div className="w-full min-h-[175px] sm:min-h-0 bg-white rounded-[16px] border border-[#ECECEC] shadow-sm overflow-hidden flex flex-col relative sm:transition-all sm:duration-200 sm:hover:shadow-md sm:group sm:border-gray-100 sm:overflow-visible">
       
       {/* 1. Image Section */}
-      <div className="h-[95px] p-[8px] flex justify-center items-center sm:relative sm:w-full sm:h-[140px] md:h-[160px] lg:h-[180px] sm:bg-white sm:p-[12px]">
+      <div className="h-[75px] mb-[6px] p-[6px] flex justify-center items-center sm:relative sm:w-full sm:h-[140px] md:h-[160px] lg:h-[180px] sm:bg-white sm:p-[12px] sm:mb-0">
         <ProductImage
           src={product.image}
           alt={product.name}
           category={product.category}
-          className="w-[90px] h-[90px] object-contain shrink-0 mix-blend-multiply sm:w-full sm:h-full sm:object-center sm:group-hover:scale-105 sm:transition-transform sm:duration-300"
+          className="w-[72px] h-[72px] object-contain shrink-0 mix-blend-multiply sm:w-full sm:h-full sm:object-center sm:group-hover:scale-105 sm:transition-transform sm:duration-300"
         />
 
         {/* Wishlist Heart Button */}
         <button
           onClick={handleToggleWishlist}
           aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
-          className={`absolute top-[8px] right-[8px] w-[30px] h-[30px] bg-white rounded-full shadow-sm flex items-center justify-center z-10 sm:top-2 sm:right-2 sm:p-1.5 sm:w-[32px] sm:h-[32px] sm:bg-white/80 sm:backdrop-blur-sm sm:border sm:border-gray-100 sm:shadow-sm sm:transition-all sm:duration-250 ${
+          className={`absolute top-[8px] right-[8px] w-[28px] h-[28px] bg-white rounded-full shadow-sm flex items-center justify-center z-10 sm:top-2 sm:right-2 sm:p-1.5 sm:w-[32px] sm:h-[32px] sm:bg-white/80 sm:backdrop-blur-sm sm:border sm:border-gray-100 sm:shadow-sm sm:transition-all sm:duration-250 ${
             isAnimatingHeart ? 'scale-125' : 'sm:hover:bg-gray-50 sm:active:scale-90'
           }`}
         >
           <Heart
-            className={`w-4 h-4 sm:transition-all sm:duration-250 ${
+            className={`w-3.5 h-3.5 sm:w-4 sm:h-4 sm:transition-all sm:duration-250 ${
               isWishlisted ? 'text-red-500 fill-red-500' : 'text-gray-400 sm:hover:text-red-500'
             } ${isAnimatingHeart ? 'scale-110' : 'scale-100'}`}
           />
@@ -103,22 +103,22 @@ const ProductCard = ({ product }) => {
       </div>
 
       {/* 2. Content Section */}
-      <div className="px-[8px] pt-[8px] flex flex-col sm:p-[8px] sm:px-2 sm:pb-0 sm:p-2.5 sm:bg-white">
+      <div className="px-[8px] flex flex-col sm:p-[8px] sm:px-2 sm:pb-0 sm:p-2.5 sm:bg-white">
         {/* Name (English) */}
         <h3 className="text-[13px] font-bold line-clamp-2 text-gray-800 leading-tight sm:text-xs">{product.name}</h3>
         
         {/* Tamil name */}
         {(product.tamilName || product.nameTamil) && (
-          <span className="text-[11px] text-[#009245] font-semibold truncate mt-[2px] sm:text-green-700 sm:font-bold">
+          <span className="text-[11px] text-[#009245] font-semibold truncate mt-[1px] sm:text-green-700 sm:font-bold">
             {product.tamilName || product.nameTamil}
           </span>
         )}
-        <span className="text-[10px] text-gray-500 mt-[2px] sm:text-gray-400">{product.unit}</span>
+        <span className="text-[10px] text-gray-500 sm:text-gray-400">{product.unit}</span>
       </div>
 
       {/* 3. Bottom Row */}
-      <div className="mt-auto px-[8px] pb-[8px] pt-[8px] flex justify-between items-center sm:gap-1 sm:p-2.5 sm:pt-2 sm:bg-white">
-        <span className="text-[16px] font-bold text-black truncate sm:text-sm sm:text-gray-900">
+      <div className="mt-auto px-[8px] pb-[8px] pt-[6px] flex justify-between items-center sm:gap-1 sm:p-2.5 sm:pt-2 sm:bg-white">
+        <span className="text-[16px] font-bold text-black truncate leading-none sm:text-sm sm:text-gray-900">
           {formatCurrency(product.price)}
         </span>
 
