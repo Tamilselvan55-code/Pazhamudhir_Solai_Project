@@ -40,7 +40,11 @@ const ProductCard = ({ product }) => {
         toast('Wishlist Updated', `❤️ ${product.name} added to wishlist!`);
       } else {
         toast('Wishlist Updated', `💔 ${product.name} removed from wishlist.`);
-        return (
+      }
+    }
+  };
+
+  return (
     <div className="w-full h-[210px] bg-white rounded-[16px] border border-[#ECECEC] shadow-sm overflow-hidden flex flex-col relative transition-all duration-200 hover:shadow-md group sm:h-full sm:border-gray-100 sm:overflow-visible">
       {/* Image Container */}
       <div className="h-[95px] p-[8px] flex justify-center items-center sm:relative sm:w-full sm:h-[140px] md:h-[160px] lg:h-[180px] sm:bg-white sm:p-[12px] sm:flex-auto">
