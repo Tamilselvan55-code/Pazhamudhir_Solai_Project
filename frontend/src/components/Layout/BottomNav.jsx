@@ -10,7 +10,7 @@ const BottomNav = () => {
   const navItems = [
     { name: 'Home', path: '/', icon: Home },
     { name: 'Categories', path: '/categories', icon: Grid },
-    { name: 'Orders', path: '/orders', icon: History },
+    { name: 'Orders', path: '/profile?tab=orders', icon: History },
     userInfo
       ? { name: 'Profile', path: '/profile', icon: User }
       : { name: 'Login', path: '/login', icon: LogIn },
@@ -21,7 +21,11 @@ const BottomNav = () => {
       <div className="flex justify-around items-center">
         {navItems.map((item) => {
           const Icon = item.icon;
-          const isActive = location.pathname === item.path;
+          // Handle active state for paths with query parameters
+          const isActive = item.path.includes('?') 
+            ? location.pathname + location.search === item.path
+            : location.pathname === item.path && (!location.search || item.path !== '/profile');
+            
           return (
             <Link
               key={item.name}

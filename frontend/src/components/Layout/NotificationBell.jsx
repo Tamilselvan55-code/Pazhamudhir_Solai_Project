@@ -104,7 +104,7 @@ const NotificationBell = () => {
   };
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className="static sm:relative" ref={dropdownRef}>
       {/* Bell Icon Button */}
       <button
         onClick={handleToggle}
@@ -142,14 +142,14 @@ const NotificationBell = () => {
       {/* Dropdown Panel */}
       {isOpen && (
         <div
-          className="absolute right-0 mt-3.5 w-80 bg-white rounded-3xl shadow-2xl border border-gray-100 py-3 z-[1000] overflow-hidden"
+          className="absolute left-0 right-0 mx-auto top-[60px] w-[92vw] max-h-[70vh] sm:top-auto sm:left-auto sm:right-0 sm:mx-0 sm:mt-3.5 sm:w-80 sm:max-h-none flex flex-col bg-white rounded-3xl shadow-2xl border border-gray-100 py-3 z-[1000] overflow-hidden"
           style={{
             transformOrigin: 'top right',
             animation: 'dropdownFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
           }}
         >
           {/* Header */}
-          <div className="px-4 pb-2.5 mb-2 border-b border-gray-50 flex items-center justify-between">
+          <div className="px-4 pb-2.5 mb-2 border-b border-gray-50 flex items-center justify-between shrink-0">
             <div>
               <h4 className="text-xs font-black text-gray-800">Notifications</h4>
               <p className="text-[10px] text-gray-400 font-semibold mt-0.5">{unreadCount} unread alerts</p>
@@ -166,7 +166,7 @@ const NotificationBell = () => {
           </div>
 
           {/* List Content */}
-          <div className="max-h-[300px] overflow-y-auto divide-y divide-gray-50/50">
+          <div className="flex-1 overflow-y-auto sm:max-h-[300px] divide-y divide-gray-50/50">
             {latestNotifications.length === 0 ? (
               <div className="py-8 text-center px-4 flex flex-col items-center">
                 <Bell size={24} className="text-gray-300 mb-2 animate-bounce" />
@@ -216,7 +216,7 @@ const NotificationBell = () => {
           </div>
 
           {/* Bottom Actions */}
-          <div className="px-3 pt-2.5 mt-2 border-t border-gray-50 flex gap-2">
+          <div className="px-3 pt-2.5 mt-2 border-t border-gray-50 flex gap-2 shrink-0">
             <button
               onClick={handleViewAll}
               className="w-full text-center py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl text-[10px] font-black shadow-md shadow-green-600/10 transition-colors"
