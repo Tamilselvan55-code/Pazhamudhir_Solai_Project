@@ -1,5 +1,6 @@
 import { API_BASE as config_API_BASE, API_URL as config_API_URL } from '../config/api';
 import React, { useState, useEffect } from 'react';
+import SEO from '../components/SEO/SEO';
 import { useNavigate, Link, Navigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { ArrowLeft, ShoppingBag, Settings, LogOut } from 'lucide-react';
@@ -91,7 +92,9 @@ const Profile = () => {
     : null;
 
   return (
-    <div className="min-h-screen pb-24 bg-[#f7fdf7]">
+    <>
+      <SEO title="My Profile | Tiruchendur Murugan Pazhamudhir Solai" description="View your profile, orders, and wishlist." canonicalPath="/profile" />
+      <div className="min-h-screen pb-24 bg-[#f7fdf7]">
       {/* 1. Large Premium Profile Header */}
       <div className="bg-gradient-to-r from-green-600 to-emerald-500 rounded-b-[2rem] sm:rounded-b-[3rem] p-6 sm:p-10 text-white shadow-md relative mb-6 min-h-[140px] flex items-center pt-8 sm:pt-12">
         <div className="max-w-7xl mx-auto w-full flex items-center justify-between">
@@ -227,7 +230,8 @@ const Profile = () => {
           onClose={() => setInvoiceOrder(null)}
         />
       )}
-    </div>
+      </div>
+    </>
   );
 };
 

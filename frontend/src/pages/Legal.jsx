@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import SEO from '../components/SEO/SEO';
 import { 
   FileText, Lock, User, ShoppingBag, Truck, CreditCard, 
   XCircle, RefreshCcw, Shield, AlertCircle, Phone, Globe
@@ -150,7 +151,9 @@ const Legal = () => {
   ];
 
   return (
-    <div className="pb-28 max-w-4xl mx-auto px-3 sm:px-6 pt-4 sm:pt-6">
+    <>
+      <SEO title="Legal Policies | Tiruchendur Murugan Pazhamudhir Solai" description="Privacy policy and terms of service." canonicalPath="/legal" />
+      <div className="pb-28 max-w-4xl mx-auto px-3 sm:px-6 pt-4 sm:pt-6">
       
       {/* Header Section */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8 mb-6 text-center">
@@ -205,6 +208,7 @@ const Legal = () => {
       </div>
 
     </div>
+    </>
   );
 };
 

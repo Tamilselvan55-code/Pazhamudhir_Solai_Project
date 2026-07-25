@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import SEO from '../components/SEO/SEO';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { API_BASE as config_API_BASE, UPLOADS_BASE } from '../config/api';
@@ -198,7 +199,9 @@ const Categories = () => {
   }
 
   return (
-    <div className="pb-28 max-w-7xl mx-auto px-3 sm:px-4 pt-3 sm:pt-4 animate-in fade-in duration-300">
+    <>
+      <SEO title="Categories | Tiruchendur Murugan Pazhamudhir Solai" description="Browse all our fresh product categories." canonicalPath="/categories" />
+      <div className="pb-28 max-w-7xl mx-auto px-3 sm:px-4 pt-3 sm:pt-4 animate-in fade-in duration-300">
       
       {/* Sticky Header */}
       <div className="sticky top-14 sm:top-16 bg-[#f7fdf7]/95 backdrop-blur-md z-40 py-3 sm:py-4 -mx-3 sm:-mx-4 px-3 sm:px-4 shadow-sm border-b border-gray-100 transition-all">
@@ -319,6 +322,7 @@ const Categories = () => {
       )}
 
     </div>
+    </>
   );
 };
 

@@ -1,5 +1,6 @@
 import { API_BASE as config_API_BASE, API_URL as config_API_URL } from '../config/api';
 import React, { useState, useMemo, useEffect } from 'react';
+import SEO from '../components/SEO/SEO';
 import { useLocation, useNavigate } from 'react-router-dom';
 import ProductCard from '../components/Product/ProductCard';
 import { ChevronRight, Search, X, Loader2 } from 'lucide-react';
@@ -224,7 +225,7 @@ const Home = () => {
         'kallu uppu': ['rock salt', 'கல் உப்பு'],
         'naatu sarkkarai': ['jaggery', 'country sugar', 'நாட்டு சர்க்கரை'],
         'poondu': ['garlic', 'பூண்டு'],
-        'thakkali': ['tomato', 'தக்காளி'],
+        'thakkali': ['tomatot', 'தக்காளி'],
         'urulaikizhangu': ['potato', 'உருளைக்கிழங்கு']
       };
       const synonyms = tanglishMap[q] || [];
@@ -260,10 +261,6 @@ const Home = () => {
     return meta;
   }, [categoriesList]);
 
-  console.log('PRODUCTS:', products);
-  console.log('IS_ARRAY:', Array.isArray(products));
-  console.log('LENGTH:', products?.length);
-
   useEffect(() => {
     if (!loading && !categoriesLoading && products.length > 0 && showSections) {
       const params = new URLSearchParams(location.search);
@@ -285,7 +282,9 @@ const Home = () => {
   }, [loading, categoriesLoading, products.length, showSections, location.search, navigate]);
 
   return (
-    <div className="pb-24 max-w-7xl mx-auto px-2 sm:px-3 md:px-4">
+    <div className="flex flex-col min-h-[100dvh] bg-[#f7fdf7] pb-24 lg:pb-0">
+      <SEO title="Tiruchendur Murugan Pazhamudhir Solai | Fresh Fruits, Vegetables & Grocery Store" description="Buy fresh fruits, vegetables, groceries, dairy products, household essentials and more from Tiruchendur Murugan Pazhamudhir Solai." />
+      <div className="pb-24 max-w-7xl mx-auto px-2 sm:px-3 md:px-4">
 
       {/* ── Hero ─────────────────────────────────────────────────────── */}
       <div className="relative rounded-2xl overflow-hidden my-3 sm:my-4 shadow-lg h-36 sm:h-40 md:h-56">
@@ -476,6 +475,7 @@ const Home = () => {
           )}
         </>
       )}
+      </div>
     </div>
   );
 };

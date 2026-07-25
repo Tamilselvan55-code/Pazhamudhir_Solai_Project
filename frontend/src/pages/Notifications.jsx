@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import SEO from '../components/SEO/SEO';
 import { useNavigate, Link } from 'react-router-dom';
 import { 
   Bell, Package, Truck, Gift, Heart, ShoppingCart, 
@@ -170,7 +171,10 @@ const Notifications = () => {
   };
 
   return (
-    <div className="min-h-screen pb-24 pt-4 sm:pt-8 px-3 sm:px-4 lg:px-8" style={{ background: '#f7fdf7' }}>
+    <>
+      <SEO title="Notifications | Tiruchendur Murugan Pazhamudhir Solai" description="View your notifications and alerts." canonicalPath="/notifications" />
+      <div className="min-h-screen pb-24 pt-4 sm:pt-8 px-3 sm:px-4 lg:px-8" style={{ background: '#f7fdf7' }}>
+
       <div className="max-w-4xl mx-auto">
         {/* Header Block */}
         <div className="mb-6 flex items-center justify-between">
@@ -499,6 +503,7 @@ const Notifications = () => {
         )}
       </div>
     </div>
+    </>
   );
 };
 

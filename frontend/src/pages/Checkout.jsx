@@ -1,5 +1,6 @@
 import { API_BASE as config_API_BASE, API_URL as config_API_URL } from '../config/api';
 import React, { useState, useEffect, useRef } from 'react';
+import SEO from '../components/SEO/SEO';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import {
@@ -346,6 +347,7 @@ const Checkout = () => {
   /* ════════════════════════════════════════════════════════════════════════ */
   return (
     <>
+      <SEO title="Checkout | Tiruchendur Murugan Pazhamudhir Solai" description="Complete your grocery order securely." canonicalPath="/checkout" />
       {/* ── Page ──────────────────────────────────────────────────────────── */}
       <div className="max-w-4xl mx-auto px-3 sm:px-4 py-4 sm:py-6 md:py-10 pb-28 grid md:grid-cols-2 gap-5 md:gap-8">
 
