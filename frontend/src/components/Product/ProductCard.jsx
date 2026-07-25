@@ -45,9 +45,10 @@ const ProductCard = ({ product }) => {
   };
 
   return (
-    <div className="w-full h-[210px] bg-white rounded-[16px] border border-[#ECECEC] shadow-sm overflow-hidden flex flex-col relative sm:transition-all sm:duration-200 sm:hover:shadow-md sm:group sm:h-full sm:border-gray-100 sm:overflow-visible">
-      {/* Image Container */}
-      <div className="h-[95px] p-[8px] flex justify-center items-center sm:relative sm:w-full sm:h-[140px] md:h-[160px] lg:h-[180px] sm:bg-white sm:p-[12px] sm:flex-auto">
+    <div className="w-full bg-white rounded-[16px] border border-[#ECECEC] shadow-sm overflow-hidden flex flex-col relative sm:transition-all sm:duration-200 sm:hover:shadow-md sm:group sm:border-gray-100 sm:overflow-visible">
+      
+      {/* 1. Image Section */}
+      <div className="h-[95px] p-[8px] flex justify-center items-center sm:relative sm:w-full sm:h-[140px] md:h-[160px] lg:h-[180px] sm:bg-white sm:p-[12px]">
         <ProductImage
           src={product.image}
           alt={product.name}
@@ -101,10 +102,10 @@ const ProductCard = ({ product }) => {
         )}
       </div>
 
-      {/* Info Container */}
-      <div className="px-[8px] pb-[8px] flex flex-col sm:p-[8px] sm:px-2 sm:pb-2 sm:p-2.5 sm:flex-1 sm:bg-white">
+      {/* 2. Content Section */}
+      <div className="px-[8px] pt-[8px] flex flex-col sm:p-[8px] sm:px-2 sm:pb-0 sm:p-2.5 sm:bg-white">
         {/* Name (English) */}
-        <h3 className="text-[13px] font-bold line-clamp-2 text-gray-800 leading-tight mt-[8px] sm:text-xs sm:mt-0">{product.name}</h3>
+        <h3 className="text-[13px] font-bold line-clamp-2 text-gray-800 leading-tight sm:text-xs">{product.name}</h3>
         
         {/* Tamil name */}
         {(product.tamilName || product.nameTamil) && (
@@ -112,48 +113,49 @@ const ProductCard = ({ product }) => {
             {product.tamilName || product.nameTamil}
           </span>
         )}
-        <span className="text-[10px] text-gray-500 mt-[2px] sm:text-gray-400 sm:mb-2">{product.unit}</span>
-
-        {/* Bottom Row */}
-        <div className="flex justify-between items-center mt-[8px] sm:gap-1 sm:mt-auto">
-          <span className="text-[16px] font-bold text-black truncate sm:text-sm sm:text-gray-900">
-            {formatCurrency(product.price)}
-          </span>
-
-          {quantity === 0 ? (
-             <button
-              onClick={handleAddToCart}
-              disabled={!isInStock}
-              className="bg-[#009245] h-[34px] w-[70px] rounded-full text-white text-[11px] font-bold flex items-center justify-center shrink-0 shadow-sm gap-1 sm:hover:bg-green-700 sm:active:scale-95 sm:transition-all sm:bg-green-600 sm:text-[10px] sm:h-auto sm:w-auto sm:px-3 sm:py-1.5 sm:rounded-xl disabled:bg-gray-300"
-            >
-              + ADD
-            </button>
-          ) : (
-            <div className="bg-[#009245] h-[34px] w-[70px] rounded-full text-white flex items-center justify-between overflow-hidden shadow-sm shrink-0 sm:bg-green-600 sm:w-auto sm:h-auto sm:rounded-xl">
-              <button
-                onClick={async () => {
-                  if (quantity <= 1) {
-                    const ok = await userConfirm('Remove Item?', 'Do you want to remove this item from your cart?', { danger: true, confirmLabel: 'Remove' });
-                    if (ok) updateQuantity(product._id, 0);
-                  } else {
-                    updateQuantity(product._id, quantity - 1);
-                  }
-                }}
-                className="w-[24px] h-full flex items-center justify-center sm:hover:bg-green-700 sm:active:bg-green-800 sm:transition-colors sm:w-auto sm:h-auto sm:p-1.5"
-              >
-                <Minus className="w-3 h-3 sm:w-3 sm:h-3" strokeWidth={3} />
-              </button>
-              <span className="text-[11px] font-bold text-center flex-1 sm:text-xs">{quantity}</span>
-              <button
-                onClick={() => updateQuantity(product._id, quantity + 1)}
-                className="w-[24px] h-full flex items-center justify-center sm:hover:bg-green-700 sm:active:bg-green-800 sm:transition-colors sm:w-auto sm:h-auto sm:p-1.5"
-              >
-                <Plus className="w-3 h-3 sm:w-3 sm:h-3" strokeWidth={3} />
-              </button>
-            </div>
-          )}
-        </div>
+        <span className="text-[10px] text-gray-500 mt-[2px] sm:text-gray-400">{product.unit}</span>
       </div>
+
+      {/* 3. Bottom Row */}
+      <div className="mt-auto px-[8px] pb-[8px] pt-[8px] flex justify-between items-center sm:gap-1 sm:p-2.5 sm:pt-2 sm:bg-white">
+        <span className="text-[16px] font-bold text-black truncate sm:text-sm sm:text-gray-900">
+          {formatCurrency(product.price)}
+        </span>
+
+        {quantity === 0 ? (
+            <button
+            onClick={handleAddToCart}
+            disabled={!isInStock}
+            className="bg-[#009245] h-[34px] w-[70px] rounded-full text-white text-[11px] font-bold flex items-center justify-center shrink-0 shadow-sm gap-1 sm:hover:bg-green-700 sm:active:scale-95 sm:transition-all sm:bg-green-600 sm:text-[10px] sm:h-auto sm:w-auto sm:px-3 sm:py-1.5 sm:rounded-xl disabled:bg-gray-300"
+          >
+            + ADD
+          </button>
+        ) : (
+          <div className="bg-[#009245] h-[34px] w-[70px] rounded-full text-white flex items-center justify-between overflow-hidden shadow-sm shrink-0 sm:bg-green-600 sm:w-auto sm:h-auto sm:rounded-xl">
+            <button
+              onClick={async () => {
+                if (quantity <= 1) {
+                  const ok = await userConfirm('Remove Item?', 'Do you want to remove this item from your cart?', { danger: true, confirmLabel: 'Remove' });
+                  if (ok) updateQuantity(product._id, 0);
+                } else {
+                  updateQuantity(product._id, quantity - 1);
+                }
+              }}
+              className="w-[24px] h-full flex items-center justify-center sm:hover:bg-green-700 sm:active:bg-green-800 sm:transition-colors sm:w-auto sm:h-auto sm:p-1.5"
+            >
+              <Minus className="w-3 h-3 sm:w-3 sm:h-3" strokeWidth={3} />
+            </button>
+            <span className="text-[11px] font-bold text-center flex-1 sm:text-xs">{quantity}</span>
+            <button
+              onClick={() => updateQuantity(product._id, quantity + 1)}
+              className="w-[24px] h-full flex items-center justify-center sm:hover:bg-green-700 sm:active:bg-green-800 sm:transition-colors sm:w-auto sm:h-auto sm:p-1.5"
+            >
+              <Plus className="w-3 h-3 sm:w-3 sm:h-3" strokeWidth={3} />
+            </button>
+          </div>
+        )}
+      </div>
+
     </div>
   );
 };
