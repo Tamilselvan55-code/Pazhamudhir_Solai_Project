@@ -40,29 +40,27 @@ const ProductCard = ({ product }) => {
         toast('Wishlist Updated', `❤️ ${product.name} added to wishlist!`);
       } else {
         toast('Wishlist Updated', `💔 ${product.name} removed from wishlist.`);
-      }
-    }  return (
-    <div className="bg-white rounded-[16px] shadow-sm border border-gray-100 flex flex-col w-full h-[210px] sm:h-full relative transition-all duration-200 hover:shadow-md group overflow-hidden sm:overflow-visible">
+        return (
+    <div className="w-full h-[220px] bg-white rounded-[16px] border border-[#E5E7EB] shadow-sm p-[8px] overflow-hidden flex flex-col relative transition-all duration-200 hover:shadow-md group sm:h-full sm:border-gray-100 sm:p-0 sm:overflow-visible">
       {/* Image Container */}
-      <div className="h-[95px] flex-none flex items-center justify-center p-[8px] sm:relative sm:w-full sm:h-[140px] md:h-[160px] lg:h-[180px] sm:flex-auto sm:bg-white sm:p-[12px]">
+      <div className="h-[95px] flex items-center justify-center p-[8px] sm:relative sm:w-full sm:h-[140px] md:h-[160px] lg:h-[180px] sm:bg-white sm:p-[12px]">
         <ProductImage
           src={product.image}
           alt={product.name}
           category={product.category}
-          fit="contain"
-          className="w-[90px] h-[90px] sm:w-full sm:h-full object-contain object-center group-hover:scale-105 transition-transform duration-300 mix-blend-multiply"
+          className="w-[90px] h-[90px] object-contain sm:w-full sm:h-full sm:object-center group-hover:scale-105 transition-transform duration-300 mix-blend-multiply shrink-0 sm:shrink"
         />
 
         {/* Wishlist Heart Button */}
         <button
           onClick={handleToggleWishlist}
           aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
-          className={`absolute top-[8px] right-[8px] sm:top-2 sm:right-2 p-1 sm:p-1.5 w-[30px] h-[30px] sm:w-[32px] sm:h-[32px] flex items-center justify-center rounded-full bg-white sm:bg-white/80 backdrop-blur-sm border border-gray-100 shadow-sm transition-all duration-250 z-10 ${
+          className={`absolute top-[8px] right-[8px] w-[30px] h-[30px] bg-white rounded-full shadow-md flex items-center justify-center z-10 sm:top-2 sm:right-2 sm:p-1.5 sm:w-[32px] sm:h-[32px] sm:bg-white/80 sm:backdrop-blur-sm sm:border sm:border-gray-100 sm:shadow-sm transition-all duration-250 ${
             isAnimatingHeart ? 'scale-125' : 'hover:bg-gray-50 active:scale-90'
           }`}
         >
           <Heart
-            className={`w-3.5 h-3.5 sm:w-4 sm:h-4 transition-all duration-250 ${
+            className={`w-4 h-4 transition-all duration-250 ${
               isWishlisted ? 'text-red-500 fill-red-500' : 'text-gray-400 hover:text-red-500'
             } ${isAnimatingHeart ? 'scale-110' : 'scale-100'}`}
           />
@@ -70,21 +68,21 @@ const ProductCard = ({ product }) => {
 
         {/* Offer badge */}
         {product.offerTag && (
-          <span className="absolute top-2 left-2 bg-red-500 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded-full shadow-md tracking-wide">
+          <span className="absolute top-[8px] left-[8px] sm:top-2 sm:left-2 bg-red-500 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded-full shadow-md tracking-wide">
             {product.offerTag}
           </span>
         )}
 
         {/* Best seller */}
         {product.isBestSeller && !product.offerTag && (
-          <span className="absolute top-2 left-2 bg-amber-500 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded-full shadow-md">
+          <span className="absolute top-[8px] left-[8px] sm:top-2 sm:left-2 bg-amber-500 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded-full shadow-md">
             ⭐ BEST
           </span>
         )}
 
         {/* Trending */}
         {product.isTrending && !product.offerTag && !product.isBestSeller && (
-          <span className="absolute top-2 left-2 bg-purple-500 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded-full shadow-md">
+          <span className="absolute top-[8px] left-[8px] sm:top-2 sm:left-2 bg-purple-500 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded-full shadow-md">
             🔥 TREND
           </span>
         )}
@@ -100,34 +98,34 @@ const ProductCard = ({ product }) => {
       </div>
 
       {/* Info Container */}
-      <div className="flex-none sm:flex-1 flex flex-col p-[8px] sm:px-2 sm:pb-2 sm:p-2.5 bg-white">
+      <div className="p-[8px] flex flex-col sm:p-[8px] sm:px-2 sm:pb-2 sm:p-2.5 sm:flex-1 sm:bg-white">
         {/* Name (English) */}
-        <h3 className="text-[13px] sm:text-xs font-bold text-gray-800 leading-tight line-clamp-2">{product.name}</h3>
+        <h3 className="text-[13px] font-bold line-clamp-2 text-gray-800 leading-tight sm:text-xs">{product.name}</h3>
         
         {/* Tamil name */}
         {(product.tamilName || product.nameTamil) && (
-          <span className="text-[11px] text-[#00a651] sm:text-green-700 font-bold truncate mt-0.5">
+          <span className="text-[11px] text-[#00a651] font-bold mt-0.5 sm:text-green-700 truncate">
             {product.tamilName || product.nameTamil}
           </span>
         )}
-        <span className="text-[10px] text-gray-400 mt-0.5 mb-2">{product.unit}</span>
+        <span className="text-[10px] text-gray-500 mt-0.5 mb-1 sm:text-gray-400 sm:mb-2">{product.unit}</span>
 
         {/* Bottom Row */}
-        <div className="flex items-center justify-between gap-1 sm:mt-auto">
-          <span className="text-[16px] sm:text-sm font-bold text-black sm:text-gray-900 truncate">
+        <div className="flex justify-between items-center sm:gap-1 sm:mt-auto">
+          <span className="text-[16px] font-bold text-black truncate sm:text-sm sm:text-gray-900">
             {formatCurrency(product.price)}
           </span>
 
           {quantity === 0 ? (
-            <button
+             <button
               onClick={handleAddToCart}
               disabled={!isInStock}
-              className="bg-[#00a651] sm:bg-green-600 text-white text-[11px] sm:text-[10px] font-bold h-[34px] w-[72px] sm:w-auto sm:h-auto sm:px-3 sm:py-1.5 rounded-full sm:rounded-xl shadow-sm hover:bg-green-700 active:scale-95 transition-all flex items-center justify-center gap-1 shrink-0 disabled:bg-gray-300"
+              className="bg-[#00a651] rounded-full h-[34px] w-[72px] text-white text-[11px] font-bold flex items-center justify-center sm:bg-green-600 sm:text-[10px] sm:h-auto sm:w-auto sm:px-3 sm:py-1.5 sm:rounded-xl shadow-sm hover:bg-green-700 active:scale-95 transition-all gap-1 sm:shrink-0 disabled:bg-gray-300"
             >
-              <Plus className="w-3.5 h-3.5 sm:w-3 sm:h-3" strokeWidth={3} /> ADD
+              + ADD
             </button>
           ) : (
-            <div className="flex items-center justify-between bg-[#00a651] sm:bg-green-600 text-white rounded-full sm:rounded-xl shadow-sm h-[34px] w-[72px] sm:w-auto sm:h-auto overflow-hidden shrink-0">
+            <div className="bg-[#00a651] rounded-full h-[34px] w-[72px] text-white flex items-center justify-between overflow-hidden shadow-sm sm:bg-green-600 sm:w-auto sm:h-auto sm:rounded-xl sm:shrink-0">
               <button
                 onClick={async () => {
                   if (quantity <= 1) {
@@ -137,14 +135,14 @@ const ProductCard = ({ product }) => {
                     updateQuantity(product._id, quantity - 1);
                   }
                 }}
-                className="w-[26px] h-full sm:w-auto sm:h-auto sm:p-1.5 flex items-center justify-center hover:bg-green-700 active:bg-green-800 transition-colors"
+                className="w-[26px] h-full flex items-center justify-center hover:bg-green-700 active:bg-green-800 transition-colors sm:w-auto sm:h-auto sm:p-1.5"
               >
                 <Minus className="w-3 h-3 sm:w-3 sm:h-3" strokeWidth={3} />
               </button>
-              <span className="text-[11px] sm:text-xs font-bold text-center flex-1">{quantity}</span>
+              <span className="text-[11px] font-bold text-center flex-1 sm:text-xs">{quantity}</span>
               <button
                 onClick={() => updateQuantity(product._id, quantity + 1)}
-                className="w-[26px] h-full sm:w-auto sm:h-auto sm:p-1.5 flex items-center justify-center hover:bg-green-700 active:bg-green-800 transition-colors"
+                className="w-[26px] h-full flex items-center justify-center hover:bg-green-700 active:bg-green-800 transition-colors sm:w-auto sm:h-auto sm:p-1.5"
               >
                 <Plus className="w-3 h-3 sm:w-3 sm:h-3" strokeWidth={3} />
               </button>

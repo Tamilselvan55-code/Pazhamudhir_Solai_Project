@@ -118,7 +118,7 @@ const ProductImage = ({
   }, [src, placeholder]);
 
   return (
-    <div className={`relative overflow-hidden flex items-center justify-center ${size === 'lg' ? 'w-full h-full' : ''}`}>
+    <div className="relative overflow-hidden flex items-center justify-center">
       {/* Skeleton shimmer */}
       {status === 'loading' && (
         <div
@@ -131,7 +131,7 @@ const ProductImage = ({
         src={displaySrc}
         alt={alt || 'Product'}
         loading="lazy"
-        className={`object-${fit} ${className} transition-opacity duration-300 ${status === 'loaded' ? 'opacity-100' : 'opacity-0'}`}
+        className={`${className} transition-opacity duration-300 ${status === 'loaded' ? 'opacity-100' : 'opacity-0'}`}
         style={style}
         onLoad={handleLoad}
         onError={handleError}
