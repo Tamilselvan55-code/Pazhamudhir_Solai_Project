@@ -118,7 +118,7 @@ const ProductImage = ({
   }, [src, placeholder]);
 
   return (
-    <div className="relative w-full h-full overflow-hidden" style={{ minHeight: size === 'sm' ? 24 : size === 'lg' ? 144 : 64 }}>
+    <div className="relative w-full h-full overflow-hidden">
       {/* Skeleton shimmer */}
       {status === 'loading' && (
         <div

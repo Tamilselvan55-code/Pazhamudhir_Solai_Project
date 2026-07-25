@@ -125,7 +125,7 @@ const ProductCard = ({ product }) => {
             <button
               onClick={handleAddToCart}
               disabled={!isInStock}
-              className="bg-[#00a651] sm:bg-green-600 text-white text-[11px] sm:text-[10px] font-bold h-[28px] sm:h-auto px-3 sm:px-3 sm:py-1.5 rounded-full sm:rounded-xl shadow-sm hover:bg-green-700 active:scale-95 transition-all flex items-center justify-center gap-1 shrink-0 disabled:bg-gray-300"
+              className="bg-[#00a651] sm:bg-green-600 text-white text-[11px] sm:text-[10px] font-bold h-[28px] sm:h-auto px-3 sm:px-3 sm:py-1.5 rounded-full sm:rounded-xl shadow-sm hover:bg-green-700 active:scale-95 transition-all flex items-center justify-center gap-0.5 shrink-0 disabled:bg-gray-300"
             >
               <Plus className="w-3.5 h-3.5 sm:w-3 sm:h-3" strokeWidth={3} /> ADD
             </button>
