@@ -138,7 +138,6 @@ router.patch('/orders/:id/status', async (req, res) => {
     if (status === 'Delivered') {
       updateData.isDelivered = true;
       updateData.deliveredAt = new Date();
-      updateData.paymentStatus = 'Paid';
     }
 
     const updatedOrderRaw = await prisma.order.update({
