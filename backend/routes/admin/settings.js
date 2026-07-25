@@ -64,17 +64,20 @@ router.put('/settings', async (req, res) => {
       updateData.orderStatusColors = req.body.orderStatusColors;
     }
     
-    // Type casting
-    if (updateData.deliveryRadiusKm !== undefined) updateData.deliveryRadiusKm = Number(updateData.deliveryRadiusKm);
-    if (updateData.gstPercentage !== undefined) updateData.gstPercentage = Number(updateData.gstPercentage);
-    if (updateData.minOrderValue !== undefined) updateData.minOrderValue = Number(updateData.minOrderValue);
-    if (updateData.maxOrderValue !== undefined) updateData.maxOrderValue = Number(updateData.maxOrderValue);
-    if (updateData.freeDeliveryThreshold !== undefined) updateData.freeDeliveryThreshold = Number(updateData.freeDeliveryThreshold);
-    if (updateData.deliveryCharges !== undefined) updateData.deliveryCharges = Number(updateData.deliveryCharges);
-    if (updateData.cancellationTimeLimit !== undefined) updateData.cancellationTimeLimit = Number(updateData.cancellationTimeLimit);
-    if (updateData.sessionTimeout !== undefined) updateData.sessionTimeout = Number(updateData.sessionTimeout);
-    if (updateData.maxLoginAttempts !== undefined) updateData.maxLoginAttempts = Number(updateData.maxLoginAttempts);
-    if (updateData.dashboardRefreshInterval !== undefined) updateData.dashboardRefreshInterval = Number(updateData.dashboardRefreshInterval);
+    // Type casting — Float fields (schema: Float / Float?)
+    if (updateData.deliveryRadiusKm !== undefined) updateData.deliveryRadiusKm = parseFloat(updateData.deliveryRadiusKm) || 0;
+    if (updateData.gstPercentage !== undefined) updateData.gstPercentage = parseFloat(updateData.gstPercentage) || 0;
+    if (updateData.minOrderValue !== undefined) updateData.minOrderValue = parseFloat(updateData.minOrderValue) || 0;
+    if (updateData.maxOrderValue !== undefined) updateData.maxOrderValue = parseFloat(updateData.maxOrderValue) || 0;
+    if (updateData.freeDeliveryThreshold !== undefined) updateData.freeDeliveryThreshold = parseFloat(updateData.freeDeliveryThreshold) || 0;
+    if (updateData.deliveryCharges !== undefined) updateData.deliveryCharges = parseFloat(updateData.deliveryCharges) || 0;
+    if (updateData.cancellationTimeLimit !== undefined) updateData.cancellationTimeLimit = parseFloat(updateData.cancellationTimeLimit) || 0;
+    if (updateData.sessionTimeout !== undefined) updateData.sessionTimeout = parseFloat(updateData.sessionTimeout) || 0;
+    if (updateData.dashboardRefreshInterval !== undefined) updateData.dashboardRefreshInterval = parseFloat(updateData.dashboardRefreshInterval) || 0;
+
+    // Type casting — Int fields (schema: Int / Int?) — must be whole numbers
+    if (updateData.maxLoginAttempts !== undefined) updateData.maxLoginAttempts = parseInt(updateData.maxLoginAttempts, 10) || 5;
+    if (updateData.smtpPort !== undefined) updateData.smtpPort = parseInt(updateData.smtpPort, 10) || 587;
 
     const booleanFields = [
       'enableProductReviews', 'enableWishlist', 'enableSearchSuggestions', 'enableNotifications', 'maintenanceMode',
@@ -148,7 +151,7 @@ router.put('/settings', async (req, res) => {
       io.emit('settings_update', updatedSettings);
     }
 
-    const adminName = req.admin ? req.admin.name : 'System Admin';
+    const adminName = (req.admin && req.admin.name) ? req.admin.name : 'System Admin';
     await prisma.auditLog.create({
       data: {
         adminName,

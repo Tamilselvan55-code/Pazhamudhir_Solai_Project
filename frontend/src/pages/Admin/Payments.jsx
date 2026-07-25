@@ -96,18 +96,19 @@ const Payments = () => {
   };
 
   const getStatusBadge = (status) => {
+    const baseClass = "inline-flex items-center justify-center gap-1.5 w-[100px] py-1.5 rounded-full text-[11px] font-bold whitespace-nowrap";
     switch (status) {
       case 'Paid':
-        return <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-bold bg-[#22C55E]/20 text-[#22C55E] border border-[#22C55E]/30"><CheckCircle className="w-3.5 h-3.5 shrink-0" /> Paid</span>;
+        return <span className={`${baseClass} bg-[#22C55E]/20 text-[#22C55E] border border-[#22C55E]/30`}><CheckCircle className="w-3.5 h-3.5 shrink-0" /> Paid</span>;
       case 'Failed':
-        return <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-bold bg-[#EF4444]/20 text-[#EF4444] border border-[#EF4444]/30"><XCircle className="w-3.5 h-3.5 shrink-0" /> Failed</span>;
+        return <span className={`${baseClass} bg-[#EF4444]/20 text-[#EF4444] border border-[#EF4444]/30`}><XCircle className="w-3.5 h-3.5 shrink-0" /> Failed</span>;
       case 'Refunded':
-        return <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-bold bg-[#A855F7]/20 text-[#A855F7] border border-[#A855F7]/30"><RefreshCw className="w-3.5 h-3.5 shrink-0" /> Refunded</span>;
+        return <span className={`${baseClass} bg-[#A855F7]/20 text-[#A855F7] border border-[#A855F7]/30`}><RefreshCw className="w-3.5 h-3.5 shrink-0" /> Refunded</span>;
       case 'Cash on Delivery (COD)':
       case 'COD':
-        return <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-bold bg-[#3B82F6]/20 text-[#3B82F6] border border-[#3B82F6]/30"><Clock className="w-3.5 h-3.5 shrink-0" /> COD</span>;
+        return <span className={`${baseClass} bg-[#3B82F6]/20 text-[#3B82F6] border border-[#3B82F6]/30`}><Clock className="w-3.5 h-3.5 shrink-0" /> COD</span>;
       default:
-        return <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-bold bg-[#F59E0B]/20 text-[#F59E0B] border border-[#F59E0B]/30"><Clock className="w-3.5 h-3.5 shrink-0" /> Pending</span>;
+        return <span className={`${baseClass} bg-[#F59E0B]/20 text-[#F59E0B] border border-[#F59E0B]/30`}><Clock className="w-3.5 h-3.5 shrink-0" /> Pending</span>;
     }
   };
 
@@ -132,15 +133,15 @@ const Payments = () => {
 
         {/* Filters and Search Bar (55px) */}
         <div className="admin-card flex flex-col lg:flex-row items-center justify-between gap-4">
-          <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
+          <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
             {['All', 'Pending', 'Paid', 'Failed', 'Refunded', 'COD'].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setFilterStatus(tab)}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                className={`px-5 py-2.5 h-[42px] flex items-center justify-center rounded-xl text-xs font-bold transition-all duration-300 hover:-translate-y-0.5 ${
                   filterStatus === tab
-                    ? 'admin-btn-primary'
-                    : 'bg-white/4 hover:bg-white/10 text-[#94A3B8] hover:text-white border border-white/8'
+                    ? 'admin-btn-primary shadow-lg shadow-[#22C55E]/20'
+                    : 'bg-white/4 hover:bg-white/10 text-[#94A3B8] hover:text-white border border-white/8 hover:border-white/20'
                 }`}
               >
                 {tab}
@@ -148,14 +149,14 @@ const Payments = () => {
             ))}
           </div>
 
-          <form onSubmit={handleSearch} className="relative w-full lg:w-96">
+          <form onSubmit={handleSearch} className="relative w-full lg:w-[400px]">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#94A3B8]" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search Order ID, Name, Phone..."
-              className="admin-search-bar"
+              className="admin-search-bar pl-12 h-[42px] w-full"
             />
             {searchQuery && (
               <button
@@ -185,16 +186,16 @@ const Payments = () => {
             <div className="overflow-x-auto max-h-[70vh] admin-scroll">
               <table className="w-full text-left border-collapse relative">
                 <thead className="sticky top-0 z-10">
-                  <tr className="admin-table-header text-xs font-bold text-[#94A3B8] uppercase tracking-wider border-b border-white/8">
-                    <th className="px-6 py-4">Order ID</th>
-                    <th className="px-6 py-4">Customer Name</th>
-                    <th className="px-6 py-4">Phone Number</th>
-                    <th className="px-6 py-4">Payment Method</th>
-                    <th className="px-6 py-4">Amount</th>
-                    <th className="px-6 py-4 text-center">Payment Status</th>
-                    <th className="px-6 py-4">Payment Date</th>
-                    <th className="px-6 py-4">Updated By</th>
-                    <th className="px-6 py-4 text-right">Actions</th>
+                  <tr className="admin-table-header text-xs font-bold text-[#94A3B8] uppercase tracking-wider border-b border-white/8 whitespace-nowrap">
+                    <th className="px-6 py-4 align-middle">Order ID</th>
+                    <th className="px-6 py-4 align-middle">Customer Name</th>
+                    <th className="px-6 py-4 align-middle">Phone Number</th>
+                    <th className="px-6 py-4 align-middle">Payment Method</th>
+                    <th className="px-6 py-4 align-middle text-right">Amount</th>
+                    <th className="px-6 py-4 align-middle text-center">Payment Status</th>
+                    <th className="px-6 py-4 align-middle">Payment Date</th>
+                    <th className="px-6 py-4 align-middle">Updated By</th>
+                    <th className="px-6 py-4 align-middle text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/6 text-xs">
@@ -210,24 +211,24 @@ const Payments = () => {
                     </tr>
                   ) : (
                     payments.map((p) => (
-                      <tr key={p._id} className="hover:bg-white/4 transition-colors group">
-                        <td className="px-6 py-3.5 font-bold text-white text-sm">{p.orderId}</td>
-                        <td className="px-6 py-3.5 font-semibold text-gray-200">{p.customerName}</td>
-                        <td className="px-6 py-3.5 text-[#94A3B8]">+91 {p.phoneNumber}</td>
-                        <td className="px-6 py-3.5">
-                          <span className="font-bold bg-white/6 border border-white/8 px-3 py-1 rounded-lg text-gray-300 text-xs">{p.paymentMethod}</span>
+                      <tr key={p._id} className="hover:bg-white/4 transition-colors group whitespace-nowrap">
+                        <td className="px-6 py-4 align-middle font-bold text-white text-sm">{p.orderId}</td>
+                        <td className="px-6 py-4 align-middle font-semibold text-gray-200">{p.customerName}</td>
+                        <td className="px-6 py-4 align-middle text-[#94A3B8]">+91 {p.phoneNumber}</td>
+                        <td className="px-6 py-4 align-middle">
+                          <span className="inline-flex items-center justify-center font-bold bg-white/6 border border-white/8 px-3 py-1.5 rounded-lg text-gray-300 text-xs">{p.paymentMethod}</span>
                         </td>
-                        <td className="px-6 py-3.5 font-black text-[#22C55E] text-sm">{formatCurrencyDecimal(p.amount)}</td>
-                        <td className="px-6 py-3.5 text-center">{getStatusBadge(p.paymentStatus)}</td>
-                        <td className="px-6 py-3.5 text-[#94A3B8]">{new Date(p.date).toLocaleDateString('en-IN')}</td>
-                        <td className="px-6 py-3.5 font-medium text-gray-300">
+                        <td className="px-6 py-4 align-middle text-right font-black text-[#22C55E] text-sm">{formatCurrencyDecimal(p.amount)}</td>
+                        <td className="px-6 py-4 align-middle text-center">{getStatusBadge(p.paymentStatus)}</td>
+                        <td className="px-6 py-4 align-middle text-[#94A3B8]">{new Date(p.date).toLocaleDateString('en-IN')}</td>
+                        <td className="px-6 py-4 align-middle font-medium text-gray-300">
                           <div className="flex items-center gap-1.5">
                             <UserCheck className="w-4 h-4 text-[#22C55E]" />
                             <span>{p.updatedBy || 'System'}</span>
                           </div>
                         </td>
-                        <td className="px-6 py-3.5 text-right">
-                          <div className="flex items-center justify-end gap-1.5 opacity-80 group-hover:opacity-100 transition-opacity">
+                        <td className="px-6 py-4 align-middle text-right">
+                          <div className="flex items-center justify-end gap-3 opacity-80 group-hover:opacity-100 transition-opacity">
                             <button
                               onClick={() => openActionModal(p, 'status')}
                               className="px-3 py-1.5 bg-[#22C55E]/20 hover:bg-[#22C55E]/30 text-[#22C55E] font-bold rounded-xl transition-colors flex items-center gap-1.5 border border-[#22C55E]/30"
