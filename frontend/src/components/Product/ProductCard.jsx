@@ -41,11 +41,8 @@ const ProductCard = ({ product }) => {
       } else {
         toast('Wishlist Updated', `💔 ${product.name} removed from wishlist.`);
       }
-    }
-  };
-
-  return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col w-full h-[215px] sm:h-full relative transition-all duration-200 hover:shadow-md group overflow-hidden sm:overflow-visible">
+    }  return (
+    <div className="bg-white rounded-[16px] shadow-sm border border-gray-100 flex flex-col w-full h-[210px] sm:h-full relative transition-all duration-200 hover:shadow-md group overflow-hidden sm:overflow-visible">
       {/* Image Container */}
       <div className="h-[95px] flex-none flex items-center justify-center p-[8px] sm:relative sm:w-full sm:h-[140px] md:h-[160px] lg:h-[180px] sm:flex-auto sm:bg-white sm:p-[12px]">
         <ProductImage
@@ -60,7 +57,7 @@ const ProductCard = ({ product }) => {
         <button
           onClick={handleToggleWishlist}
           aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
-          className={`absolute top-2 right-2 p-1 sm:p-1.5 w-[28px] h-[28px] sm:w-[32px] sm:h-[32px] flex items-center justify-center rounded-full bg-white/95 sm:bg-white/80 backdrop-blur-sm border border-gray-100 shadow-sm transition-all duration-250 z-10 ${
+          className={`absolute top-[8px] right-[8px] sm:top-2 sm:right-2 p-1 sm:p-1.5 w-[30px] h-[30px] sm:w-[32px] sm:h-[32px] flex items-center justify-center rounded-full bg-white sm:bg-white/80 backdrop-blur-sm border border-gray-100 shadow-sm transition-all duration-250 z-10 ${
             isAnimatingHeart ? 'scale-125' : 'hover:bg-gray-50 active:scale-90'
           }`}
         >
@@ -103,9 +100,9 @@ const ProductCard = ({ product }) => {
       </div>
 
       {/* Info Container */}
-      <div className="flex-none sm:flex-1 flex flex-col px-2 pb-2 sm:p-2.5 bg-white">
+      <div className="flex-none sm:flex-1 flex flex-col p-[8px] sm:px-2 sm:pb-2 sm:p-2.5 bg-white">
         {/* Name (English) */}
-        <h3 className="text-[12px] sm:text-xs font-bold text-gray-800 leading-tight line-clamp-2">{product.name}</h3>
+        <h3 className="text-[13px] sm:text-xs font-bold text-gray-800 leading-tight line-clamp-2">{product.name}</h3>
         
         {/* Tamil name */}
         {(product.tamilName || product.nameTamil) && (
@@ -117,7 +114,7 @@ const ProductCard = ({ product }) => {
 
         {/* Bottom Row */}
         <div className="flex items-center justify-between gap-1 sm:mt-auto">
-          <span className="text-[15px] sm:text-sm font-extrabold text-black sm:text-gray-900 truncate">
+          <span className="text-[16px] sm:text-sm font-bold text-black sm:text-gray-900 truncate">
             {formatCurrency(product.price)}
           </span>
 
@@ -125,12 +122,12 @@ const ProductCard = ({ product }) => {
             <button
               onClick={handleAddToCart}
               disabled={!isInStock}
-              className="bg-[#00a651] sm:bg-green-600 text-white text-[11px] sm:text-[10px] font-bold h-[28px] sm:h-auto px-3 sm:px-3 sm:py-1.5 rounded-full sm:rounded-xl shadow-sm hover:bg-green-700 active:scale-95 transition-all flex items-center justify-center gap-0.5 shrink-0 disabled:bg-gray-300"
+              className="bg-[#00a651] sm:bg-green-600 text-white text-[11px] sm:text-[10px] font-bold h-[34px] w-[72px] sm:w-auto sm:h-auto sm:px-3 sm:py-1.5 rounded-full sm:rounded-xl shadow-sm hover:bg-green-700 active:scale-95 transition-all flex items-center justify-center gap-1 shrink-0 disabled:bg-gray-300"
             >
               <Plus className="w-3.5 h-3.5 sm:w-3 sm:h-3" strokeWidth={3} /> ADD
             </button>
           ) : (
-            <div className="flex items-center bg-[#00a651] sm:bg-green-600 text-white rounded-full sm:rounded-xl shadow-sm h-[28px] sm:h-auto overflow-hidden shrink-0">
+            <div className="flex items-center justify-between bg-[#00a651] sm:bg-green-600 text-white rounded-full sm:rounded-xl shadow-sm h-[34px] w-[72px] sm:w-auto sm:h-auto overflow-hidden shrink-0">
               <button
                 onClick={async () => {
                   if (quantity <= 1) {
@@ -140,16 +137,16 @@ const ProductCard = ({ product }) => {
                     updateQuantity(product._id, quantity - 1);
                   }
                 }}
-                className="w-[28px] h-[28px] sm:w-auto sm:h-auto sm:p-1.5 flex items-center justify-center hover:bg-green-700 active:bg-green-800 transition-colors"
+                className="w-[26px] h-full sm:w-auto sm:h-auto sm:p-1.5 flex items-center justify-center hover:bg-green-700 active:bg-green-800 transition-colors"
               >
-                <Minus className="w-3.5 h-3.5 sm:w-3 sm:h-3" strokeWidth={3} />
+                <Minus className="w-3 h-3 sm:w-3 sm:h-3" strokeWidth={3} />
               </button>
-              <span className="px-1.5 sm:px-2 text-[11px] sm:text-xs font-bold min-w-[1.2rem] sm:min-w-[1.5rem] text-center">{quantity}</span>
+              <span className="text-[11px] sm:text-xs font-bold text-center flex-1">{quantity}</span>
               <button
                 onClick={() => updateQuantity(product._id, quantity + 1)}
-                className="w-[28px] h-[28px] sm:w-auto sm:h-auto sm:p-1.5 flex items-center justify-center hover:bg-green-700 active:bg-green-800 transition-colors"
+                className="w-[26px] h-full sm:w-auto sm:h-auto sm:p-1.5 flex items-center justify-center hover:bg-green-700 active:bg-green-800 transition-colors"
               >
-                <Plus className="w-3.5 h-3.5 sm:w-3 sm:h-3" strokeWidth={3} />
+                <Plus className="w-3 h-3 sm:w-3 sm:h-3" strokeWidth={3} />
               </button>
             </div>
           )}
