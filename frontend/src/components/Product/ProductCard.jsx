@@ -61,6 +61,7 @@ const ProductCard = ({ product }) => {
         <button
           onClick={handleToggleWishlist}
           aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+          style={{ minHeight: 'unset' }}
           className={`absolute top-1 right-1 sm:top-2 sm:right-2 p-1 sm:p-1.5 rounded-full bg-white/80 backdrop-blur-sm border border-gray-100 shadow-sm transition-all duration-250 z-10 ${
             isAnimatingHeart ? 'scale-125' : 'hover:bg-white active:scale-90'
           }`}
@@ -96,7 +97,7 @@ const ProductCard = ({ product }) => {
         {/* Out of stock overlay */}
         {!isInStock && (
           <div className="absolute inset-0 bg-white/75 flex items-center justify-center">
-            <span className="text-[10px] sm:text-xs font-bold text-gray-500 bg-white px-2 py-0.5 sm:px-3 sm:py-1 rounded-full border border-gray-200">
+            <span className="text-[0.625rem] sm:text-xs font-bold text-gray-500 bg-white px-2 py-0.5 sm:px-3 sm:py-1 rounded-full border border-gray-200">
               Out of Stock
             </span>
           </div>
@@ -106,12 +107,12 @@ const ProductCard = ({ product }) => {
       {/* Info */}
       <div className="p-2 sm:p-2.5 flex flex-col flex-1">
         {/* Name (English) */}
-        <h3 className="text-[10px] sm:text-xs font-bold text-gray-800 leading-tight">{product.name}</h3>
+        <h3 className="text-[0.625rem] sm:text-xs font-bold text-gray-800 leading-tight">{product.name}</h3>
         {/* Tamil name */}
         {(product.tamilName || product.nameTamil) && (
-          <span className="text-[9px] sm:text-[11px] text-green-700 font-semibold mt-0.5">{product.tamilName || product.nameTamil}</span>
+          <span className="text-[0.5625rem] sm:text-[11px] text-green-700 font-semibold mt-0.5">{product.tamilName || product.nameTamil}</span>
         )}
-        <span className="text-[8px] sm:text-[10px] text-gray-400 mt-0.5 mb-1.5 sm:mb-2">{product.unit}</span>
+        <span className="text-[8px] sm:text-[0.625rem] text-gray-400 mt-0.5 mb-1.5 sm:mb-2">{product.unit}</span>
 
         <div className="mt-auto flex items-center justify-between gap-1">
           <div>
@@ -122,7 +123,8 @@ const ProductCard = ({ product }) => {
             <button
               onClick={handleAddToCart}
               disabled={!isInStock}
-              className="bg-green-600 text-white text-[9px] sm:text-[10px] font-bold px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg sm:rounded-xl shadow hover:bg-green-700 active:scale-95 transition-all flex items-center gap-0.5 sm:gap-1 disabled:bg-gray-300"
+              style={{ minHeight: 'unset' }}
+              className="bg-green-600 text-white text-[0.5625rem] sm:text-[0.625rem] font-bold px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg sm:rounded-xl shadow hover:bg-green-700 active:scale-95 transition-all flex items-center gap-0.5 sm:gap-1 disabled:bg-gray-300"
             >
               <Plus className="w-2.5 h-2.5 sm:w-3 sm:h-3" /> ADD
             </button>
@@ -137,6 +139,7 @@ const ProductCard = ({ product }) => {
                     updateQuantity(product._id, quantity - 1);
                   }
                 }}
+                style={{ minHeight: 'unset' }}
                 className="p-1 sm:p-1.5 hover:bg-green-700 active:bg-green-800 transition-colors"
               >
                 <Minus className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
@@ -144,6 +147,7 @@ const ProductCard = ({ product }) => {
               <span className="px-1.5 sm:px-2 text-[10px] sm:text-xs font-bold min-w-[1.25rem] sm:min-w-[1.5rem] text-center">{quantity}</span>
               <button
                 onClick={() => updateQuantity(product._id, quantity + 1)}
+                style={{ minHeight: 'unset' }}
                 className="p-1 sm:p-1.5 hover:bg-green-700 active:bg-green-800 transition-colors"
               >
                 <Plus className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
