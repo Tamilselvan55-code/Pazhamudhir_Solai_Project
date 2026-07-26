@@ -54,7 +54,9 @@ model UserAddress {
   user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   label       String  @default("Home")
   fullAddress String?
+  doorNo      String?
   street      String?
+  area        String?
   city        String?
   state       String?
   pincode     String?

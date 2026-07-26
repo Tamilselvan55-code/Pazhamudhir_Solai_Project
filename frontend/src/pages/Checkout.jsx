@@ -41,30 +41,68 @@ const Checkout = () => {
   const [doorNo, setDoorNo] = useState('');
   const [street, setStreet] = useState('');
   const [area, setArea] = useState('');
-  const [manualCity, setManualCity] = useState('');
-  const [manualState, setManualState] = useState('');
   const [manualPincode, setManualPincode] = useState('');
   const [savedAddresses, setSavedAddresses] = useState([]);
+  const [selectedAddressId, setSelectedAddressId] = useState('new');
+  const [addressLabel, setAddressLabel] = useState('Home');
+  const [isDefaultAddress, setIsDefaultAddress] = useState(false);
 
   useEffect(() => {
-    if (city) setManualCity(city);
-    if (state) setManualState(state);
     if (pincode) setManualPincode(pincode);
-  }, [city, state, pincode]);
+  }, [pincode]);
 
   useEffect(() => {
     if (userInfo?.token) {
       axios.get(`${API_BASE}/auth/addresses`, { headers: { Authorization: `Bearer ${userInfo.token}` } })
         .then(res => {
+          let addrs = [];
           if (res.data?.success) {
-            setSavedAddresses(res.data.addresses || []);
+            addrs = res.data.addresses || [];
           } else if (Array.isArray(res.data)) {
-            setSavedAddresses(res.data);
+            addrs = res.data;
+          }
+          setSavedAddresses(addrs);
+          
+          if (addrs.length > 0) {
+            const defaultAddr = addrs.find(a => a.isDefault) || addrs[0];
+            if (!doorNo && !street && !area) {
+               setDoorNo(defaultAddr.doorNo || '');
+               setStreet(defaultAddr.street || '');
+               setArea(defaultAddr.area || '');
+               setManualPincode(defaultAddr.pincode || pincode || '');
+               setSelectedAddressId(defaultAddr.id || defaultAddr._id);
+               setAddressLabel(defaultAddr.label || 'Home');
+               setIsDefaultAddress(!!defaultAddr.isDefault);
+            }
+          } else {
+             setIsDefaultAddress(true);
           }
         })
         .catch(err => console.error("Failed to fetch saved addresses", err));
     }
   }, [userInfo?.token]);
+
+  const handleAddressSelect = (e) => {
+    const val = e.target.value;
+    setSelectedAddressId(val);
+    if (val === 'new') {
+      setDoorNo('');
+      setStreet('');
+      setArea('');
+      setAddressLabel('Other');
+      setIsDefaultAddress(savedAddresses.length === 0);
+    } else {
+      const addr = savedAddresses.find(a => (a.id || a._id) === val);
+      if (addr) {
+        setDoorNo(addr.doorNo || '');
+        setStreet(addr.street || '');
+        setArea(addr.area || '');
+        setManualPincode(addr.pincode || pincode || '');
+        setAddressLabel(addr.label || 'Home');
+        setIsDefaultAddress(!!addr.isDefault);
+      }
+    }
+  };
 
   /* ── Payment — COD only ─────────────────────────────────────────────────── */
   const paymentMethod = 'COD';
@@ -131,7 +169,7 @@ const Checkout = () => {
   const isNameEntered = fullName.trim() !== '';
   const isPhoneEntered = phoneNumber.trim() !== '';
 
-  const isAddressEntered = !!(doorNo.trim() && street.trim() && area.trim() && manualCity.trim() && manualState.trim() && manualPincode.trim());
+  const isAddressEntered = !!(doorNo.trim() && street.trim() && area.trim() && manualPincode.trim());
   const isTotalGreaterThanZero = totalToPay > 0;
 
   const formValid =
@@ -278,8 +316,8 @@ const Checkout = () => {
     setOrderLoading(true);
 
     try {
-      if (!doorNo.trim() || !street.trim() || !area.trim() || !manualCity.trim() || !manualState.trim() || !manualPincode.trim()) {
-        setOrderError('Please complete your full delivery address including Door No, Street, Area, City, State, and Pincode.');
+      if (!doorNo.trim() || !street.trim() || !area.trim() || !manualPincode.trim()) {
+        setOrderError('Please complete your full delivery address including Door No, Street, Area, and Pincode.');
         setOrderLoading(false);
         return;
       }
@@ -302,10 +340,10 @@ const Checkout = () => {
           doorNo:            doorNo.trim(),
           street:            street.trim(),
           area:              area.trim(),
-          city:              manualCity.trim(),
-          state:             manualState.trim(),
+          city:              '',
+          state:             '',
           pincode:           manualPincode.trim(),
-          fullAddress:       `${doorNo.trim()}, ${street.trim()}, ${area.trim()}, ${manualCity.trim()}, ${manualState.trim()} - ${manualPincode.trim()}`,
+          fullAddress:       `${doorNo.trim()}, ${street.trim()}, ${area.trim()} - ${manualPincode.trim()}`,
           lat:               userLocation?.lat,
           lon:               userLocation?.lon,
           distanceFromStore: distanceKm,
@@ -321,6 +359,44 @@ const Checkout = () => {
       const headers = userInfo?.token
         ? { Authorization: `Bearer ${userInfo.token}` }
         : {};
+
+      if (userInfo?.token) {
+        try {
+          const addressPayload = {
+            label: addressLabel,
+            doorNo: doorNo.trim(),
+            street: street.trim(),
+            area: area.trim(),
+            city: '',
+            state: '',
+            pincode: manualPincode.trim(),
+            fullAddress: `${doorNo.trim()}, ${street.trim()}, ${area.trim()} - ${manualPincode.trim()}`,
+            lat: userLocation?.lat,
+            lon: userLocation?.lon,
+            isDefault: isDefaultAddress
+          };
+          if (selectedAddressId === 'new') {
+            await axios.post(`${API_BASE}/auth/addresses`, addressPayload, { headers });
+          } else {
+            const existing = savedAddresses.find(a => (a.id || a._id) === selectedAddressId);
+            if (existing) {
+              const hasChanged = existing.doorNo !== addressPayload.doorNo || 
+                                 existing.street !== addressPayload.street || 
+                                 existing.area !== addressPayload.area || 
+                                 existing.city !== addressPayload.city || 
+                                 existing.state !== addressPayload.state || 
+                                 existing.pincode !== addressPayload.pincode || 
+                                 existing.isDefault !== addressPayload.isDefault ||
+                                 existing.label !== addressPayload.label;
+              if (hasChanged) {
+                await axios.put(`${API_BASE}/auth/addresses/${selectedAddressId}`, addressPayload, { headers });
+              }
+            }
+          }
+        } catch (err) {
+          console.error("Failed to save/update address", err);
+        }
+      }
 
       const { data } = await axios.post(`${API_BASE}/orders`, payload, { headers });
       clearCart();
@@ -362,6 +438,42 @@ const Checkout = () => {
           <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4"
             style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.05)' }}>
             <h3 className="text-sm font-bold text-gray-800">Contact & Address Details</h3>
+
+            {savedAddresses.length > 0 && (
+              <div className="mb-2">
+                <select
+                  value={selectedAddressId}
+                  onChange={handleAddressSelect}
+                  className="w-full border-2 border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-900 bg-gray-50 focus:outline-none focus:border-green-500 transition-colors"
+                >
+                  <option value="new">+ Add New Address</option>
+                  {savedAddresses.map(a => (
+                    <option key={a.id || a._id} value={a.id || a._id}>
+                      {a.label} {a.isDefault ? '(Default)' : ''} - {a.doorNo ? `${a.doorNo}, ` : ''}{a.street}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            <div className="flex items-center gap-3 mb-2">
+              <input 
+                type="text" 
+                placeholder="Label (e.g. Home, Work)" 
+                value={addressLabel}
+                onChange={(e) => setAddressLabel(e.target.value)}
+                className="flex-1 border-2 border-gray-200 rounded-xl px-3.5 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-green-500 transition-colors"
+              />
+              <label className="flex items-center gap-2 cursor-pointer text-sm text-gray-700 shrink-0">
+                <input 
+                  type="checkbox" 
+                  checked={isDefaultAddress} 
+                  onChange={(e) => setIsDefaultAddress(e.target.checked)}
+                  className="rounded text-green-600 focus:ring-green-500 w-4 h-4"
+                />
+                Default
+              </label>
+            </div>
 
             <div className="flex items-center border-2 border-gray-200 rounded-xl px-3.5 gap-2 focus-within:border-green-500 transition-colors">
               <User className="w-4 h-4 text-gray-400 shrink-0" />
@@ -408,22 +520,6 @@ const Checkout = () => {
               onChange={(e) => setArea(e.target.value)}
               className="w-full border-2 border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-green-500 transition-colors"
             />
-            <div className="grid grid-cols-2 gap-3">
-              <input
-                type="text"
-                placeholder="City"
-                value={manualCity}
-                onChange={(e) => setManualCity(e.target.value)}
-                className="w-full border-2 border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-green-500 transition-colors"
-              />
-              <input
-                type="text"
-                placeholder="State"
-                value={manualState}
-                onChange={(e) => setManualState(e.target.value)}
-                className="w-full border-2 border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-green-500 transition-colors"
-              />
-            </div>
             <input
               type="text"
               placeholder="Pincode"
@@ -566,7 +662,7 @@ const Checkout = () => {
                 <p className="text-xs text-orange-700 font-medium">Please enter your phone number.</p>
               </div>
             )}
-            {isCartNotEmpty && isDeliveryAvailable && isNameEntered && isPhoneEntered && (!doorNo || !street || !area || !manualCity || !manualState || !manualPincode) && (
+            {isCartNotEmpty && isDeliveryAvailable && isNameEntered && isPhoneEntered && (!doorNo || !street || !area || !manualPincode) && (
               <div className="flex items-start gap-2.5 p-3.5 rounded-xl bg-orange-50 border border-orange-200 text-left">
                 <Info className="w-4 h-4 text-orange-500 shrink-0 mt-0.5" />
                 <p className="text-xs text-orange-700 font-medium">Please enter your complete delivery address.</p>

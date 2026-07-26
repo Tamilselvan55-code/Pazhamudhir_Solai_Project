@@ -1200,7 +1200,7 @@ router.get('/addresses', protect, async (req, res) => {
 // ─── POST /api/auth/addresses ────────────────────────────────────────────────
 router.post('/addresses', protect, async (req, res) => {
   try {
-    const { label, fullAddress, street, city, state, pincode, isDefault, lat, lon } = req.body;
+    const { label, fullAddress, doorNo, street, area, city, state, pincode, isDefault, lat, lon } = req.body;
     const userId = req.user._id || req.user.id;
 
     if (isDefault) {
@@ -1215,7 +1215,9 @@ router.post('/addresses', protect, async (req, res) => {
         userId,
         label: label || 'Home',
         fullAddress: fullAddress || '',
+        doorNo: doorNo || '',
         street: street || '',
+        area: area || '',
         city: city || '',
         state: state || '',
         pincode: pincode || '',
@@ -1236,7 +1238,7 @@ router.post('/addresses', protect, async (req, res) => {
 // ─── PUT /api/auth/addresses/:id ─────────────────────────────────────────────
 router.put('/addresses/:id', protect, async (req, res) => {
   try {
-    const { label, fullAddress, street, city, state, pincode, isDefault, lat, lon } = req.body;
+    const { label, fullAddress, doorNo, street, area, city, state, pincode, isDefault, lat, lon } = req.body;
     const userId = req.user._id || req.user.id;
     const addressId = req.params.id;
 
@@ -1250,7 +1252,9 @@ router.put('/addresses/:id', protect, async (req, res) => {
     const dataToUpdate = {};
     if (label !== undefined) dataToUpdate.label = label;
     if (fullAddress !== undefined) dataToUpdate.fullAddress = fullAddress;
+    if (doorNo !== undefined) dataToUpdate.doorNo = doorNo;
     if (street !== undefined) dataToUpdate.street = street;
+    if (area !== undefined) dataToUpdate.area = area;
     if (city !== undefined) dataToUpdate.city = city;
     if (state !== undefined) dataToUpdate.state = state;
     if (pincode !== undefined) dataToUpdate.pincode = pincode;
