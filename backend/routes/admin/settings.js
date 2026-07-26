@@ -31,6 +31,7 @@ router.put('/settings', async (req, res) => {
 
     const fields = [
       'storeName', 'storeLogo', 'storeAddress', 'phone', 'email', 'supportWhatsApp', 'workingHours',
+      'storeStatus', 'openingTime', 'closingTime',
       'deliveryRadiusKm', 'currency', 'gstPercentage', 'invoicePrefix', 'invoiceFooter', 'storeDescription',
       'websiteName', 'websiteLogo', 'browserTitle', 'favicon', 'primaryThemeColor', 'secondaryThemeColor',
       'homepageBanner', 'announcementBanner', 'footerContent',
