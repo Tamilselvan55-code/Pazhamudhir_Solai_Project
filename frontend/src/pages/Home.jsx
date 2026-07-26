@@ -282,9 +282,9 @@ const Home = () => {
   }, [loading, categoriesLoading, products.length, showSections, location.search, navigate]);
 
   return (
-    <div className="flex flex-col min-h-[100dvh] bg-[#f7fdf7] pb-24 lg:pb-0">
+    <>
       <SEO title="Tiruchendur Murugan Pazhamudhir Solai | Fresh Fruits, Vegetables & Grocery Store" description="Buy fresh fruits, vegetables, groceries, dairy products, household essentials and more from Tiruchendur Murugan Pazhamudhir Solai." />
-      <div className="w-full min-w-0 pb-24 max-w-7xl mx-auto px-2 sm:px-3 md:px-4">
+      <div className="pb-24 max-w-7xl mx-auto px-2 sm:px-3 md:px-4">
 
       {/* ── Hero ─────────────────────────────────────────────────────── */}
       <div className="relative rounded-2xl overflow-hidden my-3 sm:my-4 shadow-lg h-36 sm:h-40 md:h-56">
@@ -476,7 +476,7 @@ const Home = () => {
         </>
       )}
       </div>
-    </div>
+    </>
   );
 };
 

@@ -30,6 +30,17 @@ html, body {
 .pb-safe { padding-bottom: env(safe-area-inset-bottom, 16px); }
 .bottom-safe { bottom: env(safe-area-inset-bottom, 0px); }
 
+/* Touch-friendly min tap targets */
+@media (max-width: 767px) {
+  button, a, [role="button"] {
+    min-height: 36px;
+  }
+  /* Prevent text from being too small to read */
+  .text-\[9px\], .text-\[10px\] {
+    font-size: 10px;
+  }
+}
+
 /* Ensure images never overflow their containers */
 img {
   max-width: 100%;

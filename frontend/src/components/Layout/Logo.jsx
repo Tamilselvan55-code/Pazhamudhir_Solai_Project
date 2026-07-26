@@ -61,7 +61,7 @@ const Logo = ({ size = 'md', variant = 'full', theme = 'dark' }) => {
       {variant === 'full' && (
         <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
           {part1 && (
-            <span className="hidden sm:block" style={{
+            <span style={{
               fontSize: s.text2,
               fontWeight: 600,
               color: subColor,
@@ -72,7 +72,8 @@ const Logo = ({ size = 'md', variant = 'full', theme = 'dark' }) => {
               {part1}
             </span>
           )}
-          <span className="text-[12px] sm:text-[13px] md:text-[15px]" style={{
+          <span style={{
+            fontSize: s.text1,
             fontWeight: 800,
             color: textColor,
             letterSpacing: '-0.02em',
