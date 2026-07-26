@@ -197,15 +197,15 @@ const InvoiceModal = ({ order, userInfo, onClose }) => {
             <div className="bg-white p-2 space-y-3 text-xs">
               <div className="flex justify-between text-slate-600 font-medium">
                 <span>Subtotal (Before GST)</span>
-                <span className="font-bold text-slate-900">₹{Number(order.subTotal || order.totalPrice || 0).toFixed(2)}</span>
+                <span className="font-bold text-slate-900">₹{(Number(order.totalPrice || 0) - Number(order.deliveryFee || 0) - Number(order.gstAmount || 0) + Number(order.couponDiscount || order.offerDiscount || 0)).toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-slate-600 font-medium">
                 <span>GST Total</span>
-                <span className="font-bold text-slate-900">₹0.00</span>
+                <span className="font-bold text-slate-900">₹{Number(order.gstAmount || 0).toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-emerald-600 font-bold">
                 <span>Delivery Charge</span>
-                <span>₹0.00</span>
+                <span>{Number(order.deliveryFee || 0) === 0 ? 'FREE' : `₹${Number(order.deliveryFee || 0).toFixed(2)}`}</span>
               </div>
               {(order.couponDiscount > 0 || order.offerDiscount > 0) && (
                 <div className="flex justify-between text-red-600 font-bold">
@@ -218,7 +218,7 @@ const InvoiceModal = ({ order, userInfo, onClose }) => {
               <div className="flex items-center justify-between pt-2">
                 <div>
                   <h4 className="text-base font-black text-emerald-800 uppercase tracking-wide">TOTAL PAYABLE</h4>
-                  <p className="text-[11px] text-slate-500 italic mt-0.5">(Rupees Five Hundred Fifteen Only)</p>
+                  <p className="text-[11px] text-slate-500 italic mt-0.5">(Amount including all taxes)</p>
                 </div>
                 <div className="bg-emerald-800 text-white px-5 py-2.5 rounded-xl font-black text-lg shadow-md">
                   ₹{Number(order.totalPrice || 0).toFixed(2)}

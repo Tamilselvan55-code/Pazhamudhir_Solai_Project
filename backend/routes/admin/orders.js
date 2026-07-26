@@ -75,7 +75,7 @@ router.get('/orders/:id', async (req, res) => {
 router.patch('/orders/:id/status', async (req, res) => {
   try {
     const { status } = req.body;
-    const allowed = ['Pending', 'Accepted', 'Out for Delivery', 'Delivered', 'Cancelled'];
+    const allowed = ['Pending', 'Waiting for Admin Approval', 'Accepted', 'Order Confirmed', 'Out for Delivery', 'Delivered', 'Cancelled', 'Cancelled by Customer', 'Rejected by Store'];
     if (!allowed.includes(status)) {
       return res.status(400).json({ success: false, message: 'Invalid status value.' });
     }
@@ -87,11 +87,15 @@ router.patch('/orders/:id/status', async (req, res) => {
     if (!orderRaw) return res.status(404).json({ success: false, message: 'Order not found' });
 
     const allowedTransitions = {
-      Pending: ["Accepted", "Cancelled"],
+      Pending: ["Accepted", "Cancelled", "Order Confirmed", "Rejected by Store"],
+      "Waiting for Admin Approval": ["Order Confirmed", "Cancelled by Customer", "Rejected by Store"],
       Accepted: ["Out for Delivery"],
+      "Order Confirmed": ["Out for Delivery"],
       "Out for Delivery": ["Delivered"],
       Delivered: [],
-      Cancelled: []
+      Cancelled: [],
+      "Cancelled by Customer": [],
+      "Rejected by Store": []
     };
 
     const currentStatus = orderRaw.status || 'Pending';

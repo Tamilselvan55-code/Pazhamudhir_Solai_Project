@@ -22,8 +22,10 @@ const getOrderStatusBadgeStyle = (status) => {
   const style = { height: '32px' };
   switch (status) {
     case 'Pending':
+    case 'Waiting for Admin Approval':
       return { className: `${base} bg-[#F59E0B]/15 text-[#F59E0B] border-[#F59E0B]/30`, style };
     case 'Accepted':
+    case 'Order Confirmed':
       return { className: `${base} bg-purple-500/15 text-purple-400 border-purple-500/30`, style };
     case 'Out for Delivery':
     case 'Out For Delivery':
@@ -31,6 +33,8 @@ const getOrderStatusBadgeStyle = (status) => {
     case 'Delivered':
       return { className: `${base} bg-[#22C55E]/15 text-[#22C55E] border-[#22C55E]/30`, style };
     case 'Cancelled':
+    case 'Cancelled by Customer':
+    case 'Rejected by Store':
       return { className: `${base} bg-[#EF4444]/15 text-[#EF4444] border-[#EF4444]/30`, style };
     default:
       return { className: `${base} bg-white/10 text-gray-300 border-white/20`, style };
@@ -46,7 +50,7 @@ const getPaymentBadgeStyle = (status) => {
   return { className: `${base} bg-[#F59E0B]/15 text-[#F59E0B] border-[#F59E0B]/30`, style, label: '🟡 Pending' };
 };
 
-const ORDER_STATUSES = ['Pending', 'Accepted', 'Out for Delivery', 'Delivered', 'Cancelled'];
+const ORDER_STATUSES = ['Waiting for Admin Approval', 'Order Confirmed', 'Out for Delivery', 'Delivered', 'Cancelled by Customer', 'Rejected by Store', 'Pending', 'Accepted', 'Cancelled'];
 
 /* ── Order Row ────────────────────────────────────────────────────────────── */
 const OrderRow = ({ order, token, onUpdated }) => {
@@ -70,10 +74,10 @@ const OrderRow = ({ order, token, onUpdated }) => {
       );
       
       let toastMsg = `Order status updated to ${status}.`;
-      if (status === 'Accepted') toastMsg = "Order Accepted Successfully";
+      if (status === 'Order Confirmed' || status === 'Accepted') toastMsg = "Order Accepted Successfully";
       else if (status === 'Out for Delivery') toastMsg = "Order Marked Out for Delivery";
       else if (status === 'Delivered') toastMsg = "Order Delivered Successfully";
-      else if (status === 'Cancelled') toastMsg = "Order Cancelled Successfully";
+      else if (status === 'Cancelled by Customer' || status === 'Cancelled' || status === 'Rejected by Store') toastMsg = "Order Cancelled Successfully";
       
       toast('Success', toastMsg);
       onUpdated();
@@ -227,12 +231,12 @@ const OrderRow = ({ order, token, onUpdated }) => {
         <div className="xl:col-span-2 text-left xl:text-center w-full flex xl:justify-center items-center gap-2">
           <span className="xl:hidden text-[11px] font-bold text-[#94A3B8] uppercase mr-2">Status:</span>
           {(() => {
-            if (order.status === 'Pending') {
+            if (order.status === 'Pending' || order.status === 'Waiting for Admin Approval') {
               return (
                 <div className="flex items-center gap-2">
                   <button
                     disabled={statusUpdating}
-                    onClick={(e) => { e.stopPropagation(); changeStatus('Accepted'); }}
+                    onClick={(e) => { e.stopPropagation(); changeStatus(order.status === 'Pending' ? 'Accepted' : 'Order Confirmed'); }}
                     title="Accept Order"
                     className="p-1.5 text-[#22C55E] hover:bg-[#22C55E]/15 rounded-full transition-all duration-200 border border-[#22C55E]/30 hover:scale-105"
                   >
@@ -240,8 +244,8 @@ const OrderRow = ({ order, token, onUpdated }) => {
                   </button>
                   <button
                     disabled={statusUpdating}
-                    onClick={(e) => { e.stopPropagation(); changeStatus('Cancelled'); }}
-                    title="Cancel Order"
+                    onClick={(e) => { e.stopPropagation(); changeStatus(order.status === 'Pending' ? 'Cancelled' : 'Rejected by Store'); }}
+                    title="Reject Order"
                     className="p-1.5 text-[#EF4444] hover:bg-[#EF4444]/15 rounded-full transition-all duration-200 border border-[#EF4444]/30 hover:scale-105"
                   >
                     <XCircle className="w-5 h-5" />
@@ -249,7 +253,7 @@ const OrderRow = ({ order, token, onUpdated }) => {
                 </div>
               );
             }
-            if (order.status === 'Accepted') {
+            if (order.status === 'Accepted' || order.status === 'Order Confirmed') {
               return (
                 <button
                   disabled={statusUpdating}

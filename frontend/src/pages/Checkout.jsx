@@ -152,6 +152,35 @@ const Checkout = () => {
   const baseDeliveryCharges = settings?.deliveryCharges ?? 40;
   const gstPercentage = settings?.gstPercentage ?? 0;
 
+  const storeStatus = settings?.storeStatus || 'OPEN';
+  const openingTime = settings?.openingTime || '08:00';
+  const closingTime = settings?.closingTime || '21:00';
+
+  const isStoreOpen = () => {
+    if (storeStatus === 'CLOSED') return false;
+    
+    const now = new Date();
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+    const currentTime = `${currentHour.toString().padStart(2, '0')}:${currentMinute.toString().padStart(2, '0')}`;
+    
+    if (openingTime <= closingTime) {
+      return currentTime >= openingTime && currentTime <= closingTime;
+    } else {
+      return currentTime >= openingTime || currentTime <= closingTime;
+    }
+  };
+
+  const storeCurrentlyOpen = isStoreOpen();
+
+  const formatTimeAMPM = (timeStr) => {
+    if (!timeStr) return '';
+    const [h, m] = timeStr.split(':');
+    const d = new Date();
+    d.setHours(h, m);
+    return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  };
+
   const itemTotal = sanitizedItems.reduce((sum, item) => sum + item.total, 0);
   const gstAmount = Math.round((itemTotal * (gstPercentage / 100)) * 100) / 100;
   const deliveryFee = itemTotal >= freeDeliveryThreshold ? 0 : baseDeliveryCharges;
@@ -180,10 +209,11 @@ const Checkout = () => {
     isAddressEntered &&
     isMinOrderSatisfied &&
     isMaxOrderSatisfied &&
-    isTotalGreaterThanZero;
+    isTotalGreaterThanZero &&
+    storeCurrentlyOpen;
 
   const canPlaceOrder = formValid && cartProductsValid;
-  const buttonDisabled = !formValid || !cartProductsValid || orderLoading || isValidatingCart;
+  const buttonDisabled = !formValid || !cartProductsValid || orderLoading || isValidatingCart || !storeCurrentlyOpen;
 
   const total = totalToPay;
   const deliveryAvailable = isDeliveryAvailable;
@@ -687,6 +717,13 @@ const Checkout = () => {
           </div>
 
           {/* ── Place Order Button ─────────────────────────────────────── */}
+          {!storeCurrentlyOpen && (
+            <div className="flex flex-col items-center gap-1 p-3.5 rounded-xl bg-orange-50 border border-orange-200 text-center mb-3">
+              <AlertTriangle className="w-5 h-5 text-orange-500 mb-1" />
+              <p className="text-sm text-orange-800 font-bold">Store is currently closed.</p>
+              <p className="text-xs text-orange-700 font-medium">Ordering hours:<br/>{formatTimeAMPM(openingTime)} – {formatTimeAMPM(closingTime)}.</p>
+            </div>
+          )}
           <button
             id="place-order-btn"
             onClick={handlePlaceOrder}

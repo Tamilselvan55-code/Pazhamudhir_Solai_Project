@@ -112,6 +112,39 @@ router.post('/', protect, checkMaintenanceAndFeature('disableOrderPlacement'), c
     const storeLon = Number(settings.location?.lon ?? settings.lon ?? 80.2270751);
     const radiusKm = Number(settings.deliveryRadiusKm || process.env.DELIVERY_RADIUS_KM || 30);
 
+    const storeStatus = settings.storeStatus || 'OPEN';
+    const openingTime = settings.openingTime || '08:00';
+    const closingTime = settings.closingTime || '21:00';
+    let isStoreOpen = true;
+
+    if (storeStatus === 'CLOSED') {
+      isStoreOpen = false;
+    } else {
+      const now = new Date();
+      const currentHour = now.getHours();
+      const currentMinute = now.getMinutes();
+      const currentTime = `${currentHour.toString().padStart(2, '0')}:${currentMinute.toString().padStart(2, '0')}`;
+      
+      if (openingTime <= closingTime) {
+        isStoreOpen = currentTime >= openingTime && currentTime <= closingTime;
+      } else {
+        isStoreOpen = currentTime >= openingTime || currentTime <= closingTime;
+      }
+    }
+
+    if (!isStoreOpen) {
+      const formatTime = (timeStr) => {
+        if (!timeStr) return '';
+        const [h, m] = timeStr.split(':');
+        const d = new Date(); d.setHours(h, m);
+        return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+      };
+      return res.status(403).json({
+        success: false,
+        message: `Store is currently closed. Ordering hours are from ${formatTime(openingTime)} to ${formatTime(closingTime)}.`
+      });
+    }
+
     if (settings.disableCheckout || settings.disableOrderPlacement) {
       return res.status(403).json({
         success: false,
@@ -288,10 +321,11 @@ router.post('/', protect, checkMaintenanceAndFeature('disableOrderPlacement'), c
           gstAmount,
           paymentMethod: paymentMethod || 'COD',
           paymentStatus: 'Pending',
+          status: 'Waiting for Admin Approval',
           notes,
           couponCode,
           couponDiscount: discount,
-          statusHistory: [{ status: 'Pending', note: 'Order placed by customer', timestamp: new Date().toISOString() }],
+          statusHistory: [{ status: 'Waiting for Admin Approval', note: 'Order placed by customer', timestamp: new Date().toISOString() }],
           orderItems: {
             create: processedItems.map(item => ({
               productId: item.product.toString(),
@@ -510,41 +544,33 @@ router.patch('/:id/cancel', async (req, res) => {
     if (!orderRaw) return res.status(404).json({ success: false, message: 'Order not found' });
     let order = formatMongoCompat(orderRaw);
 
-    const settingsRaw = await prisma.storeSettings.findFirst();
-    const settings = formatMongoCompat(settingsRaw);
-    const timeLimitMinutes = settings?.cancellationTimeLimit ?? 30;
-    const createdAtTime = new Date(order.createdAt).getTime();
-    const currentTime = Date.now();
-    const minutesElapsed = (currentTime - createdAtTime) / (1000 * 60);
-
-    if (minutesElapsed > timeLimitMinutes) {
-      return res.status(400).json({
-        success: false,
-        message: `Order cancellation time limit of ${timeLimitMinutes} minutes has passed. Current elapsed: ${Math.round(minutesElapsed)} minutes.`,
-      });
-    }
-
     const allowedTransitions = {
       Pending: ["Accepted", "Cancelled"],
+      "Waiting for Admin Approval": ["Order Confirmed", "Cancelled by Customer", "Rejected by Store"],
       Accepted: ["Out for Delivery"],
+      "Order Confirmed": ["Out for Delivery"],
       "Out for Delivery": ["Delivered"],
       Delivered: [],
-      Cancelled: []
+      Cancelled: [],
+      "Cancelled by Customer": [],
+      "Rejected by Store": []
     };
 
     const currentStatus = order.status || 'Pending';
     const nextStatuses = allowedTransitions[currentStatus] || [];
 
-    if (!nextStatuses.includes('Cancelled')) {
+    if (!nextStatuses.includes('Cancelled') && !nextStatuses.includes('Cancelled by Customer')) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid status transition'
+        message: 'Order can no longer be cancelled.'
       });
     }
 
+    const newStatus = currentStatus === 'Pending' ? 'Cancelled' : 'Cancelled by Customer';
+
     const updatedHistory = Array.isArray(order.statusHistory) ? [...order.statusHistory] : [];
     updatedHistory.push({
-      status: 'Cancelled',
+      status: newStatus,
       note: "Your order has been cancelled.",
       timestamp: new Date().toISOString()
     });
@@ -552,7 +578,7 @@ router.patch('/:id/cancel', async (req, res) => {
     const updatedOrderRaw = await prisma.order.update({
       where: { id: order.id },
       data: {
-        status: 'Cancelled',
+        status: newStatus,
         statusHistory: updatedHistory
       },
       include: { orderItems: { include: { product: true } } }
@@ -579,8 +605,8 @@ router.patch('/:id/cancel', async (req, res) => {
     }
 
     if (io) {
-      io.emit('order_status_updated', { orderId: order._id, status: 'Cancelled', invoiceNumber: order.invoiceNumber });
-      io.emit('order_update', { orderId: order._id, status: 'Cancelled' });
+      io.emit('order_status_updated', { orderId: order._id, status: newStatus, invoiceNumber: order.invoiceNumber });
+      io.emit('order_update', { orderId: order._id, status: newStatus });
     }
 
     if (order.userId) {

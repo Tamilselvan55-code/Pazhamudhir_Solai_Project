@@ -25,6 +25,9 @@ const Settings = () => {
     email: '',
     supportWhatsApp: '',
     workingHours: '',
+    storeStatus: 'OPEN',
+    openingTime: '08:00',
+    closingTime: '21:00',
     deliveryRadiusKm: Number(import.meta.env.VITE_DELIVERY_RADIUS_KM) || 30,
     currency: '₹',
     gstPercentage: 0,
@@ -474,6 +477,46 @@ const Settings = () => {
                           step="any"
                           value={formData.lon}
                           onChange={(e) => setFormData(prev => ({ ...prev, lon: Number(e.target.value) }))}
+                          className="admin-form-input text-sm font-semibold"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="border-t border-white/8 pt-4">
+                    <h3 className="text-sm font-bold text-white flex items-center gap-2 mb-4">
+                      <SettingsIcon className="w-4 h-4 text-[#22C55E]" /> Store Order Timing Management
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                      <div>
+                        <label className="block text-xs font-bold text-[#94A3B8] uppercase tracking-wider mb-2">Store Status</label>
+                        <select
+                          name="storeStatus"
+                          value={formData.storeStatus}
+                          onChange={handleInputChange}
+                          className="admin-form-input text-sm font-semibold h-11"
+                        >
+                          <option value="OPEN">Open</option>
+                          <option value="CLOSED">Closed</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-[#94A3B8] uppercase tracking-wider mb-2">Opening Time</label>
+                        <input
+                          type="time"
+                          name="openingTime"
+                          value={formData.openingTime}
+                          onChange={handleInputChange}
+                          className="admin-form-input text-sm font-semibold"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-[#94A3B8] uppercase tracking-wider mb-2">Closing Time</label>
+                        <input
+                          type="time"
+                          name="closingTime"
+                          value={formData.closingTime}
+                          onChange={handleInputChange}
                           className="admin-form-input text-sm font-semibold"
                         />
                       </div>

@@ -14,8 +14,12 @@ const API_BASE = config_API_BASE;
 const getStatusBadge = (status) => {
   const colors = {
     Pending: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+    'Waiting for Admin Approval': 'bg-yellow-100 text-yellow-800 border-yellow-200',
     Accepted: 'bg-green-100 text-green-800 border-green-200',
+    'Order Confirmed': 'bg-green-100 text-green-800 border-green-200',
     Cancelled: 'bg-red-100 text-red-800 border-red-200',
+    'Cancelled by Customer': 'bg-red-100 text-red-800 border-red-200',
+    'Rejected by Store': 'bg-red-100 text-red-800 border-red-200',
   };
   return colors[status] || 'bg-gray-100 text-gray-800 border-gray-200';
 };
@@ -70,7 +74,7 @@ const MyOrdersTab = ({ orders, loading, onRefresh, onViewDetails, onDownloadInvo
   };
 
   const handleCancelOrder = async (orderId) => {
-    const ok = await userConfirm('Cancel Order?', 'Are you sure you want to cancel this pending order?', { danger: true, confirmLabel: 'Cancel Order' });
+    const ok = await userConfirm('Cancel Order?', 'Are you sure you want to cancel this order?', { danger: true, confirmLabel: 'Yes, Cancel', cancelLabel: 'No' });
     if (!ok) return;
     try {
       setCancellingId(orderId);
@@ -159,7 +163,7 @@ const MyOrdersTab = ({ orders, loading, onRefresh, onViewDetails, onDownloadInvo
               month: 'short',
               year: 'numeric',
             });
-            const isPending = order.status === 'Pending';
+            const isPending = order.status === 'Pending' || order.status === 'Waiting for Admin Approval';
             const isOutForDelivery = order.status === 'Out for Delivery';
 
             return (

@@ -474,15 +474,19 @@ export const generateInvoicePDF = async (order, userInfo) => {
   const row1Y = endY + 5;
   const rowGap = 4.5;
 
+  const invoiceGst = Number(order.gstAmount || 0);
+  const invoiceDelivery = Number(order.deliveryFee || 0);
+  const invoiceSubtotal = totalPayable - invoiceDelivery - invoiceGst + discount;
+
   doc.text("Subtotal", sumX, row1Y);
-  doc.text(`Rs. ${subtotal.toFixed(2)}`, valX, row1Y, { align: "right" });
+  doc.text(`Rs. ${invoiceSubtotal.toFixed(2)}`, valX, row1Y, { align: "right" });
 
   doc.text("GST", sumX, row1Y + rowGap);
-  doc.text("Rs. 0.00", valX, row1Y + rowGap, { align: "right" });
+  doc.text(`Rs. ${invoiceGst.toFixed(2)}`, valX, row1Y + rowGap, { align: "right" });
 
   doc.setTextColor(...brandGreen);
   doc.text("Delivery", sumX, row1Y + rowGap * 2);
-  doc.text("Rs. 0.00", valX, row1Y + rowGap * 2, { align: "right" });
+  doc.text(invoiceDelivery === 0 ? "FREE" : `Rs. ${invoiceDelivery.toFixed(2)}`, valX, row1Y + rowGap * 2, { align: "right" });
 
   doc.setTextColor(220, 38, 38);
   doc.text("Discount", sumX, row1Y + rowGap * 3);
