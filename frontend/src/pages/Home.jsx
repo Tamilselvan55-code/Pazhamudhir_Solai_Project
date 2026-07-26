@@ -110,7 +110,7 @@ const ProductSection = ({ categoryObj, products, onSeeAll }) => {
           See all <ChevronRight className="w-3 h-3" />
         </button>
       </div>
-      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-2 md:gap-3 items-start sm:items-stretch">
+      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-2 md:gap-3">
         {products.map(p => <ProductCard key={p._id} product={p} />)}
       </div>
     </section>
@@ -391,7 +391,7 @@ const Home = () => {
                   <p className="text-sm">Try searching in English or Thanglish</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-2 md:gap-3 items-start sm:items-stretch">
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-2 md:gap-3">
                   {filtered.map(p => <ProductCard key={p._id} product={p} />)}
                 </div>
               )}
@@ -407,7 +407,7 @@ const Home = () => {
                 </h2>
                 <p className="text-white/80 text-xs">{BASE_SECTION_META[activeCategory]?.tamTitle}</p>
               </div>
-              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-2 md:gap-3 items-start sm:items-stretch">
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-2 md:gap-3">
                 {filtered.map(p => <ProductCard key={p._id} product={p} />)}
               </div>
             </div>
@@ -444,7 +444,7 @@ const Home = () => {
                     <p className="text-xs text-gray-500">இன்றைய பிரபல பொருட்கள்</p>
                   </div>
                 </div>
-              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-2 md:gap-3 items-start sm:items-stretch">
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-2 md:gap-3">
                   {trending.map(p => <ProductCard key={`tr-${p._id}`} product={p} />)}
                 </div>
               </section>
@@ -457,7 +457,7 @@ const Home = () => {
                     <p className="text-white/80 text-xs">அதிகம் விற்கப்படுகின்றன</p>
                   </div>
                 </div>
-                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-2 md:gap-3 items-start sm:items-stretch">
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-2 md:gap-3">
                   {bestSellers.map(p => <ProductCard key={`bs-${p._id}`} product={p} />)}
                 </div>
               </section>
