@@ -720,8 +720,17 @@ const Checkout = () => {
           {!storeCurrentlyOpen && (
             <div className="flex flex-col items-center gap-1 p-3.5 rounded-xl bg-orange-50 border border-orange-200 text-center mb-3">
               <AlertTriangle className="w-5 h-5 text-orange-500 mb-1" />
-              <p className="text-sm text-orange-800 font-bold">Store is currently closed.</p>
-              <p className="text-xs text-orange-700 font-medium">Ordering hours:<br/>{formatTimeAMPM(openingTime)} – {formatTimeAMPM(closingTime)}.</p>
+              {storeStatus === 'CLOSED' ? (
+                <>
+                  <p className="text-sm text-orange-800 font-bold">🏪 Store is temporarily closed.</p>
+                  <p className="text-xs text-orange-700 font-medium">We'll be back in service soon.<br/>Thank you for your patience.</p>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm text-orange-800 font-bold">🕒 Store is currently closed.</p>
+                  <p className="text-xs text-orange-700 font-medium">Ordering Hours<br/>{formatTimeAMPM(openingTime)} – {formatTimeAMPM(closingTime)}<br/>Please place your order during store hours.</p>
+                </>
+              )}
             </div>
           )}
           <button

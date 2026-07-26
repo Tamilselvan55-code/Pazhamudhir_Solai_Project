@@ -20,7 +20,13 @@ const emojiMap = {
   'oils': '🛢️',
   'others': '🧂',
   'chocolate': '🍫',
-  'masalas': '🌶️'
+  'masalas': '🌶️',
+  'rice': '🍚',
+  'flour': '🌾',
+  'coffee-tea': '☕',
+  'coffee': '☕',
+  'tea': '☕',
+  'beverages': '🥤'
 };
 
 const colorMap = [
@@ -403,7 +409,7 @@ const Home = () => {
             <div className="mb-8">
               <div className={`${BASE_SECTION_META[activeCategory]?.banner || 'bg-green-600'} rounded-2xl px-4 py-3 mb-4 shadow-sm`}>
                 <h2 className="text-white font-extrabold text-base">
-                  {BASE_SECTION_META[activeCategory]?.emoji || '📦'} {BASE_SECTION_META[activeCategory]?.title || activeCategory}
+                  {BASE_SECTION_META[activeCategory]?.emoji || emojiMap[activeCategory] || '📦'} {BASE_SECTION_META[activeCategory]?.title || activeCategory}
                 </h2>
                 <p className="text-white/80 text-xs">{BASE_SECTION_META[activeCategory]?.tamTitle}</p>
               </div>
