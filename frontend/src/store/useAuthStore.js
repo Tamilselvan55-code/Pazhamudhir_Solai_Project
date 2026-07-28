@@ -109,6 +109,8 @@ const useAuthStore = create(
       },
       adminLogout: () => set({ adminInfo: null, error: null }),
 
+      setUserInfo: (user) => set({ userInfo: user }),
+
       clearError: () => set({ error: null }),
     }),
     { name: 'auth-storage', partialize: (state) => ({ userInfo: state.userInfo, adminInfo: state.adminInfo }) }

@@ -13,6 +13,7 @@ import useModal from '../../hooks/useModal';
 import { formatCurrency } from '../../utils/currency';
 import { generateInvoicePDF } from '../../utils/pdfGenerator';
 import { formatDisplayAddress } from '../../utils/addressFormatter';
+import AssignDeliveryModal from '../../components/Admin/AssignDeliveryModal';
 
 const API_BASE = `${config_API_BASE}/admin`;
 
@@ -257,12 +258,48 @@ const OrderRow = ({ order, token, onUpdated }) => {
               return (
                 <button
                   disabled={statusUpdating}
-                  onClick={(e) => { e.stopPropagation(); changeStatus('Out for Delivery'); }}
-                  title="Mark as Out for Delivery"
-                  className="p-1.5 text-[#3B82F6] hover:bg-[#3B82F6]/15 rounded-full transition-all duration-200 border border-[#3B82F6]/30 hover:scale-105"
+                  onClick={(e) => { e.stopPropagation(); changeStatus('Packing'); }}
+                  title="Mark as Packing"
+                  className="p-1.5 text-purple-400 hover:bg-purple-500/15 rounded-full transition-all duration-200 border border-purple-500/30 hover:scale-105"
                 >
-                  <Truck className="w-5 h-5" />
+                  <Package className="w-5 h-5" />
                 </button>
+              );
+            }
+            if (order.status === 'Packing') {
+              return (
+                <button
+                  disabled={statusUpdating}
+                  onClick={(e) => { e.stopPropagation(); changeStatus('Packed'); }}
+                  title="Mark as Packed"
+                  className="p-1.5 text-indigo-400 hover:bg-indigo-500/15 rounded-full transition-all duration-200 border border-indigo-500/30 hover:scale-105"
+                >
+                  <CheckCircle className="w-5 h-5" />
+                </button>
+              );
+            }
+            if (order.status === 'Packed') {
+              return (
+                <div className="flex items-center gap-2">
+                  <button
+                    disabled={statusUpdating || order.deliveryPartnerId}
+                    onClick={(e) => { e.stopPropagation(); window.dispatchEvent(new CustomEvent('openAssignModal', { detail: order })); }}
+                    title={order.deliveryPartnerId ? "Delivery Partner Assigned" : "Assign Delivery Partner"}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all border ${order.deliveryPartnerId ? 'bg-gray-700 text-gray-400 border-gray-600' : 'bg-[#3B82F6]/15 text-[#3B82F6] border-[#3B82F6]/30 hover:bg-[#3B82F6]/30'}`}
+                  >
+                    {order.deliveryPartnerId ? 'Assigned' : 'Assign Partner'}
+                  </button>
+                  {order.deliveryPartnerId && !order.pickedUpAt && (
+                    <button
+                      disabled={statusUpdating}
+                      onClick={(e) => { e.stopPropagation(); window.dispatchEvent(new CustomEvent('openAssignModal', { detail: order })); }}
+                      title="Reassign Delivery Partner"
+                      className="p-1.5 text-[#F59E0B] hover:bg-[#F59E0B]/15 rounded-full transition-all duration-200 border border-[#F59E0B]/30 hover:scale-105"
+                    >
+                      <RefreshCw className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
               );
             }
             if (order.status === 'Out for Delivery' || order.status === 'Out For Delivery') {
@@ -375,6 +412,51 @@ const OrderRow = ({ order, token, onUpdated }) => {
                 <span>Total</span><span className="text-[#22C55E]">{formatCurrency(order.totalPrice || 0)}</span>
               </div>
             </div>
+
+            {/* Delivery Tracking Details (Phase 2) */}
+            {order.deliveryPartnerId && (
+              <div className="bg-white/4 rounded-xl border border-white/8 p-4 space-y-1.5 md:col-span-3 lg:col-span-1">
+                <p className="text-[11px] font-bold text-[#3B82F6] uppercase tracking-wide flex items-center gap-1.5">
+                  <Truck className="w-3.5 h-3.5 text-[#3B82F6]" /> Delivery Assignment
+                </p>
+                <div className="space-y-2 mt-2">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-gray-400">Assigned To:</span>
+                    <span className="text-white font-bold">{order.deliveryPartner?.name || 'Assigned'}</span>
+                  </div>
+                  {order.deliveryAssignedAt && (
+                    <div className="flex justify-between text-xs">
+                      <span className="text-gray-400">Assigned Time:</span>
+                      <span className="text-white">{new Date(order.deliveryAssignedAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</span>
+                    </div>
+                  )}
+                  {order.deliveryAcceptedAt && (
+                    <div className="flex justify-between text-xs">
+                      <span className="text-gray-400">Accepted Time:</span>
+                      <span className="text-white">{new Date(order.deliveryAcceptedAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</span>
+                    </div>
+                  )}
+                  {order.pickedUpAt && (
+                    <div className="flex justify-between text-xs">
+                      <span className="text-gray-400">Picked Up Time:</span>
+                      <span className="text-white">{new Date(order.pickedUpAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</span>
+                    </div>
+                  )}
+                  {order.outForDeliveryAt && (
+                    <div className="flex justify-between text-xs">
+                      <span className="text-gray-400">Out For Delivery:</span>
+                      <span className="text-white">{new Date(order.outForDeliveryAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</span>
+                    </div>
+                  )}
+                  {order.deliveredAt && (
+                    <div className="flex justify-between text-xs">
+                      <span className="text-gray-400">Delivered Time:</span>
+                      <span className="text-white">{new Date(order.deliveredAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* ── Action Buttons ──────────────────────────────────────────────── */}
@@ -460,6 +542,7 @@ const Orders = () => {
   const [searchQuery,   setSearchQuery]   = useState(() => new URLSearchParams(window.location.search).get('search') || '');
   const [statusFilter,  setStatusFilter]  = useState('');
   const [payFilter,     setPayFilter]     = useState('');
+  const [assignModalOrder, setAssignModalOrder] = useState(null);
 
   useEffect(() => {
     const q = new URLSearchParams(location.search).get('search');
@@ -501,8 +584,15 @@ const Orders = () => {
   useEffect(() => {
     fetchOrders();
     const handlePaymentUpdate = () => fetchOrders();
+    const handleAssignModal = (e) => setAssignModalOrder(e.detail);
+    
     window.addEventListener('socket_payment_update', handlePaymentUpdate);
-    return () => window.removeEventListener('socket_payment_update', handlePaymentUpdate);
+    window.addEventListener('openAssignModal', handleAssignModal);
+    
+    return () => {
+      window.removeEventListener('socket_payment_update', handlePaymentUpdate);
+      window.removeEventListener('openAssignModal', handleAssignModal);
+    };
   }, [fetchOrders]);
 
   /* ── Summary stats ──────────────────────────────────────────────────────── */
@@ -740,6 +830,18 @@ const Orders = () => {
           </div>
         </div>
       </div>
+      
+      {assignModalOrder && (
+        <AssignDeliveryModal
+          order={assignModalOrder}
+          token={adminInfo.token}
+          onClose={() => setAssignModalOrder(null)}
+          onAssignSuccess={() => {
+            setAssignModalOrder(null);
+            fetchOrders();
+          }}
+        />
+      )}
     </AdminLayout>
   );
 };

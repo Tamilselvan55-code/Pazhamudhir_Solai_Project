@@ -7,7 +7,8 @@ import useAuthStore from '../../store/useAuthStore';
 const API_BASE = config_API_BASE;
 
 const ProfileDetailsTab = () => {
-  const { userInfo, setCredentials } = useAuthStore();
+  const userInfo = useAuthStore((state) => state.userInfo);
+  const setUserInfo = useAuthStore((state) => state.setUserInfo);
   const [formData, setFormData] = useState({
     fullName: userInfo?.fullName || userInfo?.name || '',
     phoneNumber: userInfo?.phoneNumber || '',
@@ -27,7 +28,18 @@ const ProfileDetailsTab = () => {
     try {
       setLoading(true);
       const { data } = await axios.put(`${API_BASE}/auth/profile`, formData, { headers });
-      setCredentials(data);
+
+      const updatedUser = {
+        ...(userInfo || {}),
+        ...data,
+        fullName: data.fullName || data.name || formData.fullName,
+        name: data.fullName || data.name || formData.fullName,
+        phoneNumber: data.phoneNumber || formData.phoneNumber,
+        email: data.email || formData.email,
+        token: data.token || userInfo?.token,
+      };
+
+      setUserInfo(updatedUser);
       setSuccessMsg('Profile updated successfully!');
     } catch (err) {
       setErrorMsg(err.response?.data?.message || 'Failed to update profile.');
