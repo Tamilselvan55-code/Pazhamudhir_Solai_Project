@@ -1,7 +1,7 @@
 import { API_BASE } from '../../config/api';
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
-import { Truck, Plus, Search, Edit2, Shield, User, Loader2, FileText, CheckCircle, XCircle } from 'lucide-react';
+import { Truck, Plus, Search, Edit2, Shield, User, Loader2, FileText, CheckCircle, XCircle, ArrowDownToLine } from 'lucide-react';
 import AdminLayout from '../../components/Admin/AdminLayout';
 import DocumentReviewModal from '../../components/Admin/DocumentReviewModal';
 import useAuthStore from '../../store/useAuthStore';
@@ -161,136 +161,137 @@ const DeliveryPartners = () => {
     <AdminLayout>
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <Truck className="w-7 h-7 text-green-600" />
+          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+            <Truck className="w-7 h-7 text-[#22C55E]" />
             Delivery Partners
           </h1>
-          <p className="text-sm text-gray-500 mt-1">Manage delivery personnel</p>
+          <p className="text-sm text-[#94A3B8] mt-1">Manage delivery personnel</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-3">
           <button
             onClick={exportCSV}
-            className="flex items-center gap-2 bg-gray-100 text-gray-700 px-4 py-2 rounded-xl hover:bg-gray-200 transition-colors border border-gray-200 font-medium text-sm"
+            className="admin-btn-secondary px-4 py-2 flex items-center gap-2 text-sm"
           >
-            Export CSV
+            <ArrowDownToLine className="w-4 h-4" /> Export CSV
           </button>
           <button
             onClick={() => handleOpenModal()}
-            className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-xl hover:bg-green-700 transition-colors"
+            className="admin-btn-primary px-4 py-2 flex items-center gap-2 text-sm"
           >
-            <Plus className="w-4 h-4" />
-            Add Partner
+            <Plus className="w-4 h-4" /> Add Partner
           </button>
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-6">
-        <div className="p-4 border-b border-gray-100 flex items-center justify-between gap-4 bg-gray-50/50 rounded-t-xl flex-wrap">
+      <div className="admin-table-container mb-6">
+        <div className="p-5 admin-table-header flex flex-wrap items-center justify-between gap-4">
           <div className="relative flex-1 min-w-[250px] max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
             <input
               type="text"
               placeholder="Search by name, email or mobile..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all bg-white"
+              className="admin-search-bar w-full"
             />
           </div>
           <div className="flex items-center gap-2">
-            <label className="text-sm text-gray-500 font-medium">Status:</label>
+            <label className="text-xs font-bold text-[#94A3B8] uppercase tracking-wide">Status:</label>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
+              className="admin-search-bar h-10 px-3 bg-white/4 border border-white/8 text-white focus:border-[#22C55E]"
             >
-              <option value="All">All Partners</option>
-              <option value="Available">Available</option>
-              <option value="On Delivery">On Delivery</option>
-              <option value="Offline">Offline</option>
-              <option value="Inactive">Inactive</option>
+              <option value="All" className="text-gray-900">All Partners</option>
+              <option value="Available" className="text-gray-900">Available</option>
+              <option value="On Delivery" className="text-gray-900">On Delivery</option>
+              <option value="Offline" className="text-gray-900">Offline</option>
+              <option value="Inactive" className="text-gray-900">Inactive</option>
             </select>
           </div>
         </div>
 
         {loading ? (
-          <div className="p-8 text-center flex flex-col items-center">
-            <Loader2 className="w-8 h-8 text-green-500 animate-spin mb-4" />
-            <p className="text-gray-500 text-sm font-medium">Loading delivery partners...</p>
+          <div className="p-12 text-center flex flex-col items-center">
+            <Loader2 className="w-8 h-8 text-[#22C55E] animate-spin mb-4" />
+            <p className="text-[#94A3B8] text-sm font-bold uppercase tracking-widest">Loading delivery partners...</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-gray-50 border-b border-gray-100">
-                  <th className="py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider w-1/4">Name / Contact</th>
-                  <th className="py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Vehicle Number</th>
-                  <th className="py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Actions</th>
+                <tr className="border-b border-white/8 text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider bg-white/4">
+                  <th className="py-4 px-6 w-1/4">Name / Contact</th>
+                  <th className="py-4 px-6">Vehicle Number</th>
+                  <th className="py-4 px-6">Status</th>
+                  <th className="py-4 px-6 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="text-xs text-white">
                 {filteredPartners.length === 0 ? (
                   <tr>
-                    <td colSpan="4" className="py-8 text-center text-gray-500 text-sm">
+                    <td colSpan="4" className="py-8 text-center text-[#94A3B8] font-medium">
                       No delivery partners found.
                     </td>
                   </tr>
                 ) : (
                   filteredPartners.map(partner => (
-                    <tr key={partner.id} className="hover:bg-gray-50 transition-colors">
+                    <tr key={partner.id} className="admin-table-row group">
                       <td className="py-4 px-6">
-                        <div className="flex items-center">
-                          <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-bold shrink-0">
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-[12px] bg-[#F59E0B]/20 border border-[#F59E0B]/30 flex items-center justify-center text-[#F59E0B] font-black shrink-0 shadow-sm transition-transform group-hover:scale-110">
                             {partner.name.charAt(0).toUpperCase()}
                           </div>
-                          <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">{partner.name} <span className="text-xs text-gray-500 font-normal">({partner.employeeId})</span></div>
-                            <div className="text-xs text-gray-500">{partner.mobile}</div>
-                            <div className="text-xs text-gray-500">{partner.email}</div>
+                          <div>
+                            <div className="text-sm font-bold text-white group-hover:text-[#22C55E] transition-colors">
+                              {partner.name} <span className="text-[10px] text-[#94A3B8] font-normal">({partner.employeeId})</span>
+                            </div>
+                            <div className="text-[11px] text-[#94A3B8] mt-0.5">{partner.mobile}</div>
+                            <div className="text-[11px] text-[#94A3B8]">{partner.email}</div>
                           </div>
                         </div>
                       </td>
-                      <td className="py-4 px-6 text-sm text-gray-700">
+                      <td className="py-4 px-6 text-[11px] font-mono text-[#94A3B8]">
                         {partner.vehicleNumber || '-'}
                       </td>
                       <td className="py-4 px-6">
-                        <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          !partner.isActive || partner.status === 'Inactive' ? 'bg-red-100 text-red-800' :
-                          partner.status === 'Available' ? 'bg-green-100 text-green-800' :
-                          partner.status === 'On Delivery' ? 'bg-blue-100 text-blue-800' :
-                          'bg-gray-100 text-gray-800'
+                        <span className={`px-2.5 py-1 inline-flex text-[10px] font-bold rounded-full ${
+                          !partner.isActive || partner.status === 'Inactive' ? 'bg-[#EF4444]/20 text-[#EF4444] border border-[#EF4444]/30' :
+                          partner.status === 'Available' ? 'bg-[#22C55E]/20 text-[#22C55E] border border-[#22C55E]/30' :
+                          partner.status === 'On Delivery' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' :
+                          'bg-white/10 text-white border border-white/20'
                         }`}>
                           {!partner.isActive ? 'Inactive' : partner.status}
                         </span>
                         {partner.documents?.status === 'Pending' && (
-                          <span className="ml-2 px-2 py-0.5 inline-flex text-[10px] leading-5 font-bold rounded-full bg-amber-100 text-amber-800">
+                          <span className="ml-2 px-2 py-0.5 inline-flex text-[9px] font-bold rounded-full bg-[#F59E0B]/20 text-[#F59E0B] border border-[#F59E0B]/30 uppercase tracking-wider">
                             Docs Pending
                           </span>
                         )}
                         {!partner.isVerified && partner.documents?.status !== 'Pending' && (
-                          <span className="ml-2 px-2 py-0.5 inline-flex text-[10px] leading-5 font-bold rounded-full bg-red-100 text-red-800">
+                          <span className="ml-2 px-2 py-0.5 inline-flex text-[9px] font-bold rounded-full bg-[#EF4444]/20 text-[#EF4444] border border-[#EF4444]/30 uppercase tracking-wider">
                             Unverified
                           </span>
                         )}
                       </td>
-                      <td className="py-4 px-6 text-right space-x-3">
+                      <td className="py-4 px-6 text-right space-x-2">
                         <button
                           onClick={() => { setSelectedPartner(partner); setReviewModalOpen(true); }}
-                          className="text-indigo-600 hover:text-indigo-900 transition-colors p-1 rounded-md hover:bg-indigo-50"
+                          className="text-[#94A3B8] hover:text-white transition-colors p-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/5"
                           title="Review Documents"
                         >
                           <FileText className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleOpenModal(partner)}
-                          className="text-blue-600 hover:text-blue-900 transition-colors p-1 rounded-md hover:bg-blue-50"
+                          className="text-[#94A3B8] hover:text-[#22C55E] transition-colors p-2 rounded-lg bg-white/5 hover:bg-[#22C55E]/10 border border-white/5 hover:border-[#22C55E]/20"
                           title="Edit Partner"
                         >
                           <Edit2 className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => { setSelectedPartner(partner); setResetModalOpen(true); }}
-                          className="text-orange-600 hover:text-orange-900 transition-colors p-1 rounded-md hover:bg-orange-50"
+                          className="text-[#94A3B8] hover:text-[#EF4444] transition-colors p-2 rounded-lg bg-white/5 hover:bg-[#EF4444]/10 border border-white/5 hover:border-[#EF4444]/20"
                           title="Reset Password"
                         >
                           <Shield className="w-4 h-4" />
@@ -327,7 +328,7 @@ const DeliveryPartners = () => {
                     required
                     value={formData.name}
                     onChange={(e) => setFormData({...formData, name: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all text-gray-900"
                   />
                 </div>
                 <div>
@@ -337,7 +338,7 @@ const DeliveryPartners = () => {
                     required
                     value={formData.mobile}
                     onChange={(e) => setFormData({...formData, mobile: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all text-gray-900"
                   />
                 </div>
                 <div>
@@ -347,7 +348,7 @@ const DeliveryPartners = () => {
                     required
                     value={formData.email}
                     onChange={(e) => setFormData({...formData, email: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all text-gray-900"
                   />
                 </div>
                 <div className="col-span-2 sm:col-span-1">
@@ -356,7 +357,7 @@ const DeliveryPartners = () => {
                     type="text"
                     value={formData.vehicleNumber}
                     onChange={(e) => setFormData({...formData, vehicleNumber: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all text-gray-900"
                   />
                 </div>
                 <div className="col-span-2 sm:col-span-1">
@@ -364,7 +365,7 @@ const DeliveryPartners = () => {
                   <select
                     value={formData.vehicleType}
                     onChange={(e) => setFormData({...formData, vehicleType: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all bg-white"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all bg-white text-gray-900"
                   >
                     <option value="Two Wheeler">Two Wheeler</option>
                     <option value="Three Wheeler">Three Wheeler</option>
@@ -379,7 +380,7 @@ const DeliveryPartners = () => {
                     value={formData.emergencyContact}
                     onChange={(e) => setFormData({...formData, emergencyContact: e.target.value})}
                     placeholder="+91"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all text-gray-900"
                   />
                 </div>
                 {selectedPartner && (
@@ -388,7 +389,7 @@ const DeliveryPartners = () => {
                     <select
                       value={formData.status}
                       onChange={(e) => setFormData({...formData, status: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all bg-white"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all bg-white text-gray-900"
                     >
                       <option value="Available">Available</option>
                       <option value="On Delivery">On Delivery</option>

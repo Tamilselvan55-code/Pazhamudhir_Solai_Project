@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
-import { DollarSign, Search, CheckCircle, Clock, FileText, Download } from 'lucide-react';
+import { DollarSign, Search, CheckCircle, Clock, FileText, Download, ArrowDownToLine, Users } from 'lucide-react';
 import AdminLayout from '../../components/Admin/AdminLayout';
 import useAuthStore from '../../store/useAuthStore';
 import axios from 'axios';
 import { API_BASE } from '../../config/api';
+import { StatCard } from '../../components/Admin/DashboardShared';
 
 const DeliveryEarnings = () => {
   const { adminInfo } = useAuthStore();
@@ -79,61 +80,37 @@ const DeliveryEarnings = () => {
     <AdminLayout>
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <DollarSign className="w-7 h-7 text-green-600" />
+          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+            <DollarSign className="w-7 h-7 text-[#22C55E]" />
             Delivery Earnings Management
           </h1>
-          <p className="text-sm text-gray-500 mt-1">Manage and settle earnings for your delivery fleet.</p>
+          <p className="text-sm text-[#94A3B8] mt-1">Manage and settle earnings for your delivery fleet.</p>
         </div>
 
-        <button onClick={exportCSV} className="flex items-center gap-1.5 bg-white px-4 py-2 rounded-xl border border-gray-200 text-xs font-bold text-gray-700 hover:bg-gray-50 shadow-xs">
-          <Download className="w-4 h-4 text-gray-500" /> Export CSV
+        <button onClick={exportCSV} className="admin-btn-secondary px-4 py-2 flex items-center gap-2 text-sm">
+          <ArrowDownToLine className="w-4 h-4" /> Export CSV
         </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div className="bg-white p-5 rounded-2xl shadow-xs border border-gray-100 flex items-center gap-4">
-          <div className="w-12 h-12 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center shrink-0">
-            <Clock className="w-6 h-6" />
-          </div>
-          <div>
-            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Total Pending</p>
-            <p className="text-2xl font-black text-gray-900 mt-0.5">₹{totalPending}</p>
-          </div>
-        </div>
-        <div className="bg-white p-5 rounded-2xl shadow-xs border border-gray-100 flex items-center gap-4">
-          <div className="w-12 h-12 bg-green-100 text-green-600 rounded-xl flex items-center justify-center shrink-0">
-            <CheckCircle className="w-6 h-6" />
-          </div>
-          <div>
-            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Total Paid</p>
-            <p className="text-2xl font-black text-gray-900 mt-0.5">₹{totalPaid}</p>
-          </div>
-        </div>
-        <div className="bg-white p-5 rounded-2xl shadow-xs border border-gray-100 flex items-center gap-4">
-          <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center shrink-0">
-            <FileText className="w-6 h-6" />
-          </div>
-          <div>
-            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Active Partners</p>
-            <p className="text-2xl font-black text-gray-900 mt-0.5">{earnings.length}</p>
-          </div>
-        </div>
+        <StatCard title="Total Pending" value={`₹${totalPending}`} icon={Clock} iconColor="text-[#F59E0B]" gradientBg="bg-[#F59E0B]" />
+        <StatCard title="Total Paid" value={`₹${totalPaid}`} icon={CheckCircle} iconColor="text-[#22C55E]" gradientBg="bg-[#22C55E]" />
+        <StatCard title="Active Partners" value={earnings.length} icon={Users} iconColor="text-blue-500" gradientBg="bg-blue-500" />
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-xs overflow-hidden">
-        <div className="p-4 border-b border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4 bg-gray-50/50">
-          <h2 className="font-bold text-gray-800 flex items-center gap-2">
-            Partner Settlements
+      <div className="admin-table-container mb-6">
+        <div className="p-5 admin-table-header flex flex-col sm:flex-row items-center justify-between gap-4">
+          <h2 className="text-xs font-bold text-[#94A3B8] uppercase tracking-wide flex items-center gap-2">
+            <FileText className="w-4 h-4 text-[#22C55E]" /> Partner Settlements
           </h2>
           <div className="relative w-full sm:w-64">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
             <input
               type="text"
               placeholder="Search partner or ID..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-green-500 bg-white"
+              className="admin-search-bar w-full"
             />
           </div>
         </div>
@@ -141,7 +118,7 @@ const DeliveryEarnings = () => {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-white border-b border-gray-100 text-[11px] font-extrabold text-gray-500 uppercase tracking-wider">
+              <tr className="border-b border-white/8 text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider bg-white/4">
                 <th className="py-4 px-6">Delivery Partner</th>
                 <th className="py-4 px-6 text-center">Completed Deliveries</th>
                 <th className="py-4 px-6 text-right">Lifetime Earned</th>
@@ -150,31 +127,35 @@ const DeliveryEarnings = () => {
                 <th className="py-4 px-6 text-center">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100 text-sm font-medium text-gray-800">
+            <tbody className="text-xs text-white">
               {loading ? (
                 <tr>
-                  <td colSpan="6" className="py-12 text-center text-gray-500">Loading...</td>
+                  <td colSpan="6" className="py-12 text-center text-[#94A3B8]">Loading...</td>
                 </tr>
               ) : filteredEarnings.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="py-12 text-center text-gray-400">No earnings data found.</td>
+                  <td colSpan="6" className="py-12 text-center text-[#94A3B8]">No earnings data found.</td>
                 </tr>
               ) : (
                 filteredEarnings.map(partner => (
-                  <tr key={partner.id} className="hover:bg-gray-50 transition-colors">
+                  <tr key={partner.id} className="admin-table-row group">
                     <td className="py-4 px-6">
-                      <p className="font-bold text-gray-900">{partner.name}</p>
-                      <p className="text-xs text-gray-500">{partner.employeeId} &middot; {partner.mobile}</p>
+                      <p className="font-bold text-white group-hover:text-[#22C55E] transition-colors">{partner.name}</p>
+                      <p className="text-[11px] text-[#94A3B8] mt-0.5">{partner.employeeId} &middot; {partner.mobile}</p>
                     </td>
-                    <td className="py-4 px-6 text-center">{partner.completedDeliveries}</td>
-                    <td className="py-4 px-6 text-right">₹{partner.totalLifetimeEarnings}</td>
-                    <td className="py-4 px-6 text-right text-green-600 font-bold">₹{partner.paidAmount}</td>
-                    <td className="py-4 px-6 text-right text-amber-600 font-bold">₹{partner.pendingAmount}</td>
+                    <td className="py-4 px-6 text-center text-[#94A3B8] font-bold">{partner.completedDeliveries}</td>
+                    <td className="py-4 px-6 text-right font-mono text-white">₹{partner.totalLifetimeEarnings}</td>
+                    <td className="py-4 px-6 text-right font-mono text-[#22C55E] font-bold">₹{partner.paidAmount}</td>
+                    <td className="py-4 px-6 text-right font-mono text-[#F59E0B] font-bold">₹{partner.pendingAmount}</td>
                     <td className="py-4 px-6 text-center">
                       <button
                         onClick={() => handleSettle(partner.id)}
                         disabled={partner.pendingAmount === 0 || settleLoading === partner.id}
-                        className="px-4 py-2 rounded-xl text-xs font-bold transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5 w-full max-w-[120px] mx-auto bg-green-600 hover:bg-green-700 text-white"
+                        className={`px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5 w-full max-w-[120px] mx-auto ${
+                          partner.pendingAmount === 0 
+                            ? 'bg-white/5 text-[#94A3B8] border border-white/10' 
+                            : 'bg-[#22C55E]/10 text-[#22C55E] border border-[#22C55E]/30 hover:bg-[#22C55E]/20'
+                        }`}
                       >
                         {settleLoading === partner.id ? 'Processing...' : 'Pay Now'}
                       </button>
