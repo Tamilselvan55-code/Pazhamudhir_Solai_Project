@@ -75,7 +75,7 @@ router.get('/orders/:id', async (req, res) => {
 router.patch('/orders/:id/status', async (req, res) => {
   try {
     const { status } = req.body;
-    const allowed = ['Pending', 'Waiting for Admin Approval', 'Accepted', 'Order Confirmed', 'Out for Delivery', 'Delivered', 'Cancelled', 'Cancelled by Customer', 'Rejected by Store'];
+    const allowed = ['Pending', 'Waiting for Admin Approval', 'Accepted', 'Order Confirmed', 'Packing', 'Packed', 'Out for Delivery', 'Delivered', 'Cancelled', 'Cancelled by Customer', 'Rejected by Store'];
     if (!allowed.includes(status)) {
       return res.status(400).json({ success: false, message: 'Invalid status value.' });
     }
@@ -89,8 +89,10 @@ router.patch('/orders/:id/status', async (req, res) => {
     const allowedTransitions = {
       Pending: ["Accepted", "Cancelled", "Order Confirmed", "Rejected by Store"],
       "Waiting for Admin Approval": ["Order Confirmed", "Cancelled by Customer", "Rejected by Store"],
-      Accepted: ["Out for Delivery"],
-      "Order Confirmed": ["Out for Delivery"],
+      Accepted: ["Packing", "Out for Delivery"],
+      "Order Confirmed": ["Packing", "Out for Delivery"],
+      Packing: ["Packed"],
+      Packed: ["Out for Delivery"],
       "Out for Delivery": ["Delivered"],
       Delivered: [],
       Cancelled: [],
@@ -110,6 +112,8 @@ router.patch('/orders/:id/status', async (req, res) => {
 
     let noteText = `Status changed to ${status} by admin`;
     if (status === 'Accepted') noteText = "Your order has been accepted.";
+    else if (status === 'Packing') noteText = "Your order is currently being packed.";
+    else if (status === 'Packed') noteText = "Your order has been packed and is ready for delivery.";
     else if (status === 'Out for Delivery') noteText = "Your order is out for delivery and will arrive shortly.";
     else if (status === 'Delivered') noteText = "Your order has been delivered successfully.";
     else if (status === 'Cancelled') noteText = "Your order has been cancelled.";
@@ -202,3 +206,100 @@ router.patch('/orders/:id/status', async (req, res) => {
 });
 
 export default router;
+
+// ─── Delivery Partner Assignment Endpoints ─────────────────────────────────
+
+router.post('/orders/:id/assign-delivery', async (req, res) => {
+  try {
+    const { deliveryPartnerId } = req.body;
+    if (!deliveryPartnerId) {
+      return res.status(400).json({ message: 'deliveryPartnerId is required' });
+    }
+
+    const orderRaw = await prisma.order.findUnique({ where: { id: req.params.id } });
+    if (!orderRaw) return res.status(404).json({ message: 'Order not found' });
+
+    if (orderRaw.status !== 'Packed') {
+      return res.status(400).json({ message: 'Order must be Packed before assigning a delivery partner' });
+    }
+
+    if (orderRaw.deliveryPartnerId) {
+      return res.status(400).json({ message: 'Order already has a delivery partner assigned' });
+    }
+
+    const partner = await prisma.deliveryPartner.findUnique({ where: { id: deliveryPartnerId } });
+    if (!partner || partner.status !== 'Available') {
+      return res.status(400).json({ message: 'Selected delivery partner is not Available' });
+    }
+
+    // Update partner status and assign to order
+    await prisma.$transaction([
+      prisma.deliveryPartner.update({
+        where: { id: deliveryPartnerId },
+        data: { status: 'On Delivery' }
+      }),
+      prisma.order.update({
+        where: { id: req.params.id },
+        data: {
+          deliveryPartnerId,
+          deliveryAssignedAt: new Date()
+        }
+      })
+    ]);
+
+    res.json({ success: true, message: 'Delivery partner assigned successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+router.post('/orders/:id/reassign-delivery', async (req, res) => {
+  try {
+    const { deliveryPartnerId } = req.body;
+    if (!deliveryPartnerId) {
+      return res.status(400).json({ message: 'deliveryPartnerId is required' });
+    }
+
+    const orderRaw = await prisma.order.findUnique({ where: { id: req.params.id } });
+    if (!orderRaw) return res.status(404).json({ message: 'Order not found' });
+
+    if (orderRaw.pickedUpAt) {
+      return res.status(400).json({ message: 'Cannot reassign after the order is Picked Up' });
+    }
+
+    const newPartner = await prisma.deliveryPartner.findUnique({ where: { id: deliveryPartnerId } });
+    if (!newPartner || newPartner.status !== 'Available') {
+      return res.status(400).json({ message: 'Selected new delivery partner is not Available' });
+    }
+
+    const transactionTasks = [
+      prisma.deliveryPartner.update({
+        where: { id: deliveryPartnerId },
+        data: { status: 'On Delivery' }
+      }),
+      prisma.order.update({
+        where: { id: req.params.id },
+        data: {
+          deliveryPartnerId,
+          deliveryAssignedAt: new Date(),
+          deliveryAcceptedAt: null // reset tracking for new partner
+        }
+      })
+    ];
+
+    if (orderRaw.deliveryPartnerId) {
+      transactionTasks.unshift(
+        prisma.deliveryPartner.update({
+          where: { id: orderRaw.deliveryPartnerId },
+          data: { status: 'Available' }
+        })
+      );
+    }
+
+    await prisma.$transaction(transactionTasks);
+
+    res.json({ success: true, message: 'Delivery partner reassigned successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});

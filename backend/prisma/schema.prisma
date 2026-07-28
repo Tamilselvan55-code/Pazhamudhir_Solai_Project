@@ -133,30 +133,39 @@ model Product {
 }
 
 model Order {
-  id              String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId          String         @db.Uuid
-  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  invoiceNumber   String?        @unique
-  shippingAddress Json
-  recipient       Json?
-  totalPrice      Float          @default(0.0)
-  deliveryFee     Float          @default(0.0)
-  gstAmount       Float          @default(0.0)
-  couponCode      String?        @default("")
-  couponDiscount  Float          @default(0)
-  paymentMethod   String         @default("COD")
-  paymentStatus   String         @default("Pending")
-  transactionId   String?        @default("")
-  paymentAuditLog Json[]
-  status          String         @default("Pending")
-  statusHistory   Json[]
-  isDelivered     Boolean        @default(false)
-  deliveredAt     DateTime?
-  notes           String?        @default("")
-  orderItems      OrderItem[]
-  notifications   Notification[]
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
+  id                 String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId             String           @db.Uuid
+  user               User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  invoiceNumber      String?          @unique
+  shippingAddress    Json
+  recipient          Json?
+  totalPrice         Float            @default(0.0)
+  deliveryFee        Float            @default(0.0)
+  gstAmount          Float            @default(0.0)
+  couponCode         String?          @default("")
+  couponDiscount     Float            @default(0)
+  paymentMethod      String           @default("COD")
+  paymentStatus      String           @default("Pending")
+  transactionId      String?          @default("")
+  paymentAuditLog    Json[]
+  status             String           @default("Pending")
+  statusHistory      Json[]
+  isDelivered        Boolean          @default(false)
+  
+  // Delivery Assignment & Tracking (Phase 2)
+  deliveryPartnerId  String?          @db.Uuid
+  deliveryPartner    DeliveryPartner? @relation(fields: [deliveryPartnerId], references: [id])
+  deliveryAssignedAt DateTime?
+  deliveryAcceptedAt DateTime?
+  pickedUpAt         DateTime?
+  outForDeliveryAt   DateTime?
+  deliveredAt        DateTime?
+
+  notes              String?          @default("")
+  orderItems         OrderItem[]
+  notifications      Notification[]
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
 }
 
 model OrderItem {
@@ -369,4 +378,20 @@ model PendingUser {
   resendAttempts             Int      @default(0)
   createdAt                  DateTime @default(now())
   updatedAt                  DateTime @updatedAt
+}
+
+model DeliveryPartner {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  employeeId    String   @unique
+  name          String
+  email         String   @unique
+  mobile        String   @unique
+  password      String
+  status        String   @default("Available") // Available, On Delivery, Offline, Inactive
+  vehicleNumber String?
+  profileImage  String?
+  isActive      Boolean  @default(true)
+  orders        Order[]  // Relation to assigned orders
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }

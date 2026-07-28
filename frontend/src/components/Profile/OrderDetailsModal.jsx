@@ -38,13 +38,16 @@ const OrderDetailsModal = ({ order, onClose, onDownloadInvoice }) => {
       ];
     }
 
-    const isAccepted = ['Accepted', 'Out for Delivery', 'Delivered'].includes(status);
-    const isOutForDelivery = ['Out for Delivery', 'Delivered'].includes(status);
+    const isAccepted = ['Accepted', 'Order Confirmed', 'Packing', 'Packed', 'Out for Delivery', 'Out For Delivery', 'Delivered'].includes(status);
+    const isPacking = ['Packing', 'Packed', 'Out for Delivery', 'Out For Delivery', 'Delivered'].includes(status);
+    const isPacked = ['Packed', 'Out for Delivery', 'Out For Delivery', 'Delivered'].includes(status);
+    const isOutForDelivery = ['Out for Delivery', 'Out For Delivery', 'Delivered'].includes(status);
     const isDelivered = status === 'Delivered';
 
     return [
-      { label: 'Order Placed', status: 'completed' },
+      { label: 'Placed', status: 'completed' },
       { label: 'Accepted', status: isAccepted ? 'completed' : 'upcoming' },
+      { label: 'Packed', status: isPacked ? 'completed' : (isPacking ? 'active' : 'upcoming') },
       { label: 'Out for Delivery', status: isOutForDelivery ? 'completed' : 'upcoming' },
       { label: 'Delivered', status: isDelivered ? 'completed' : 'upcoming' }
     ];

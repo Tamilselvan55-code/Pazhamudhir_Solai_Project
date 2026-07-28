@@ -42,7 +42,11 @@ const Notifications = lazy(() => import('./pages/Admin/Notifications'));
 const Staff = lazy(() => import('./pages/Admin/Staff'));
 const DatabaseController = lazy(() => import('./pages/Admin/Database'));
 const SystemLogs = lazy(() => import('./pages/Admin/SystemLogs'));
+const DeliveryPartners = lazy(() => import('./pages/Admin/DeliveryPartners'));
 
+// Lazy Loaded Delivery Pages
+const DeliveryLogin = lazy(() => import('./pages/Delivery/Login'));
+const DeliveryDashboard = lazy(() => import('./pages/Delivery/Dashboard'));
 const AdminRedirectHandler = () => {
   const { adminInfo, userInfo } = useAuthStore();
   if (userInfo && (!adminInfo || !adminInfo.token)) {
@@ -59,6 +63,8 @@ function App() {
   const [cartNotice, setCartNotice] = useState('');
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith('/admin');
+  const isDeliveryRoute = location.pathname.startsWith('/delivery');
+  const hideCustomerLayout = isAdminRoute || isDeliveryRoute;
 
   const initSocketSync = useCartStore((s) => s.initSocketSync);
   const fetchSettings = useSettingsStore((s) => s.fetchSettings);
@@ -127,7 +133,7 @@ function App() {
     }
   }, [location]);
 
-  if (settings?.maintenanceMode && !isAdminRoute) {
+  if (settings?.maintenanceMode && !hideCustomerLayout) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#f7fdf7] p-6 text-center select-none">
         <div className="w-20 h-20 rounded-[28px] bg-green-500/10 border border-green-500/20 flex items-center justify-center text-3xl mb-5 animate-bounce">
@@ -155,8 +161,8 @@ function App() {
         </div>
       )}
 
-      {!isAdminRoute && <Navbar toggleCart={() => setIsCartOpen(true)} />}
-      {!isAdminRoute && <LocationBanner />}
+      {!hideCustomerLayout && <Navbar toggleCart={() => setIsCartOpen(true)} />}
+      {!hideCustomerLayout && <LocationBanner />}
 
       <main className="flex-1">
         <Suspense fallback={
@@ -181,6 +187,9 @@ function App() {
             <Route path="/notifications" element={<CustomerNotifications />} />
             <Route path="/legal" element={<Legal />} />
             
+            <Route path="/delivery/login" element={<DeliveryLogin />} />
+            <Route path="/delivery/dashboard" element={<DeliveryDashboard />} />
+            
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
             <Route path="/admin/users" element={<Users />} />
@@ -195,13 +204,14 @@ function App() {
             <Route path="/admin/staff" element={<Staff />} />
             <Route path="/admin/database" element={<DatabaseController />} />
             <Route path="/admin/system-logs" element={<SystemLogs />} />
+            <Route path="/admin/delivery-partners" element={<DeliveryPartners />} />
 
             <Route path="*" element={<Home />} />
           </Routes>
         </Suspense>
       </main>
 
-      {!isAdminRoute && (
+      {!hideCustomerLayout && (
         <footer className="bg-white border-t border-gray-100 py-8 px-4 mt-12 pb-24 text-center">
           <div className="max-w-4xl mx-auto space-y-2">
             <h3 className="font-extrabold text-gray-800 text-base">Tiruchendur Murugan Pazhamudhir Solai</h3>
@@ -222,9 +232,9 @@ function App() {
         </footer>
       )}
 
-      {!isAdminRoute && <BottomNav />}
-      {!isAdminRoute && <InstallPrompt />}
-      {!isAdminRoute && <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />}
+      {!hideCustomerLayout && <BottomNav />}
+      {!hideCustomerLayout && <InstallPrompt />}
+      {!hideCustomerLayout && <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />}
     </div>
     </ModalProvider>
   );

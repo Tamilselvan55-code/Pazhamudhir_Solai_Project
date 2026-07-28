@@ -18,6 +18,7 @@ import jwt from 'jsonwebtoken';
 import { migrateTamilNames } from './utils/migrateTamilNames.js';
 import { ensureDefaultCategories } from './utils/seedDefaultCategories.js';
 import userNotificationRoutes from './routes/userNotificationRoutes.js';
+import deliveryRoutes from './routes/deliveryRoutes.js';
 
 dotenv.config();
 
@@ -128,6 +129,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/store', storeRoutes);
 app.use('/api/location', locationRoutes);
 app.use('/api', userNotificationRoutes);
+app.use('/api/delivery', deliveryRoutes);
 
 // Public categories endpoint
 app.get('/api/categories', async (req, res) => {
