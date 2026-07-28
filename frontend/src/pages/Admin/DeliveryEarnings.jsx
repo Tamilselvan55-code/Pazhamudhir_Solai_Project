@@ -62,7 +62,8 @@ const DeliveryEarnings = () => {
     URL.revokeObjectURL(url);
   };
 
-  if (!adminInfo || !adminInfo.permissions?.reports) {
+  const isSuperAdmin = adminInfo?.role === 'SuperAdmin' || adminInfo?.role === 'Super Admin';
+  if (!adminInfo || (!isSuperAdmin && !adminInfo.permissions?.reports)) {
     return <Navigate to="/admin/dashboard" replace />;
   }
 

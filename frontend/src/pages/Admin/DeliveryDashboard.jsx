@@ -85,7 +85,8 @@ const DeliveryDashboard = () => {
     URL.revokeObjectURL(url);
   };
 
-  if (!adminInfo || !adminInfo.permissions?.users) {
+  const isSuperAdmin = adminInfo?.role === 'SuperAdmin' || adminInfo?.role === 'Super Admin';
+  if (!adminInfo || (!isSuperAdmin && !adminInfo.permissions?.users)) {
     return <Navigate to="/admin/dashboard" replace />;
   }
 
