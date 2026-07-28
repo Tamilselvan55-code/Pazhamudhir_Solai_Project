@@ -6,7 +6,7 @@ import {
   updateDeliveryPassword,
   logoutDeliveryPartner,
 } from '../controllers/deliveryController.js';
-import { getAssignedOrders, updateOrderStatus } from '../controllers/deliveryOrdersController.js';
+import { getAssignedOrders, updateOrderStatus, rejectOrder } from '../controllers/deliveryOrdersController.js';
 import { protectDelivery } from '../middleware/deliveryAuthMiddleware.js';
 
 const router = express.Router();
@@ -21,5 +21,6 @@ router.put('/profile/password', protectDelivery, updateDeliveryPassword);
 
 router.get('/orders', protectDelivery, getAssignedOrders);
 router.patch('/orders/:id/status', protectDelivery, updateOrderStatus);
+router.post('/orders/:id/reject', protectDelivery, rejectOrder);
 
 export default router;

@@ -34,7 +34,8 @@ router.get('/orders', async (req, res) => {
       where,
       include: {
         user: { select: { fullName: true, phoneNumber: true, email: true, addresses: true } },
-        orderItems: { include: { product: true } }
+        orderItems: { include: { product: true } },
+        deliveryPartner: { select: { name: true, mobile: true, employeeId: true, vehicleNumber: true } }
       },
       orderBy: { createdAt: 'desc' },
       skip: (Number(page) - 1) * Number(limit),
@@ -61,7 +62,8 @@ router.get('/orders/:id', async (req, res) => {
       where: { id: req.params.id },
       include: {
         user: { select: { fullName: true, phoneNumber: true, email: true, addresses: true } },
-        orderItems: { include: { product: true } }
+        orderItems: { include: { product: true } },
+        deliveryPartner: { select: { name: true, mobile: true, employeeId: true, vehicleNumber: true } }
       }
     });
     if (!orderRaw) return res.status(404).json({ message: 'Order not found' });
@@ -219,8 +221,9 @@ router.post('/orders/:id/assign-delivery', async (req, res) => {
     const orderRaw = await prisma.order.findUnique({ where: { id: req.params.id } });
     if (!orderRaw) return res.status(404).json({ message: 'Order not found' });
 
-    if (orderRaw.status !== 'Packed') {
-      return res.status(400).json({ message: 'Order must be Packed before assigning a delivery partner' });
+    const assignableStatuses = ['Accepted', 'Order Confirmed', 'Packing', 'Packed'];
+    if (!assignableStatuses.includes(orderRaw.status)) {
+      return res.status(400).json({ message: `Order must be Accepted or Packed before assigning a delivery partner. Current status: ${orderRaw.status}` });
     }
 
     if (orderRaw.deliveryPartnerId) {

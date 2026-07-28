@@ -101,6 +101,18 @@ const DeliveryDashboard = () => {
               <span className="font-bold text-xl text-orange-600">Delivery Partner Hub</span>
             </div>
             <div className="flex items-center space-x-4">
+              {/* Available / Offline Toggle */}
+              <button
+                onClick={() => updateStatus(partner?.status === 'Available' ? 'Offline' : 'Available')}
+                className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold border transition-colors ${
+                  partner?.status === 'Available'
+                    ? 'bg-green-50 text-green-700 border-green-300 hover:bg-green-100'
+                    : 'bg-gray-100 text-gray-600 border-gray-300 hover:bg-gray-200'
+                }`}
+              >
+                <span className={`w-2 h-2 rounded-full ${partner?.status === 'Available' ? 'bg-green-500' : 'bg-gray-400'}`} />
+                {partner?.status === 'Available' ? 'Go Offline' : 'Go Available'}
+              </button>
               <button
                 onClick={handleLogout}
                 className="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors"
@@ -207,8 +219,10 @@ const DeliveryDashboard = () => {
 
 const AssignedOrders = ({ token }) => {
   const [orders, setOrders] = useState([]);
+  const [historyOrders, setHistoryOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('Assigned'); // Assigned, Active, Completed
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState('Assigned');
   const [actionLoading, setActionLoading] = useState(null);
 
   const fetchOrders = async () => {
@@ -224,9 +238,27 @@ const AssignedOrders = ({ token }) => {
     }
   };
 
+  const fetchHistory = async () => {
+    setHistoryLoading(true);
+    try {
+      const { data } = await axios.get(`${API_BASE}/delivery/orders?history=true`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setHistoryOrders(data);
+    } catch (err) {
+      console.error('Failed to fetch history', err);
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchOrders();
   }, [token]);
+
+  useEffect(() => {
+    if (activeTab === 'History') fetchHistory();
+  }, [activeTab]);
 
   const handleAction = async (orderId, action) => {
     setActionLoading(orderId);
@@ -234,15 +266,24 @@ const AssignedOrders = ({ token }) => {
       await axios.patch(`${API_BASE}/delivery/orders/${orderId}/status`, { action }, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      // Optionally show a success toast here
-      fetchOrders(); // Refresh list to get updated status
-      
-      // If it's a delivery complete, we should also probably trigger a profile refresh if we wanted to show the available status updated
-      if (action === 'Delivered') {
-         window.location.reload();
-      }
+      fetchOrders();
     } catch (err) {
       alert(err.response?.data?.message || `Failed to mark ${action}`);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleReject = async (orderId) => {
+    if (!window.confirm('Are you sure you want to reject this assignment? The order will return to unassigned.')) return;
+    setActionLoading(orderId);
+    try {
+      await axios.post(`${API_BASE}/delivery/orders/${orderId}/reject`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      fetchOrders();
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to reject assignment');
     } finally {
       setActionLoading(null);
     }
@@ -283,10 +324,35 @@ const AssignedOrders = ({ token }) => {
         >
           Completed Today ({categorized.completed.length})
         </button>
+        <button
+          className={`flex-1 py-4 text-sm font-medium text-center ${activeTab === 'History' ? 'border-b-2 border-gray-500 text-gray-700' : 'text-gray-500 hover:text-gray-700'}`}
+          onClick={() => setActiveTab('History')}
+        >
+          History
+        </button>
       </div>
 
       <div className="p-6">
-        {currentOrders.length === 0 ? (
+        {activeTab === 'History' ? (
+          historyLoading ? (
+            <div className="text-center py-10 text-gray-500">Loading history...</div>
+          ) : historyOrders.length === 0 ? (
+            <div className="text-center py-10 text-gray-500">No delivery history yet.</div>
+          ) : (
+            <div className="space-y-3">
+              {historyOrders.map(order => (
+                <div key={order.id} className="border border-gray-100 rounded-xl p-3 bg-gray-50/50 flex justify-between items-center">
+                  <div>
+                    <p className="text-sm font-bold text-gray-800">{order.invoiceNumber || `#${order.id.slice(-6).toUpperCase()}`}</p>
+                    <p className="text-xs text-gray-500">{order.user?.fullName || 'Customer'} &middot; ₹{order.totalPrice}</p>
+                    <p className="text-xs text-gray-400">{new Date(order.deliveredAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                  </div>
+                  <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded-md text-xs font-semibold">Delivered</span>
+                </div>
+              ))}
+            </div>
+          )
+        ) : currentOrders.length === 0 ? (
           <div className="text-center py-10 text-gray-500">
             No {activeTab.toLowerCase()} orders found.
           </div>
@@ -314,7 +380,12 @@ const AssignedOrders = ({ token }) => {
                 </div>
                 
                 <div className="flex flex-col gap-2 w-full sm:w-auto mt-2 sm:mt-0">
-                  {/* Sequence: Accept Order -> Picked Up -> Out For Delivery -> Delivered */}
+                  {/* B4: Item count and notes */}
+                  <div className="text-xs text-gray-500">
+                    {order.orderItems?.length ? `${order.orderItems.length} item${order.orderItems.length > 1 ? 's' : ''}` : ''}
+                    {order.notes ? ` · 📝 ${order.notes}` : ''}
+                  </div>
+                  {/* Sequence: Accept Order → Picked Up → Out For Delivery → Delivered */}
                   {!order.deliveryAcceptedAt && !order.pickedUpAt && !order.isDelivered && (
                     <button
                       disabled={actionLoading === order.id}
@@ -322,6 +393,15 @@ const AssignedOrders = ({ token }) => {
                       className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors w-full disabled:opacity-50"
                     >
                       {actionLoading === order.id ? 'Processing...' : 'Accept Order'}
+                    </button>
+                  )}
+                  {!order.deliveryAcceptedAt && !order.isDelivered && (
+                    <button
+                      disabled={actionLoading === order.id}
+                      onClick={() => handleReject(order.id)}
+                      className="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-lg text-sm font-medium transition-colors w-full disabled:opacity-50"
+                    >
+                      Reject Assignment
                     </button>
                   )}
                   {order.deliveryAcceptedAt && !order.pickedUpAt && !order.isDelivered && (

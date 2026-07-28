@@ -489,7 +489,10 @@ router.get('/myorders/:userId', async (req, res) => {
     const ordersRaw = await prisma.order.findMany({
       where: { userId: req.params.userId },
       orderBy: { createdAt: 'desc' },
-      include: { orderItems: { include: { product: true } } }
+      include: {
+        orderItems: { include: { product: true } },
+        deliveryPartner: { select: { name: true, mobile: true, vehicleNumber: true, employeeId: true } }
+      }
     });
     const formatted = ordersRaw.map(o => formatOrderWithDeliveryAddress(o));
     res.json(formatMongoCompat(formatted));

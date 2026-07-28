@@ -1,30 +1,40 @@
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
-
+import prisma from '../utils/prismaClient.js';
 // @desc    Get orders assigned to logged in delivery partner
 // @route   GET /api/delivery/orders
 // @access  Private (Delivery Partner)
 export const getAssignedOrders = async (req, res) => {
   try {
-    const partnerId = req.deliveryPartner.id;
-    
-    // Get all active orders, and orders delivered today
-    const startOfToday = new Date();
-    startOfToday.setHours(0, 0, 0, 0);
+    const partnerId = req.partner.id;
+    const history = req.query.history === 'true';
 
-    const orders = await prisma.order.findMany({
-      where: {
+    let where;
+    if (history) {
+      // Full history: all delivered orders for this partner (all time)
+      where = {
+        deliveryPartnerId: partnerId,
+        isDelivered: true
+      };
+    } else {
+      // Default: active orders + today's completed
+      const startOfToday = new Date();
+      startOfToday.setHours(0, 0, 0, 0);
+      where = {
         deliveryPartnerId: partnerId,
         OR: [
           { isDelivered: false },
           { deliveredAt: { gte: startOfToday } }
         ]
-      },
+      };
+    }
+
+    const orders = await prisma.order.findMany({
+      where,
       include: {
-        user: { select: { fullName: true, phoneNumber: true } }
+        user: { select: { fullName: true, phoneNumber: true } },
+        orderItems: { include: { product: { select: { name: true } } } }
       },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
+      ...(history ? { take: 50 } : {})
     });
 
     res.json(orders);
@@ -40,7 +50,7 @@ export const getAssignedOrders = async (req, res) => {
 export const updateOrderStatus = async (req, res) => {
   try {
     const { action } = req.body; // 'Accept Order', 'Picked Up', 'Out For Delivery', 'Delivered'
-    const partnerId = req.deliveryPartner.id;
+    const partnerId = req.partner.id;
     const orderId = req.params.id;
 
     const order = await prisma.order.findUnique({ where: { id: orderId } });
@@ -125,6 +135,69 @@ export const updateOrderStatus = async (req, res) => {
     res.json({ success: true, order: updatedOrder, message: `Successfully marked as ${action}` });
   } catch (error) {
     console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// @desc    Reject an assigned order (before accepting)
+// @route   POST /api/delivery/orders/:id/reject
+// @access  Private (Delivery Partner)
+export const rejectOrder = async (req, res) => {
+  try {
+    const partnerId = req.partner.id;
+    const orderId = req.params.id;
+
+    const order = await prisma.order.findUnique({ where: { id: orderId } });
+    if (!order) return res.status(404).json({ message: 'Order not found' });
+
+    if (order.deliveryPartnerId !== partnerId) {
+      return res.status(403).json({ message: 'Unauthorized. Order is not assigned to you.' });
+    }
+
+    // Block rejection after already accepted/picked up
+    if (order.deliveryAcceptedAt) {
+      return res.status(400).json({ message: 'Cannot reject an order you have already accepted. Contact admin.' });
+    }
+
+    const now = new Date();
+    const newHistoryEntry = {
+      status: order.status,
+      note: `Delivery partner rejected this assignment`,
+      date: now.toISOString()
+    };
+    const updatedHistory = Array.isArray(order.statusHistory)
+      ? [...order.statusHistory, newHistoryEntry]
+      : [newHistoryEntry];
+
+    await prisma.$transaction([
+      prisma.deliveryPartner.update({
+        where: { id: partnerId },
+        data: { status: 'Available' }
+      }),
+      prisma.order.update({
+        where: { id: orderId },
+        data: {
+          deliveryPartnerId: null,
+          deliveryAssignedAt: null,
+          statusHistory: updatedHistory
+        }
+      })
+    ]);
+
+    // Notify admin via socket
+    const io = req.app?.get('io');
+    if (io) {
+      io.emit('delivery_rejected', {
+        orderId,
+        partnerId,
+        invoiceNumber: order.invoiceNumber,
+        message: `Delivery partner rejected assignment for order ${order.invoiceNumber || orderId.slice(-6).toUpperCase()}`
+      });
+    }
+
+    res.json({ success: true, message: 'Assignment rejected. Order is now unassigned.' });
+  } catch (error) {
+    console.error('[DELIVERY] Reject order error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };

@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Package, Calendar, CreditCard, MapPin, CheckCircle, Clock, Truck, AlertCircle, FileText } from 'lucide-react';
+import { X, Package, Calendar, CreditCard, MapPin, CheckCircle, Clock, Truck, AlertCircle, FileText, Phone, User } from 'lucide-react';
 import { formatCurrency } from '../../utils/currency';
 import ProductImage from '../Product/ProductImage';
 import { formatDisplayAddress, formatDisplayAddressLines } from '../../utils/addressFormatter';
@@ -28,32 +28,32 @@ const OrderDetailsModal = ({ order, onClose, onDownloadInvoice }) => {
     year: 'numeric',
   });
 
-  // Dynamic steps based on current status (Requirement: Timeline UI)
-  const getTimelineSteps = () => {
+  const timelineSteps = (() => {
     const status = order.status;
-    if (status === 'Cancelled' || status === 'Rejected') {
+    const fmt = (ts) => ts ? new Date(ts).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true }) : null;
+
+    if (status === 'Cancelled' || status === 'Cancelled by Customer' || status === 'Rejected by Store') {
       return [
-        { label: 'Order Placed', status: 'completed' },
-        { label: 'Cancelled', status: 'cancelled' }
+        { label: 'Order Placed', status: 'completed', time: fmt(order.createdAt) },
+        { label: 'Cancelled', status: 'cancelled', time: null }
       ];
     }
 
-    const isAccepted = ['Accepted', 'Order Confirmed', 'Packing', 'Packed', 'Out for Delivery', 'Out For Delivery', 'Delivered'].includes(status);
-    const isPacking = ['Packing', 'Packed', 'Out for Delivery', 'Out For Delivery', 'Delivered'].includes(status);
-    const isPacked = ['Packed', 'Out for Delivery', 'Out For Delivery', 'Delivered'].includes(status);
-    const isOutForDelivery = ['Out for Delivery', 'Out For Delivery', 'Delivered'].includes(status);
+    const isAccepted  = ['Accepted', 'Order Confirmed', 'Packing', 'Packed', 'Out for Delivery', 'Out For Delivery', 'Delivered'].includes(status);
+    const isPacking   = ['Packing', 'Packed', 'Out for Delivery', 'Out For Delivery', 'Delivered'].includes(status);
+    const isPacked    = ['Packed', 'Out for Delivery', 'Out For Delivery', 'Delivered'].includes(status);
+    const isOutForDel = ['Out for Delivery', 'Out For Delivery', 'Delivered'].includes(status);
     const isDelivered = status === 'Delivered';
 
     return [
-      { label: 'Placed', status: 'completed' },
-      { label: 'Accepted', status: isAccepted ? 'completed' : 'upcoming' },
-      { label: 'Packed', status: isPacked ? 'completed' : (isPacking ? 'active' : 'upcoming') },
-      { label: 'Out for Delivery', status: isOutForDelivery ? 'completed' : 'upcoming' },
-      { label: 'Delivered', status: isDelivered ? 'completed' : 'upcoming' }
+      { label: 'Placed',           status: 'completed', time: fmt(order.createdAt) },
+      { label: 'Accepted',         status: isAccepted ? 'completed' : 'upcoming',  time: isAccepted ? fmt(order.deliveryAcceptedAt) : null },
+      { label: 'Packed',           status: isPacked ? 'completed' : (isPacking ? 'active' : 'upcoming'), time: isPacked ? fmt(order.pickedUpAt) : null },
+      { label: 'Out for Delivery', status: isOutForDel ? 'completed' : 'upcoming', time: isOutForDel ? fmt(order.outForDeliveryAt) : null },
+      { label: 'Delivered',        status: isDelivered ? 'completed' : 'upcoming', time: isDelivered ? fmt(order.deliveredAt) : null }
     ];
-  };
+  })();
 
-  const timelineSteps = getTimelineSteps();
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/50 backdrop-blur-sm animate-fadeIn">
@@ -146,6 +146,9 @@ const OrderDetailsModal = ({ order, onClose, onDownloadInvoice }) => {
                       <span className={`text-xs mt-2.5 text-center font-bold tracking-wide ${textClass}`}>
                         {step.label}
                       </span>
+                      {step.time && (
+                        <span className="text-[10px] text-gray-400 mt-0.5 text-center">{step.time}</span>
+                      )}
                     </div>
                     {idx < timelineSteps.length - 1 && (
                       <div className={`flex-1 h-0.5 mx-2 rounded transition-colors duration-300 -mt-6 ${
@@ -157,6 +160,34 @@ const OrderDetailsModal = ({ order, onClose, onDownloadInvoice }) => {
               })}
             </div>
           </div>
+
+          {/* B1 — Driver Info Card (shown when a partner is assigned) */}
+          {order.deliveryPartner && (
+            <div className="bg-orange-50 p-4 rounded-2xl border border-orange-100">
+              <h4 className="text-xs font-bold text-orange-600 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                <Truck className="w-4 h-4" /> Your Delivery Partner
+              </h4>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center shrink-0">
+                  <User className="w-5 h-5 text-orange-500" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-bold text-gray-900">{order.deliveryPartner.name}</p>
+                  {order.deliveryPartner.vehicleNumber && (
+                    <p className="text-xs text-gray-500 mt-0.5">🛵 {order.deliveryPartner.vehicleNumber}</p>
+                  )}
+                </div>
+                {order.deliveryPartner.mobile && (
+                  <a
+                    href={`tel:+91${order.deliveryPartner.mobile}`}
+                    className="flex items-center gap-1.5 px-3 py-2 bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold rounded-xl transition-colors"
+                  >
+                    <Phone className="w-3.5 h-3.5" /> Call
+                  </a>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Products List */}
           <div>

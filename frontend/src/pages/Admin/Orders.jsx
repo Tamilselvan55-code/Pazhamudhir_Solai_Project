@@ -256,14 +256,34 @@ const OrderRow = ({ order, token, onUpdated }) => {
             }
             if (order.status === 'Accepted' || order.status === 'Order Confirmed') {
               return (
-                <button
-                  disabled={statusUpdating}
-                  onClick={(e) => { e.stopPropagation(); changeStatus('Packing'); }}
-                  title="Mark as Packing"
-                  className="p-1.5 text-purple-400 hover:bg-purple-500/15 rounded-full transition-all duration-200 border border-purple-500/30 hover:scale-105"
-                >
-                  <Package className="w-5 h-5" />
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    disabled={statusUpdating}
+                    onClick={(e) => { e.stopPropagation(); changeStatus('Packing'); }}
+                    title="Mark as Packing"
+                    className="p-1.5 text-purple-400 hover:bg-purple-500/15 rounded-full transition-all duration-200 border border-purple-500/30 hover:scale-105"
+                  >
+                    <Package className="w-5 h-5" />
+                  </button>
+                  <button
+                    disabled={statusUpdating || !!order.deliveryPartnerId}
+                    onClick={(e) => { e.stopPropagation(); window.dispatchEvent(new CustomEvent('openAssignModal', { detail: order })); }}
+                    title={order.deliveryPartnerId ? "Delivery Partner Assigned" : "Assign Delivery Partner"}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all border ${order.deliveryPartnerId ? 'bg-gray-700 text-gray-400 border-gray-600' : 'bg-[#3B82F6]/15 text-[#3B82F6] border-[#3B82F6]/30 hover:bg-[#3B82F6]/30'}`}
+                  >
+                    {order.deliveryPartnerId ? 'Assigned ✓' : 'Assign Partner'}
+                  </button>
+                  {order.deliveryPartnerId && !order.pickedUpAt && (
+                    <button
+                      disabled={statusUpdating}
+                      onClick={(e) => { e.stopPropagation(); window.dispatchEvent(new CustomEvent('openAssignModal', { detail: order })); }}
+                      title="Reassign Delivery Partner"
+                      className="p-1.5 text-[#F59E0B] hover:bg-[#F59E0B]/15 rounded-full transition-all duration-200 border border-[#F59E0B]/30 hover:scale-105"
+                    >
+                      <RefreshCw className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
               );
             }
             if (order.status === 'Packing') {
