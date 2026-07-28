@@ -389,7 +389,7 @@ const AssignedOrders = ({ token, partner }) => {
     return () => socket.disconnect();
   }, [token]);
 
-  // Geolocation streaming during active delivery (Phase 10)
+  // Geolocation streaming during active delivery (Phase 10 & 11)
   useEffect(() => {
     if (!token || !partner || partner.status !== 'On Delivery') return;
     if (!('geolocation' in navigator)) return;
@@ -397,7 +397,15 @@ const AssignedOrders = ({ token, partner }) => {
     const watchId = navigator.geolocation.watchPosition(
       (pos) => {
         const { latitude: lat, longitude: lon, heading, speed } = pos.coords;
-        axios.post(`${API_BASE}/delivery/location`, { lat, lon, heading, speed }, {
+        const activeOrder = orders.find(o => o.pickedUpAt && !o.isDelivered);
+        
+        axios.post(`${API_BASE}/delivery/location`, { 
+          lat, 
+          lon, 
+          heading, 
+          speed, 
+          orderId: activeOrder?.id || activeOrder?._id 
+        }, {
           headers: { Authorization: `Bearer ${token}` }
         }).catch(() => {});
       },
@@ -406,7 +414,7 @@ const AssignedOrders = ({ token, partner }) => {
     );
 
     return () => navigator.geolocation.clearWatch(watchId);
-  }, [token, partner?.status]);
+  }, [token, partner?.status, orders]);
 
   const handleAction = async (orderId, action) => {
     setActionLoading(orderId);
