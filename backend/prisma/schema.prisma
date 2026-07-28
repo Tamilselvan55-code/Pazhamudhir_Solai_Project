@@ -63,6 +63,8 @@ model UserAddress {
   lat         Float?
   lon         Float?
   isDefault   Boolean @default(false)
+
+  @@index([userId])
 }
 
 model WishlistItem {
@@ -130,6 +132,9 @@ model Product {
   updatedAt    DateTime       @updatedAt
 
   @@unique([name, categorySlug])
+  @@index([categoryId])
+  @@index([categorySlug])
+  @@index([isActive, inStock])
 }
 
 model Order {
@@ -162,10 +167,28 @@ model Order {
   deliveredAt        DateTime?
 
   notes              String?          @default("")
+
+  // Phase 14: Delivery OTP Verification
+  deliveryOtp         String?
+  deliveryOtpExpiry   DateTime?
+  deliveryOtpVerified Boolean          @default(false)
+
+  // Phase 15: Customer Rating & Review
+  customerRating      Int?
+  customerReview      String?
+
+  // Phase 17: Earnings
+  deliveryEarnings    DeliveryEarnings?
+
   orderItems         OrderItem[]
   notifications      Notification[]
   createdAt          DateTime         @default(now())
   updatedAt          DateTime         @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([deliveryPartnerId])
+  @@index([paymentStatus])
 }
 
 model OrderItem {
@@ -178,6 +201,9 @@ model OrderItem {
   quantity  Int
   image     String?
   price     Float
+
+  @@index([orderId])
+  @@index([productId])
 }
 
 model Notification {
@@ -204,6 +230,10 @@ model Notification {
   orderStatus   String?  @default("")
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+
+  @@index([userId])
+  @@index([isRead])
+  @@index([role])
 }
 
 model NotificationSettings {
@@ -394,7 +424,57 @@ model DeliveryPartner {
   emergencyContact String?
   profileImage     String?
   isActive         Boolean  @default(true)
+  isVerified       Boolean  @default(false)
   orders           Order[]  // Relation to assigned orders
+  earnings         DeliveryEarnings[]
+  settlements      Settlement[]
+  documents        DeliveryPartnerDocument?
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
+}
+
+model DeliveryPartnerDocument {
+  id                   String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  partnerId            String   @unique @db.Uuid
+  partner              DeliveryPartner @relation(fields: [partnerId], references: [id])
+  drivingLicense       String?
+  governmentId         String?
+  vehicleRegistration  String?
+  insuranceCertificate String?
+  vehiclePhoto         String?
+  status               String   @default("Pending") // Pending, Approved, Rejected
+  rejectionReason      String?
+  verifiedAt           DateTime?
+  verifierName         String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+}
+
+model DeliveryEarnings {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  partnerId      String   @db.Uuid
+  partner        DeliveryPartner @relation(fields: [partnerId], references: [id])
+  orderId        String   @unique @db.Uuid
+  order          Order    @relation(fields: [orderId], references: [id])
+  distanceKm     Float    @default(0)
+  baseEarnings   Float    @default(0)
+  distanceBonus  Float    @default(0)
+  peakHourBonus  Float    @default(0)
+  totalEarned    Float    @default(0)
+  isSettled      Boolean  @default(false)
+  settlementId   String?  @db.Uuid
+  settlement     Settlement? @relation(fields: [settlementId], references: [id])
+  createdAt      DateTime @default(now())
+}
+
+model Settlement {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  partnerId      String   @db.Uuid
+  partner        DeliveryPartner @relation(fields: [partnerId], references: [id])
+  amount         Float
+  status         String   @default("Pending") // Pending, Paid
+  paidAt         DateTime?
+  referenceId    String?
+  earnings       DeliveryEarnings[]
+  createdAt      DateTime @default(now())
 }

@@ -172,51 +172,178 @@ export const getDeliveryPartnerAnalytics = async (req, res) => {
 
     const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
 
-    const [todayCount, weeklyCount, monthlyCount, totalDelivered] = await Promise.all([
+    const [todayCount, weeklyCount, monthlyCount, totalDelivered, earningsAggr] = await Promise.all([
       prisma.order.count({
         where: {
           deliveryPartnerId: req.partner.id,
-          orderStatus: 'Delivered',
+          status: 'Delivered',
           deliveredAt: { gte: today }
         }
       }),
       prisma.order.count({
         where: {
           deliveryPartnerId: req.partner.id,
-          orderStatus: 'Delivered',
+          status: 'Delivered',
           deliveredAt: { gte: startOfWeek }
         }
       }),
       prisma.order.count({
         where: {
           deliveryPartnerId: req.partner.id,
-          orderStatus: 'Delivered',
+          status: 'Delivered',
           deliveredAt: { gte: startOfMonth }
         }
       }),
       prisma.order.count({
         where: {
           deliveryPartnerId: req.partner.id,
-          orderStatus: 'Delivered'
+          status: 'Delivered'
         }
+      }),
+      prisma.deliveryEarnings.aggregate({
+        where: { partnerId: req.partner.id },
+        _sum: { totalEarned: true }
       })
     ]);
 
-    // For mock metrics that aren't fully tracked yet
-    const earnings = totalDelivered * 40; // Assume ₹40 per delivery
-    const rating = 4.8;
-    const acceptanceRate = 95;
+    const totalEarnings = earningsAggr._sum.totalEarned || 0;
+    
+    // Calculate average rating
+    const ratingAggr = await prisma.order.aggregate({
+      where: {
+        deliveryPartnerId: req.partner.id,
+        status: 'Delivered',
+        customerRating: { not: null }
+      },
+      _avg: { customerRating: true }
+    });
+    
+    const rating = ratingAggr._avg.customerRating ? Number(ratingAggr._avg.customerRating).toFixed(1) : 'No Rating';
+    const acceptanceRate = 100; // Mock until rejection logic is fully tracked
 
     res.json({
       deliveriesToday: todayCount,
       weeklyDeliveries: weeklyCount,
       monthlyDeliveries: monthlyCount,
-      totalEarnings: earnings,
+      totalEarnings,
       rating,
       acceptanceRate
     });
   } catch (error) {
     console.error('Analytics Error:', error);
+    res.status(500).json({ message: 'Server Error' });
+  }
+};
+
+// @desc    Update partner live location
+// @route   POST /api/delivery/location
+// @access  Private (Delivery Partner)
+export const updateDeliveryLocation = async (req, res) => {
+  const { lat, lon, orderId, heading, speed } = req.body;
+  try {
+    if (lat == null || lon == null) {
+      return res.status(400).json({ message: 'Coordinates (lat, lon) required' });
+    }
+    const io = req.app?.get('io');
+    const locationData = {
+      partnerId: req.partner.id,
+      partnerName: req.partner.name,
+      orderId: orderId || null,
+      lat,
+      lon,
+      heading: heading || 0,
+      speed: speed || 0,
+      timestamp: new Date().toISOString()
+    };
+    if (io) {
+      io.emit('partner_location_changed', locationData);
+      if (orderId) {
+        io.emit(`order_location_${orderId}`, locationData);
+      }
+    }
+    res.json({ success: true, location: locationData });
+  } catch (error) {
+    console.error('Location Update Error:', error);
+    res.status(500).json({ message: 'Server Error' });
+  }
+};
+
+// @desc    Get delivery earnings history and summary
+// @route   GET /api/delivery/earnings
+// @access  Private (Delivery Partner)
+export const getDeliveryEarnings = async (req, res) => {
+  try {
+    const earnings = await prisma.deliveryEarnings.findMany({
+      where: { partnerId: req.partner.id },
+      include: {
+        order: { select: { invoiceNumber: true, user: { select: { fullName: true } } } },
+        settlement: { select: { status: true, paidAt: true, referenceId: true } }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    const pendingAmount = earnings.filter(e => !e.isSettled).reduce((acc, curr) => acc + curr.totalEarned, 0);
+    const paidAmount = earnings.filter(e => e.isSettled).reduce((acc, curr) => acc + curr.totalEarned, 0);
+    
+    res.json({
+      success: true,
+      earnings,
+      summary: {
+        pendingAmount,
+        paidAmount,
+        totalDeliveries: earnings.length
+      }
+    });
+  } catch (error) {
+    console.error('Earnings Error:', error);
+    res.status(500).json({ message: 'Server Error' });
+  }
+};
+
+// @desc    Get delivery partner documents
+// @route   GET /api/delivery/documents
+// @access  Private (Delivery Partner)
+export const getDeliveryDocuments = async (req, res) => {
+  try {
+    const documents = await prisma.deliveryPartnerDocument.findUnique({
+      where: { partnerId: req.partner.id }
+    });
+    res.json({ success: true, documents });
+  } catch (error) {
+    console.error('Fetch Documents Error:', error);
+    res.status(500).json({ message: 'Server Error' });
+  }
+};
+
+// @desc    Upload delivery partner documents
+// @route   POST /api/delivery/documents
+// @access  Private (Delivery Partner)
+export const uploadDeliveryDocuments = async (req, res) => {
+  try {
+    const { drivingLicense, governmentId, vehicleRegistration, insuranceCertificate, vehiclePhoto } = req.body;
+    
+    const dataToUpdate = {
+      status: 'Pending',
+      rejectionReason: null
+    };
+    if (drivingLicense) dataToUpdate.drivingLicense = drivingLicense;
+    if (governmentId) dataToUpdate.governmentId = governmentId;
+    if (vehicleRegistration) dataToUpdate.vehicleRegistration = vehicleRegistration;
+    if (insuranceCertificate) dataToUpdate.insuranceCertificate = insuranceCertificate;
+    if (vehiclePhoto) dataToUpdate.vehiclePhoto = vehiclePhoto;
+
+    const documents = await prisma.deliveryPartnerDocument.upsert({
+      where: { partnerId: req.partner.id },
+      update: dataToUpdate,
+      create: {
+        partnerId: req.partner.id,
+        ...dataToUpdate
+      }
+    });
+
+    res.json({ success: true, documents, message: 'Documents uploaded successfully for review.' });
+  } catch (error) {
+    console.error('Upload Documents Error:', error);
     res.status(500).json({ message: 'Server Error' });
   }
 };

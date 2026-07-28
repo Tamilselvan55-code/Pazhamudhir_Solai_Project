@@ -200,12 +200,109 @@ router.patch('/orders/:id/status', async (req, res) => {
       });
     }
 
+    // Phase 13: Automatic Delivery Partner Assignment when Packed or Accepted
+    if ((status === 'Packed' || status === 'Accepted') && !updatedOrderRaw.deliveryPartnerId) {
+      autoAssignDeliveryPartner(updatedOrderRaw.id, io).catch(err => {
+        console.error('Auto assign background error:', err);
+      });
+    }
+
     res.json({ success: true, message: `Order status updated to ${status}.`, order: formatMongoCompat(updatedOrderRaw) });
   } catch (error) {
     console.error('Update order status error:', error);
     res.status(500).json({ success: false, message: 'Server error' });
   }
 });
+
+// Phase 13 Helper: Auto Assign Algorithm
+export const autoAssignDeliveryPartner = async (orderId, io) => {
+  try {
+    const order = await prisma.order.findUnique({
+      where: { id: orderId }
+    });
+
+    if (!order || order.deliveryPartnerId) {
+      return { success: false, message: 'Order already assigned or not found' };
+    }
+
+    // Filter available active and verified partners
+    const availablePartners = await prisma.deliveryPartner.findMany({
+      where: { status: 'Available', isActive: true, isVerified: true },
+      include: {
+        orders: {
+          where: { isDelivered: false }
+        }
+      }
+    });
+
+    if (!availablePartners || availablePartners.length === 0) {
+      if (io) {
+        io.emit('no_partner_available', {
+          orderId,
+          invoiceNumber: order.invoiceNumber,
+          message: `Order ${order.invoiceNumber || orderId.slice(-6).toUpperCase()} is ready for delivery but no delivery partners are currently Available.`
+        });
+      }
+      await prisma.adminNotification.create({
+        data: {
+          type: 'delivery',
+          message: `Order ${order.invoiceNumber || orderId.slice(-6).toUpperCase()} is ready but no delivery partner is currently Available. Manual assignment required.`
+        }
+      }).catch(() => {});
+
+      return { success: false, message: 'No available delivery partners' };
+    }
+
+    // Priority Rules:
+    // 1. Lowest Active Workload (orders count)
+    // 2. Longest Idle Time (updatedAt)
+    const sortedPartners = availablePartners.sort((a, b) => {
+      const activeA = a.orders ? a.orders.length : 0;
+      const activeB = b.orders ? b.orders.length : 0;
+      if (activeA !== activeB) return activeA - activeB;
+      return new Date(a.updatedAt) - new Date(b.updatedAt);
+    });
+
+    const chosenPartner = sortedPartners[0];
+
+    await prisma.$transaction([
+      prisma.deliveryPartner.update({
+        where: { id: chosenPartner.id },
+        data: { status: 'On Delivery' }
+      }),
+      prisma.order.update({
+        where: { id: orderId },
+        data: {
+          deliveryPartnerId: chosenPartner.id,
+          deliveryAssignedAt: new Date()
+        }
+      })
+    ]);
+
+    if (io) {
+      io.emit('delivery_assigned', {
+        partnerId: chosenPartner.id,
+        orderId: orderId,
+        invoiceNumber: order.invoiceNumber,
+        message: `⚡ Automatically assigned order ${order.invoiceNumber || orderId.slice(-6).toUpperCase()}`
+      });
+      io.emit('order_status_updated', {
+        orderId,
+        status: order.status,
+        deliveryPartnerId: chosenPartner.id
+      });
+    }
+
+    return {
+      success: true,
+      partner: chosenPartner,
+      message: `Automatically assigned to ${chosenPartner.name}`
+    };
+  } catch (err) {
+    console.error('[AUTO-ASSIGN ERROR]:', err);
+    return { success: false, message: 'Server error during auto assignment' };
+  }
+};
 
 export default router;
 
@@ -324,5 +421,18 @@ router.post('/orders/:id/reassign-delivery', async (req, res) => {
     res.json({ success: true, message: 'Delivery partner reassigned successfully' });
   } catch (error) {
     res.status(500).json({ message: 'Server error' });
+  }
+});
+
+router.post('/orders/:id/auto-assign', async (req, res) => {
+  try {
+    const io = req.app?.get('io');
+    const result = await autoAssignDeliveryPartner(req.params.id, io);
+    if (!result.success) {
+      return res.status(400).json(result);
+    }
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error during auto assignment' });
   }
 });

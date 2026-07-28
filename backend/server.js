@@ -248,6 +248,16 @@ io.on('connection', (socket) => {
       const room = `user:${data.userId}`;
       socket.join(room);
       console.log(`[Socket.io] Client joined room ${room}: ${socket.id}`);
+    } else if (data.role === 'delivery' || data.partnerId) {
+      socket.join('delivery');
+      console.log(`[Socket.io] Client joined delivery room: ${socket.id}`);
+    }
+  });
+
+  socket.on('update_delivery_location', (data) => {
+    io.emit('partner_location_changed', data);
+    if (data?.orderId) {
+      io.emit(`order_location_${data.orderId}`, data);
     }
   });
 

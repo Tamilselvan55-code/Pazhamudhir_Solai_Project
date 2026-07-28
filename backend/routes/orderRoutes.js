@@ -638,4 +638,48 @@ router.patch('/:id/cancel', async (req, res) => {
   }
 });
 
+// ─── Phase 15: POST /api/orders/:id/rate — Customer Rating & Review ─────────
+router.post('/:id/rate', protect, async (req, res) => {
+  try {
+    const { rating, review } = req.body;
+    const userId = req.user._id.toString();
+    const orderId = req.params.id;
+
+    if (!rating || rating < 1 || rating > 5) {
+      return res.status(400).json({ message: 'Please provide a rating between 1 and 5' });
+    }
+
+    const order = await prisma.order.findUnique({ where: { id: orderId } });
+
+    if (!order) return res.status(404).json({ message: 'Order not found' });
+    if (order.userId !== userId) return res.status(403).json({ message: 'Unauthorized' });
+    if (!order.isDelivered) return res.status(400).json({ message: 'Order must be delivered before rating' });
+    if (order.customerRating) return res.status(400).json({ message: 'You have already rated this delivery' });
+
+    const updatedOrder = await prisma.order.update({
+      where: { id: orderId },
+      data: {
+        customerRating: parseInt(rating),
+        customerReview: review?.trim() || null
+      }
+    });
+
+    const io = req.app?.get('io');
+    if (io) {
+      io.emit('rating_submitted', {
+        orderId,
+        partnerId: order.deliveryPartnerId,
+        rating: parseInt(rating),
+        invoiceNumber: order.invoiceNumber
+      });
+    }
+
+    res.json({ success: true, message: 'Rating submitted. Thank you!', order: formatMongoCompat(updatedOrder) });
+  } catch (error) {
+    console.error('[RATING] Error:', error);
+    res.status(500).json({ message: 'Failed to submit rating' });
+  }
+});
+
 export default router;
+

@@ -14,6 +14,7 @@ const generateTempPassword = () => {
 export const getDeliveryPartners = async (req, res) => {
   try {
     const partners = await prisma.deliveryPartner.findMany({
+      include: { documents: true },
       orderBy: { createdAt: 'desc' },
     });
     
@@ -207,6 +208,131 @@ export const getDeliveryAnalytics = async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching delivery analytics:', error);
+    res.status(500).json({ message: 'Server Error' });
+  }
+};
+
+// @desc    Get all delivery partners earnings and settlements
+// @route   GET /api/admin/delivery-earnings
+// @access  Private/Admin
+export const getAllDeliveryEarnings = async (req, res) => {
+  try {
+    const partners = await prisma.deliveryPartner.findMany({
+      include: {
+        earnings: true,
+        settlements: true
+      },
+      orderBy: { name: 'asc' }
+    });
+
+    const data = partners.map(p => {
+      const pendingAmount = p.earnings.filter(e => !e.isSettled).reduce((acc, e) => acc + e.totalEarned, 0);
+      const paidAmount = p.earnings.filter(e => e.isSettled).reduce((acc, e) => acc + e.totalEarned, 0);
+      return {
+        id: p.id,
+        name: p.name,
+        employeeId: p.employeeId,
+        mobile: p.mobile,
+        completedDeliveries: p.earnings.length,
+        pendingAmount,
+        paidAmount,
+        totalLifetimeEarnings: pendingAmount + paidAmount
+      };
+    });
+
+    res.json({ success: true, earnings: data });
+  } catch (error) {
+    console.error('Error fetching admin earnings:', error);
+    res.status(500).json({ message: 'Server Error' });
+  }
+};
+
+// @desc    Mark settlement as paid for a partner
+// @route   POST /api/admin/delivery-earnings/:id/settle
+// @access  Private/Admin
+export const paySettlement = async (req, res) => {
+  try {
+    const partnerId = req.params.id;
+    const { referenceId } = req.body;
+
+    const pendingEarnings = await prisma.deliveryEarnings.findMany({
+      where: { partnerId, isSettled: false }
+    });
+
+    if (pendingEarnings.length === 0) {
+      return res.status(400).json({ message: 'No pending earnings to settle' });
+    }
+
+    const totalAmount = pendingEarnings.reduce((acc, e) => acc + e.totalEarned, 0);
+
+    const settlement = await prisma.$transaction(async (prisma) => {
+      const newSettlement = await prisma.settlement.create({
+        data: {
+          partnerId,
+          amount: totalAmount,
+          status: 'Paid',
+          paidAt: new Date(),
+          referenceId: referenceId || ''
+        }
+      });
+
+      await prisma.deliveryEarnings.updateMany({
+        where: { partnerId, isSettled: false },
+        data: { isSettled: true, settlementId: newSettlement.id }
+      });
+
+      return newSettlement;
+    });
+
+    res.json({ success: true, settlement, message: 'Settlement marked as paid' });
+  } catch (error) {
+    console.error('Error paying settlement:', error);
+    res.status(500).json({ message: 'Server Error' });
+  }
+};
+
+// @desc    Verify delivery partner document
+// @route   POST /api/admin/delivery-partners/:id/verify
+// @access  Private/Admin
+export const verifyDeliveryPartnerDocument = async (req, res) => {
+  try {
+    const partnerId = req.params.id;
+    const { status, rejectionReason } = req.body; // status: 'Approved' or 'Rejected'
+
+    if (!['Approved', 'Rejected'].includes(status)) {
+      return res.status(400).json({ message: 'Invalid status' });
+    }
+
+    const document = await prisma.deliveryPartnerDocument.findUnique({
+      where: { partnerId }
+    });
+
+    if (!document) {
+      return res.status(404).json({ message: 'No documents uploaded by this partner.' });
+    }
+
+    await prisma.$transaction([
+      prisma.deliveryPartnerDocument.update({
+        where: { partnerId },
+        data: {
+          status,
+          rejectionReason: status === 'Rejected' ? rejectionReason : null,
+          verifiedAt: new Date(),
+          verifierName: req.admin?.name || 'Admin'
+        }
+      }),
+      prisma.deliveryPartner.update({
+        where: { id: partnerId },
+        data: {
+          isVerified: status === 'Approved',
+          status: status === 'Rejected' ? 'Inactive' : undefined
+        }
+      })
+    ]);
+
+    res.json({ success: true, message: `Partner documents ${status.toLowerCase()}` });
+  } catch (error) {
+    console.error('Error verifying partner document:', error);
     res.status(500).json({ message: 'Server Error' });
   }
 };

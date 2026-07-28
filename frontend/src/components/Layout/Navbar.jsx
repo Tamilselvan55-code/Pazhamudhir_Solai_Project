@@ -10,6 +10,7 @@ import useSettingsStore from '../../store/useSettingsStore';
 import NotificationBell from './NotificationBell';
 
 const Navbar = ({ toggleCart }) => {
+  const [isScrolled, setIsScrolled] = React.useState(false);
   const totalItems = useCartStore((state) => state.getTotalItems());
   const { wishlistItems, fetchWishlist } = useWishlistStore();
   const { userInfo, logout } = useAuthStore();
@@ -20,6 +21,18 @@ const Navbar = ({ toggleCart }) => {
       fetchWishlist();
     }
   }, [userInfo, fetchWishlist]);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 15) {
+        setIsScrolled(true);
+      } else {
+        setIsScrolled(false);
+      }
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -52,12 +65,12 @@ const Navbar = ({ toggleCart }) => {
           <span className="block truncate">{settings.announcementBanner}</span>
         </div>
       )}
-      <header className="sticky top-0 z-50" style={{
-      background: 'rgba(255,255,255,0.92)',
+      <header className="sticky top-0 z-50 transition-all duration-300" style={{
+      background: isScrolled ? 'rgba(255,255,255,0.96)' : 'rgba(255,255,255,0.92)',
       backdropFilter: 'blur(16px)',
       WebkitBackdropFilter: 'blur(16px)',
-      borderBottom: '1px solid rgba(22,163,74,0.12)',
-      boxShadow: '0 2px 20px rgba(0,0,0,0.06)',
+      borderBottom: isScrolled ? '1px solid rgba(22,163,74,0.18)' : '1px solid rgba(22,163,74,0.12)',
+      boxShadow: isScrolled ? '0 4px 18px rgba(0,0,0,0.08)' : '0 2px 20px rgba(0,0,0,0.06)',
     }}>
       <div className="max-w-7xl mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-4">
 

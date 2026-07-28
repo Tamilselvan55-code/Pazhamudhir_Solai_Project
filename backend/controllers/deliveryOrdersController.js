@@ -1,4 +1,6 @@
 import prisma from '../utils/prismaClient.js';
+import { createAndEmitNotification } from '../utils/notificationHelper.js';
+
 // @desc    Get orders assigned to logged in delivery partner
 // @route   GET /api/delivery/orders
 // @access  Private (Delivery Partner)
@@ -49,7 +51,7 @@ export const getAssignedOrders = async (req, res) => {
 // @access  Private (Delivery Partner)
 export const updateOrderStatus = async (req, res) => {
   try {
-    const { action } = req.body; // 'Accept Order', 'Picked Up', 'Out For Delivery', 'Delivered'
+    const { action } = req.body; // 'Accept Order', 'Picked Up', 'Out For Delivery'
     const partnerId = req.partner.id;
     const orderId = req.params.id;
 
@@ -81,35 +83,61 @@ export const updateOrderStatus = async (req, res) => {
       if (!order.pickedUpAt) return res.status(400).json({ message: 'You must mark Picked Up first' });
       if (order.outForDeliveryAt) return res.status(400).json({ message: 'Order already Out For Delivery' });
       
+      // Phase 14: Generate 4-digit OTP when partner marks Out For Delivery
+      const otp = String(Math.floor(1000 + Math.random() * 9000));
+      const otpExpiry = new Date(now.getTime() + 10 * 60 * 1000); // 10 minutes
+
       updateData.outForDeliveryAt = now;
       updateData.status = 'Out for Delivery';
+      updateData.deliveryOtp = otp;
+      updateData.deliveryOtpExpiry = otpExpiry;
+      updateData.deliveryOtpVerified = false;
       
       const newHistoryEntry = { status: 'Out for Delivery', note: 'Order is out for delivery', date: now.toISOString() };
       updateData.statusHistory = order.statusHistory && Array.isArray(order.statusHistory)
         ? [...order.statusHistory, newHistoryEntry]
         : [newHistoryEntry];
-    } 
-    else if (action === 'Delivered') {
-      if (!order.outForDeliveryAt) return res.status(400).json({ message: 'You must mark Out For Delivery first' });
-      if (order.isDelivered) return res.status(400).json({ message: 'Order already delivered' });
 
-      updateData.deliveredAt = now;
-      updateData.isDelivered = true;
-      updateData.status = 'Delivered';
-      
-      const newHistoryEntry = { status: 'Delivered', note: 'Order has been delivered', date: now.toISOString() };
-      updateData.statusHistory = order.statusHistory && Array.isArray(order.statusHistory)
-        ? [...order.statusHistory, newHistoryEntry]
-        : [newHistoryEntry];
+      // After update, notify customer with OTP via socket + notification
+      const io = req.app?.get('io');
+      if (io && order.userId) {
+        io.to(`user:${order.userId}`).emit('otp_generated', {
+          orderId,
+          otp,
+          invoiceNumber: order.invoiceNumber,
+          message: `Your delivery OTP is ${otp}. Share it ONLY after receiving your order.`
+        });
+      }
 
-      // Automatically return partner to Available
-      partnerUpdate = {
-        where: { id: partnerId },
-        data: { status: 'Available' }
-      };
+      // Save update first, then send notification
+      await prisma.order.update({ where: { id: orderId }, data: updateData });
+
+      if (order.userId) {
+        await createAndEmitNotification(io, {
+          userId: order.userId,
+          title: '🔐 Your Delivery OTP',
+          message: `Your delivery OTP for order ${order.invoiceNumber || orderId.slice(-6).toUpperCase()} is ${otp}. Share it only after receiving your order. Valid for 10 minutes.`,
+          type: 'delivery',
+          role: 'customer',
+          actionUrl: '/profile?tab=orders',
+          orderId: order.id,
+          invoiceNumber: order.invoiceNumber || ''
+        });
+      }
+
+      const updatedOrder = await prisma.order.findUnique({
+        where: { id: orderId },
+        include: { user: { select: { fullName: true, phoneNumber: true } } }
+      });
+
+      if (io) {
+        io.emit('order_status_updated', { orderId, status: 'Out for Delivery', action });
+      }
+
+      return res.json({ success: true, order: updatedOrder, message: 'Successfully marked as Out For Delivery. OTP generated for customer.' });
     } 
     else {
-      return res.status(400).json({ message: 'Invalid action' });
+      return res.status(400).json({ message: 'Invalid action. Use /verify-otp to complete delivery.' });
     }
 
     const transactionTasks = [
@@ -140,7 +168,6 @@ export const updateOrderStatus = async (req, res) => {
         type: 'order',
         link: `/admin/orders?search=${updatedOrder.invoiceNumber || orderId}`
       });
-      // also emit the generic update
       io.emit('order_status_updated', {
         orderId,
         status: updatedOrder.status,
@@ -152,6 +179,129 @@ export const updateOrderStatus = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// @desc    Verify delivery OTP and complete delivery (Phase 14)
+// @route   POST /api/delivery/orders/:id/verify-otp
+// @access  Private (Delivery Partner)
+export const verifyDeliveryOtp = async (req, res) => {
+  try {
+    const { otp } = req.body;
+    const partnerId = req.partner.id;
+    const orderId = req.params.id;
+
+    if (!otp || otp.length !== 4) {
+      return res.status(400).json({ message: 'Please enter a valid 4-digit OTP' });
+    }
+
+    const order = await prisma.order.findUnique({ where: { id: orderId } });
+
+    if (!order) return res.status(404).json({ message: 'Order not found' });
+    if (order.deliveryPartnerId !== partnerId) return res.status(403).json({ message: 'Unauthorized' });
+    if (!order.outForDeliveryAt) return res.status(400).json({ message: 'Order must be Out For Delivery before OTP verification' });
+    if (order.isDelivered) return res.status(400).json({ message: 'Order already delivered' });
+    if (order.deliveryOtpVerified) return res.status(400).json({ message: 'OTP already used' });
+
+    if (!order.deliveryOtp) return res.status(400).json({ message: 'No OTP generated for this order' });
+
+    // Check expiry
+    if (order.deliveryOtpExpiry && new Date() > new Date(order.deliveryOtpExpiry)) {
+      return res.status(400).json({ message: 'OTP has expired. Please ask admin to regenerate.' });
+    }
+
+    // Validate OTP (server-side only)
+    if (String(otp).trim() !== String(order.deliveryOtp).trim()) {
+      return res.status(400).json({ message: 'Invalid OTP. Please try again.' });
+    }
+
+    const now = new Date();
+    const newHistoryEntry = { status: 'Delivered', note: 'Order delivered and OTP verified', date: now.toISOString() };
+    const updatedHistory = order.statusHistory && Array.isArray(order.statusHistory)
+      ? [...order.statusHistory, newHistoryEntry]
+      : [newHistoryEntry];
+
+    // Phase 17: Calculate Earnings
+    const distanceKm = order.shippingAddress?.distanceFromStore || 0;
+    const baseEarnings = 30;
+    let distanceBonus = 0;
+    if (distanceKm > 3) {
+      distanceBonus = (distanceKm - 3) * 5; // 5 Rs per extra km
+    }
+    
+    // Peak hour bonus (6 PM - 9 PM)
+    const currentHour = now.getHours();
+    const peakHourBonus = (currentHour >= 18 && currentHour <= 21) ? 10 : 0;
+    
+    const totalEarned = baseEarnings + distanceBonus + peakHourBonus;
+
+    // Mark delivered, OTP verified, and generate earnings in one transaction
+    await prisma.$transaction([
+      prisma.order.update({
+        where: { id: orderId },
+        data: {
+          deliveredAt: now,
+          isDelivered: true,
+          status: 'Delivered',
+          deliveryOtpVerified: true,
+          statusHistory: updatedHistory
+        }
+      }),
+      prisma.deliveryPartner.update({
+        where: { id: partnerId },
+        data: { status: 'Available' }
+      }),
+      prisma.deliveryEarnings.create({
+        data: {
+          partnerId,
+          orderId,
+          distanceKm,
+          baseEarnings,
+          distanceBonus,
+          peakHourBonus,
+          totalEarned
+        }
+      })
+    ]);
+
+    const io = req.app?.get('io');
+
+    // Notify customer: OTP verified + delivered
+    if (order.userId) {
+      await createAndEmitNotification(io, {
+        userId: order.userId,
+        title: '✅ Order Delivered!',
+        message: `Your order ${order.invoiceNumber || orderId.slice(-6).toUpperCase()} has been delivered successfully. OTP verified.`,
+        type: 'delivery',
+        role: 'customer',
+        actionUrl: '/profile?tab=orders',
+        orderId: order.id,
+        invoiceNumber: order.invoiceNumber || ''
+      });
+
+      // Emit otp_verified to customer room
+      if (io) {
+        io.to(`user:${order.userId}`).emit('otp_verified', {
+          orderId,
+          invoiceNumber: order.invoiceNumber,
+          message: 'Your order has been delivered. OTP verified successfully.'
+        });
+      }
+    }
+
+    if (io) {
+      io.emit('order_status_updated', { orderId, status: 'Delivered', action: 'Delivered' });
+      io.emit('admin_notification', {
+        title: 'Order Delivered',
+        message: `Order ${order.invoiceNumber || orderId.slice(-6).toUpperCase()} delivered & OTP verified.`,
+        type: 'order'
+      });
+    }
+
+    res.json({ success: true, message: 'OTP verified! Order marked as Delivered.' });
+  } catch (error) {
+    console.error('[VERIFY OTP ERROR]:', error);
+    res.status(500).json({ message: 'Server error during OTP verification' });
   }
 };
 

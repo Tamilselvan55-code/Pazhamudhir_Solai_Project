@@ -39,31 +39,38 @@ const VerifyEmail = () => {
   const [resendCooldown, setResendCooldown] = useState(60);
   
   // Attempt locking state
-  const [attempts, setAttempts] = useState(0);
-  const [lockedUntil, setLockedUntil] = useState(null);
-  const [lockTimeRemaining, setLockTimeRemaining] = useState(0);
+  const [attempts, setAttempts] = useState(() => {
+    const saved = localStorage.getItem(`verify_attempts_${email}`);
+    return saved ? parseInt(saved, 10) : 0;
+  });
+
+  const [lockedUntil, setLockedUntil] = useState(() => {
+    const saved = localStorage.getItem(`verify_lock_${email}`);
+    const lockTime = saved ? parseInt(saved, 10) : null;
+    if (lockTime && lockTime > Date.now()) {
+      return lockTime;
+    }
+    return null;
+  });
+
+  const [lockTimeRemaining, setLockTimeRemaining] = useState(() => {
+    if (lockedUntil && lockedUntil > Date.now()) {
+      return Math.ceil((lockedUntil - Date.now()) / 1000);
+    }
+    return 0;
+  });
 
   const otpInputsRef = useRef([]);
 
-  // Check locking state on render
   useEffect(() => {
-    const savedLock = localStorage.getItem(`verify_lock_${email}`);
-    const savedAttempts = localStorage.getItem(`verify_attempts_${email}`);
-    if (savedAttempts) {
-      setAttempts(parseInt(savedAttempts, 10));
+    if (lockedUntil && lockedUntil <= Date.now()) {
+      localStorage.removeItem(`verify_lock_${email}`);
+      localStorage.removeItem(`verify_attempts_${email}`);
+      setAttempts(0);
+      setLockedUntil(null);
+      setLockTimeRemaining(0);
     }
-    if (savedLock) {
-      const lockTime = parseInt(savedLock, 10);
-      if (lockTime > Date.now()) {
-        setLockedUntil(lockTime);
-        setLockTimeRemaining(Math.ceil((lockTime - Date.now()) / 1000));
-      } else {
-        localStorage.removeItem(`verify_lock_${email}`);
-        localStorage.removeItem(`verify_attempts_${email}`);
-        setAttempts(0);
-      }
-    }
-  }, [email]);
+  }, [email, lockedUntil]);
 
   // Lock timer countdown
   useEffect(() => {

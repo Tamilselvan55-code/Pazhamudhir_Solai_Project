@@ -7,7 +7,7 @@ import {
   Menu, X, ChevronDown, Bell, Search, ChevronLeft, ChevronRight,
   Package, User as UserIcon, CreditCard as PayIcon,
   Layers, Gift, AlertCircle, Loader2, CheckCircle, XCircle, UserPlus,
-  Database, Activity, Truck
+  Database, Activity, Truck, DollarSign
 } from 'lucide-react';
 import { io as socketIO } from 'socket.io-client';
 import useAuthStore from '../../store/useAuthStore';
@@ -487,6 +487,7 @@ const AdminLayout = ({ children }) => {
     { name: 'Payments', path: '/admin/payments', icon: CreditCard, permission: 'orders' },
     { name: 'Users', path: '/admin/users', icon: Users, permission: 'users' },
     { name: 'Delivery Dashboard', path: '/admin/delivery-dashboard', icon: Truck, permission: 'users' },
+    { name: 'Delivery Earnings', path: '/admin/delivery-earnings', icon: DollarSign, permission: 'users' },
     { name: 'Delivery Partners', path: '/admin/delivery-partners', icon: Users, permission: 'users' },
     { name: 'Notifications', path: '/admin/notifications', icon: Bell, permission: 'notifications' },
     { name: 'Staff', path: '/admin/staff', icon: UserPlus, permission: 'users' },

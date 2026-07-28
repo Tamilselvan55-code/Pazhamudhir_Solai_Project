@@ -250,4 +250,158 @@ router.get('/reports/analytics', async (req, res) => {
   }
 });
 
+// ─── Phase 16: GET /admin/delivery-analytics ─────────────────────────────────
+router.get('/delivery-analytics', protectAdmin, async (req, res) => {
+  try {
+    const { period = 'week', from, to } = req.query;
+
+    const now = new Date();
+    let startDate;
+    let endDate = now;
+
+    if (period === 'today') {
+      startDate = new Date(now); startDate.setHours(0, 0, 0, 0);
+    } else if (period === 'yesterday') {
+      startDate = new Date(now); startDate.setDate(startDate.getDate() - 1); startDate.setHours(0, 0, 0, 0);
+      endDate = new Date(startDate); endDate.setHours(23, 59, 59, 999);
+    } else if (period === 'week') {
+      startDate = new Date(now); startDate.setDate(now.getDate() - 7); startDate.setHours(0, 0, 0, 0);
+    } else if (period === 'month') {
+      startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+    } else if (period === 'custom' && from && to) {
+      startDate = new Date(from);
+      endDate = new Date(to);
+    } else {
+      startDate = new Date(now); startDate.setDate(now.getDate() - 7); startDate.setHours(0, 0, 0, 0);
+    }
+
+    const baseWhere = {
+      deliveryPartnerId: { not: null },
+      createdAt: { gte: startDate, lte: endDate }
+    };
+
+    // Aggregate delivered orders for this period
+    const [deliveredOrders, allOrders, partners] = await Promise.all([
+      prisma.order.findMany({
+        where: { ...baseWhere, isDelivered: true },
+        include: {
+          deliveryPartner: { select: { id: true, name: true, vehicleType: true, vehicleNumber: true } },
+          user: { select: { fullName: true } }
+        }
+      }),
+      prisma.order.findMany({
+        where: baseWhere,
+        include: { deliveryPartner: { select: { id: true, name: true } } }
+      }),
+      prisma.deliveryPartner.findMany({ where: { isActive: true } })
+    ]);
+
+    const cancelledOrders = allOrders.filter(o => o.status === 'Cancelled' || o.status === 'Cancelled by Customer');
+
+    // Average delivery time (minutes from deliveryAssignedAt to deliveredAt)
+    const deliveryTimes = deliveredOrders
+      .filter(o => o.deliveryAssignedAt && o.deliveredAt)
+      .map(o => (new Date(o.deliveredAt) - new Date(o.deliveryAssignedAt)) / 60000);
+    const avgDeliveryMinutes = deliveryTimes.length > 0
+      ? Math.round(deliveryTimes.reduce((a, b) => a + b, 0) / deliveryTimes.length)
+      : 0;
+
+    // Average customer rating
+    const ratedOrders = deliveredOrders.filter(o => o.customerRating);
+    const avgRating = ratedOrders.length > 0
+      ? (ratedOrders.reduce((a, o) => a + o.customerRating, 0) / ratedOrders.length).toFixed(1)
+      : null;
+
+    // Per-partner performance breakdown
+    const partnerMap = {};
+    for (const p of partners) {
+      partnerMap[p.id] = {
+        id: p.id,
+        name: p.name,
+        vehicleType: p.vehicleType || 'Two Wheeler',
+        completed: 0,
+        cancelled: 0,
+        totalTime: 0,
+        timedCount: 0,
+        ratings: [],
+        totalAssigned: 0
+      };
+    }
+
+    for (const o of allOrders) {
+      if (!o.deliveryPartnerId || !partnerMap[o.deliveryPartnerId]) continue;
+      partnerMap[o.deliveryPartnerId].totalAssigned++;
+      if (o.isDelivered) {
+        partnerMap[o.deliveryPartnerId].completed++;
+        if (o.deliveryAssignedAt && o.deliveredAt) {
+          const mins = (new Date(o.deliveredAt) - new Date(o.deliveryAssignedAt)) / 60000;
+          partnerMap[o.deliveryPartnerId].totalTime += mins;
+          partnerMap[o.deliveryPartnerId].timedCount++;
+        }
+        if (o.customerRating) partnerMap[o.deliveryPartnerId].ratings.push(o.customerRating);
+      }
+      if (o.status === 'Cancelled' || o.status === 'Cancelled by Customer') {
+        partnerMap[o.deliveryPartnerId].cancelled++;
+      }
+    }
+
+    const byPartner = Object.values(partnerMap)
+      .filter(p => p.totalAssigned > 0)
+      .map(p => ({
+        id: p.id,
+        name: p.name,
+        vehicleType: p.vehicleType,
+        completed: p.completed,
+        cancelled: p.cancelled,
+        avgDeliveryMinutes: p.timedCount > 0 ? Math.round(p.totalTime / p.timedCount) : 0,
+        avgRating: p.ratings.length > 0 ? (p.ratings.reduce((a, b) => a + b, 0) / p.ratings.length).toFixed(1) : null,
+        acceptanceRate: p.totalAssigned > 0 ? Math.round((p.completed / p.totalAssigned) * 100) : 0
+      }))
+      .sort((a, b) => b.completed - a.completed);
+
+    // Leaderboard
+    const topByDeliveries = byPartner[0] || null;
+    const topByRating = [...byPartner].filter(p => p.avgRating).sort((a, b) => b.avgRating - a.avgRating)[0] || null;
+    const topBySpeed = [...byPartner].filter(p => p.avgDeliveryMinutes > 0).sort((a, b) => a.avgDeliveryMinutes - b.avgDeliveryMinutes)[0] || null;
+
+    // Daily chart data (last 7 days)
+    const dailyChart = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now); d.setDate(now.getDate() - i); d.setHours(0, 0, 0, 0);
+      const dEnd = new Date(d); dEnd.setHours(23, 59, 59, 999);
+      const count = deliveredOrders.filter(o => {
+        const del = new Date(o.deliveredAt);
+        return del >= d && del <= dEnd;
+      }).length;
+      dailyChart.push({
+        date: d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }),
+        deliveries: count
+      });
+    }
+
+    res.json({
+      period,
+      summary: {
+        total: allOrders.length,
+        completed: deliveredOrders.length,
+        cancelled: cancelledOrders.length,
+        pending: allOrders.length - deliveredOrders.length - cancelledOrders.length,
+        avgDeliveryMinutes,
+        avgRating
+      },
+      leaderboard: {
+        topByDeliveries,
+        topByRating,
+        topBySpeed
+      },
+      byPartner,
+      dailyChart
+    });
+  } catch (err) {
+    console.error('[DELIVERY ANALYTICS ERROR]:', err);
+    res.status(500).json({ message: 'Server error fetching delivery analytics' });
+  }
+});
+
 export default router;
+

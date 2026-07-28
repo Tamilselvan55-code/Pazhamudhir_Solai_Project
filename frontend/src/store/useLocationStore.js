@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import axios from 'axios';
 import { API_BASE } from '../config/api';
-import { calculateDistance, isWithinDeliveryRadius, logDeliveryDecision } from '../utils/distance';
+import { isWithinDeliveryRadius, logDeliveryDecision } from '../utils/distance';
 import useSettingsStore from './useSettingsStore';
 
 // ── Fallback store coordinates (used ONLY if settings API has not loaded yet) ──
@@ -241,7 +241,9 @@ const useLocationStore = create(
                     const parsed = JSON.parse(authRaw);
                     fallbackAddress = parsed?.state?.user?.deliveryAddress;
                   }
-                } catch (e) {}
+                } catch {
+                  // Fallback to error logic below
+                }
 
                 if (fallbackAddress?.lat != null && fallbackAddress?.lon != null) {
                   const result = await fetchDeliveryData(fallbackAddress.lat, fallbackAddress.lon);
@@ -311,7 +313,9 @@ const useLocationStore = create(
                   const parsed = JSON.parse(authRaw);
                   fallbackAddress = parsed?.state?.user?.deliveryAddress;
                 }
-              } catch (e) {}
+              } catch {
+                // Fallback to error logic below
+              }
 
               if (fallbackAddress?.lat != null && fallbackAddress?.lon != null) {
                 const result = await fetchDeliveryData(fallbackAddress.lat, fallbackAddress.lon);

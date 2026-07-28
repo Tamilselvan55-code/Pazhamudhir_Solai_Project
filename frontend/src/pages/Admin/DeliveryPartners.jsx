@@ -1,8 +1,9 @@
 import { API_BASE } from '../../config/api';
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
-import { Truck, Plus, Search, Edit2, Shield, User, Loader2 } from 'lucide-react';
+import { Truck, Plus, Search, Edit2, Shield, User, Loader2, FileText, CheckCircle, XCircle } from 'lucide-react';
 import AdminLayout from '../../components/Admin/AdminLayout';
+import DocumentReviewModal from '../../components/Admin/DocumentReviewModal';
 import useAuthStore from '../../store/useAuthStore';
 import axios from 'axios';
 import useModal from '../../hooks/useModal';
@@ -18,6 +19,7 @@ const DeliveryPartners = () => {
   // Modal states
   const [modalOpen, setModalOpen] = useState(false);
   const [resetModalOpen, setResetModalOpen] = useState(false);
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
   const [selectedPartner, setSelectedPartner] = useState(null);
   
   // Form states
@@ -259,8 +261,25 @@ const DeliveryPartners = () => {
                         }`}>
                           {!partner.isActive ? 'Inactive' : partner.status}
                         </span>
+                        {partner.documents?.status === 'Pending' && (
+                          <span className="ml-2 px-2 py-0.5 inline-flex text-[10px] leading-5 font-bold rounded-full bg-amber-100 text-amber-800">
+                            Docs Pending
+                          </span>
+                        )}
+                        {!partner.isVerified && partner.documents?.status !== 'Pending' && (
+                          <span className="ml-2 px-2 py-0.5 inline-flex text-[10px] leading-5 font-bold rounded-full bg-red-100 text-red-800">
+                            Unverified
+                          </span>
+                        )}
                       </td>
                       <td className="py-4 px-6 text-right space-x-3">
+                        <button
+                          onClick={() => { setSelectedPartner(partner); setReviewModalOpen(true); }}
+                          className="text-indigo-600 hover:text-indigo-900 transition-colors p-1 rounded-md hover:bg-indigo-50"
+                          title="Review Documents"
+                        >
+                          <FileText className="w-4 h-4" />
+                        </button>
                         <button
                           onClick={() => handleOpenModal(partner)}
                           className="text-blue-600 hover:text-blue-900 transition-colors p-1 rounded-md hover:bg-blue-50"
@@ -450,6 +469,15 @@ const DeliveryPartners = () => {
           </div>
         </div>
       )}
+
+      {/* Document Review Modal */}
+      <DocumentReviewModal 
+        isOpen={reviewModalOpen} 
+        onClose={() => setReviewModalOpen(false)} 
+        partner={selectedPartner}
+        token={adminInfo.token}
+        onVerify={fetchPartners}
+      />
     </AdminLayout>
   );
 };
