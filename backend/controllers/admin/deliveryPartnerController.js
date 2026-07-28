@@ -33,7 +33,7 @@ export const getDeliveryPartners = async (req, res) => {
 // @route   POST /api/admin/delivery-partners
 // @access  Private/Admin
 export const createDeliveryPartner = async (req, res) => {
-  const { name, email, mobile, vehicleNumber, status } = req.body;
+  const { name, email, mobile, vehicleNumber, vehicleType, emergencyContact, status } = req.body;
 
   try {
     const existingPartner = await prisma.deliveryPartner.findFirst({
@@ -63,6 +63,8 @@ export const createDeliveryPartner = async (req, res) => {
         mobile,
         password: hashedPassword,
         vehicleNumber,
+        vehicleType: vehicleType || 'Two Wheeler',
+        emergencyContact,
         status: status || 'Available'
       }
     });
@@ -80,7 +82,7 @@ export const createDeliveryPartner = async (req, res) => {
 // @access  Private/Admin
 export const updateDeliveryPartner = async (req, res) => {
   const { id } = req.params;
-  const { name, email, mobile, vehicleNumber, status, isActive } = req.body;
+  const { name, email, mobile, vehicleNumber, vehicleType, emergencyContact, status, isActive } = req.body;
 
   try {
     const partner = await prisma.deliveryPartner.findUnique({ where: { id } });
@@ -95,7 +97,9 @@ export const updateDeliveryPartner = async (req, res) => {
         name: name || partner.name,
         email: email || partner.email,
         mobile: mobile || partner.mobile,
-        vehicleNumber: vehicleNumber || partner.vehicleNumber,
+        vehicleNumber: vehicleNumber !== undefined ? vehicleNumber : partner.vehicleNumber,
+        vehicleType: vehicleType !== undefined ? vehicleType : partner.vehicleType,
+        emergencyContact: emergencyContact !== undefined ? emergencyContact : partner.emergencyContact,
         status: status || partner.status,
         isActive: isActive !== undefined ? isActive : partner.isActive,
       }
@@ -136,6 +140,73 @@ export const resetPassword = async (req, res) => {
 
     res.json({ message: 'Password reset successfully', tempPassword });
   } catch (error) {
+    res.status(500).json({ message: 'Server Error' });
+  }
+};
+
+// @desc    Get delivery analytics for Admin Dashboard
+// @route   GET /api/admin/delivery-partners/analytics
+// @access  Private/Admin
+export const getDeliveryAnalytics = async (req, res) => {
+  try {
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+
+    const [
+      totalPartners,
+      availablePartners,
+      onDeliveryPartners,
+      offlinePartners,
+      inactivePartners,
+      completedToday,
+      completedThisMonth,
+      activeOrders
+    ] = await Promise.all([
+      prisma.deliveryPartner.count(),
+      prisma.deliveryPartner.count({ where: { status: 'Available', isActive: true } }),
+      prisma.deliveryPartner.count({ where: { status: 'On Delivery', isActive: true } }),
+      prisma.deliveryPartner.count({ where: { status: 'Offline', isActive: true } }),
+      prisma.deliveryPartner.count({ where: { isActive: false } }),
+      prisma.order.count({
+        where: {
+          isDelivered: true,
+          deliveredAt: { gte: startOfToday }
+        }
+      }),
+      prisma.order.count({
+        where: {
+          isDelivered: true,
+          deliveredAt: { gte: startOfMonth }
+        }
+      }),
+      prisma.order.count({
+        where: {
+          deliveryPartnerId: { not: null },
+          isDelivered: false
+        }
+      })
+    ]);
+
+    res.json({
+      partners: {
+        total: totalPartners,
+        available: availablePartners,
+        onDelivery: onDeliveryPartners,
+        offline: offlinePartners,
+        inactive: inactivePartners
+      },
+      orders: {
+        completedToday,
+        completedThisMonth,
+        active: activeOrders
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching delivery analytics:', error);
     res.status(500).json({ message: 'Server Error' });
   }
 };

@@ -306,6 +306,7 @@ model StoreSettings {
   contactUs                String?  @default("Contact us via phone or email.")
   privacyPolicy            String?  @default("Your privacy is our priority.")
   termsAndConditions       String?  @default("Standard terms and conditions apply.")
+  deliverySettings         Json?    @default("{\"maxActiveOrders\":3,\"autoAssign\":false,\"workingHours\":\"06:00-22:00\",\"deliveryRadiusKm\":10}")
   createdAt                DateTime @default(now())
   updatedAt                DateTime @updatedAt
 }
@@ -381,17 +382,19 @@ model PendingUser {
 }
 
 model DeliveryPartner {
-  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  employeeId    String   @unique
-  name          String
-  email         String   @unique
-  mobile        String   @unique
-  password      String
-  status        String   @default("Available") // Available, On Delivery, Offline, Inactive
-  vehicleNumber String?
-  profileImage  String?
-  isActive      Boolean  @default(true)
-  orders        Order[]  // Relation to assigned orders
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  employeeId       String   @unique
+  name             String
+  email            String   @unique
+  mobile           String   @unique
+  password         String
+  status           String   @default("Available") // Available, On Delivery, Offline, Inactive
+  vehicleNumber    String?
+  vehicleType      String?  @default("Two Wheeler")
+  emergencyContact String?
+  profileImage     String?
+  isActive         Boolean  @default(true)
+  orders           Order[]  // Relation to assigned orders
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 }

@@ -3,10 +3,13 @@ import {
   getDeliveryPartners,
   createDeliveryPartner,
   updateDeliveryPartner,
-  resetPassword
+  resetPassword,
+  getDeliveryAnalytics
 } from '../../controllers/admin/deliveryPartnerController.js';
 
 const router = express.Router();
+
+router.get('/delivery-partners/analytics', getDeliveryAnalytics);
 
 router.route('/delivery-partners')
   .get(getDeliveryPartners)

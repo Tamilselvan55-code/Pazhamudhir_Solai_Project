@@ -5,6 +5,7 @@ import {
   updateDeliveryProfile,
   updateDeliveryPassword,
   logoutDeliveryPartner,
+  getDeliveryPartnerAnalytics,
 } from '../controllers/deliveryController.js';
 import { getAssignedOrders, updateOrderStatus, rejectOrder } from '../controllers/deliveryOrdersController.js';
 import { protectDelivery } from '../middleware/deliveryAuthMiddleware.js';
@@ -18,6 +19,8 @@ router.route('/profile')
   .put(protectDelivery, updateDeliveryProfile);
 
 router.put('/profile/password', protectDelivery, updateDeliveryPassword);
+
+router.get('/analytics', protectDelivery, getDeliveryPartnerAnalytics);
 
 router.get('/orders', protectDelivery, getAssignedOrders);
 router.patch('/orders/:id/status', protectDelivery, updateOrderStatus);

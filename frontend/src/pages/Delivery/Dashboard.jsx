@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { API_BASE } from '../../config/api';
+import { API_BASE, API_URL } from '../../config/api';
+import { io } from 'socket.io-client';
 
 const DeliveryDashboard = () => {
   const [partner, setPartner] = useState(null);
@@ -138,7 +139,10 @@ const DeliveryDashboard = () => {
             <div className="bg-white overflow-hidden shadow-sm rounded-2xl border border-gray-100">
               <div className="p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg leading-6 font-medium text-gray-900">Profile</h3>
+                  <div className="flex items-center gap-3">
+                    <h3 className="text-lg leading-6 font-medium text-gray-900">Profile</h3>
+                    <button onClick={() => navigate('/delivery/profile')} className="text-xs font-semibold text-orange-600 hover:text-orange-700 bg-orange-50 px-2 py-1 rounded-md">Edit Profile</button>
+                  </div>
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${partner?.status === 'Available' ? 'bg-green-100 text-green-800' : partner?.status === 'On Delivery' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}`}>
                     {partner?.status}
                   </span>
@@ -209,10 +213,63 @@ const DeliveryDashboard = () => {
 
           {/* Assigned Orders Column */}
           <div className="col-span-1 md:col-span-2 space-y-6">
+            <AnalyticsOverview token={JSON.parse(localStorage.getItem('deliveryPartnerInfo'))?.token} />
             <AssignedOrders token={JSON.parse(localStorage.getItem('deliveryPartnerInfo'))?.token} />
           </div>
         </div>
       </main>
+    </div>
+  );
+};
+
+const AnalyticsOverview = ({ token }) => {
+  const [metrics, setMetrics] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      try {
+        const { data } = await axios.get(`${API_BASE}/delivery/analytics`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setMetrics(data);
+      } catch (err) {
+        console.error('Failed to fetch analytics', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    if (token) fetchAnalytics();
+  }, [token]);
+
+  if (loading) return <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-center min-h-[120px]"><div className="w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full animate-spin"></div></div>;
+
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center text-center">
+        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Today</span>
+        <span className="text-2xl font-black text-gray-900 mt-1">{metrics?.deliveriesToday || 0}</span>
+      </div>
+      <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center text-center">
+        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Weekly</span>
+        <span className="text-2xl font-black text-gray-900 mt-1">{metrics?.weeklyDeliveries || 0}</span>
+      </div>
+      <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center text-center">
+        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Monthly</span>
+        <span className="text-2xl font-black text-gray-900 mt-1">{metrics?.monthlyDeliveries || 0}</span>
+      </div>
+      <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center text-center">
+        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Earnings</span>
+        <span className="text-2xl font-black text-green-600 mt-1">₹{metrics?.totalEarnings || 0}</span>
+      </div>
+      <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center text-center col-span-2 md:col-span-2">
+        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Rating</span>
+        <span className="text-2xl font-black text-yellow-500 mt-1">⭐ {metrics?.rating || '4.8'}</span>
+      </div>
+      <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center text-center col-span-2 md:col-span-2">
+        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Acceptance Rate</span>
+        <span className="text-2xl font-black text-blue-600 mt-1">{metrics?.acceptanceRate || '95'}%</span>
+      </div>
     </div>
   );
 };
@@ -251,6 +308,39 @@ const AssignedOrders = ({ token }) => {
       setHistoryLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (activeTab === 'Assigned') fetchOrders();
+    else fetchHistory();
+  }, [activeTab, token]); // eslint-disable-line
+
+  useEffect(() => {
+    if (!token) return;
+    const socket = io(API_URL, { transports: ['websocket', 'polling'] });
+    socket.on('connect', () => {
+      // we could join a partner specific room, but for now we listen globally and filter by partnerId
+      socket.emit('join', { role: 'delivery' });
+    });
+
+    socket.on('delivery_assigned', (data) => {
+      const stored = localStorage.getItem('deliveryPartnerInfo');
+      if (stored) {
+        const partner = JSON.parse(stored);
+        if (partner._id === data.partnerId || partner.id === data.partnerId) {
+          fetchOrders(); // refresh the list
+          // show a browser notification if possible
+          if ('Notification' in window && Notification.permission === 'granted') {
+            new Notification(data.title || 'New Order Assigned', {
+              body: data.message
+            });
+          }
+        }
+      }
+    });
+
+    return () => socket.disconnect();
+  }, [token]);
+
 
   useEffect(() => {
     fetchOrders();

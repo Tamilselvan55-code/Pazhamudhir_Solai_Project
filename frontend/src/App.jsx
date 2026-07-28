@@ -43,10 +43,12 @@ const Staff = lazy(() => import('./pages/Admin/Staff'));
 const DatabaseController = lazy(() => import('./pages/Admin/Database'));
 const SystemLogs = lazy(() => import('./pages/Admin/SystemLogs'));
 const DeliveryPartners = lazy(() => import('./pages/Admin/DeliveryPartners'));
+const AdminDeliveryDashboard = lazy(() => import('./pages/Admin/DeliveryDashboard'));
 
 // Lazy Loaded Delivery Pages
 const DeliveryLogin = lazy(() => import('./pages/Delivery/Login'));
 const DeliveryDashboard = lazy(() => import('./pages/Delivery/Dashboard'));
+const DeliveryProfile = lazy(() => import('./pages/Delivery/Profile'));
 const AdminRedirectHandler = () => {
   const { adminInfo, userInfo } = useAuthStore();
   if (userInfo && (!adminInfo || !adminInfo.token)) {
@@ -189,6 +191,7 @@ function App() {
             
             <Route path="/delivery/login" element={<DeliveryLogin />} />
             <Route path="/delivery/dashboard" element={<DeliveryDashboard />} />
+            <Route path="/delivery/profile" element={<DeliveryProfile />} />
             
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
@@ -205,6 +208,7 @@ function App() {
             <Route path="/admin/database" element={<DatabaseController />} />
             <Route path="/admin/system-logs" element={<SystemLogs />} />
             <Route path="/admin/delivery-partners" element={<DeliveryPartners />} />
+            <Route path="/admin/delivery-dashboard" element={<AdminDeliveryDashboard />} />
 
             <Route path="*" element={<Home />} />
           </Routes>

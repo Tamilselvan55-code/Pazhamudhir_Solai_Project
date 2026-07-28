@@ -81,6 +81,8 @@ export const updateDeliveryProfile = async (req, res) => {
           email: req.body.email || partner.email,
           mobile: req.body.mobile || partner.mobile,
           vehicleNumber: req.body.vehicleNumber || partner.vehicleNumber,
+          vehicleType: req.body.vehicleType || partner.vehicleType,
+          emergencyContact: req.body.emergencyContact || partner.emergencyContact,
           status: req.body.status || partner.status,
           profileImage: req.body.profileImage || partner.profileImage,
         },
@@ -153,6 +155,68 @@ export const updateDeliveryPassword = async (req, res) => {
 
     res.status(200).json({ message: 'Password changed successfully' });
   } catch (error) {
+    res.status(500).json({ message: 'Server Error' });
+  }
+};
+
+// @desc    Get delivery partner analytics
+// @route   GET /api/delivery/analytics
+// @access  Private (Delivery Partner)
+export const getDeliveryPartnerAnalytics = async (req, res) => {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(today.getDate() - today.getDay());
+
+    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+
+    const [todayCount, weeklyCount, monthlyCount, totalDelivered] = await Promise.all([
+      prisma.order.count({
+        where: {
+          deliveryPartnerId: req.partner.id,
+          orderStatus: 'Delivered',
+          deliveredAt: { gte: today }
+        }
+      }),
+      prisma.order.count({
+        where: {
+          deliveryPartnerId: req.partner.id,
+          orderStatus: 'Delivered',
+          deliveredAt: { gte: startOfWeek }
+        }
+      }),
+      prisma.order.count({
+        where: {
+          deliveryPartnerId: req.partner.id,
+          orderStatus: 'Delivered',
+          deliveredAt: { gte: startOfMonth }
+        }
+      }),
+      prisma.order.count({
+        where: {
+          deliveryPartnerId: req.partner.id,
+          orderStatus: 'Delivered'
+        }
+      })
+    ]);
+
+    // For mock metrics that aren't fully tracked yet
+    const earnings = totalDelivered * 40; // Assume ₹40 per delivery
+    const rating = 4.8;
+    const acceptanceRate = 95;
+
+    res.json({
+      deliveriesToday: todayCount,
+      weeklyDeliveries: weeklyCount,
+      monthlyDeliveries: monthlyCount,
+      totalEarnings: earnings,
+      rating,
+      acceptanceRate
+    });
+  } catch (error) {
+    console.error('Analytics Error:', error);
     res.status(500).json({ message: 'Server Error' });
   }
 };

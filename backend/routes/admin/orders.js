@@ -250,6 +250,16 @@ router.post('/orders/:id/assign-delivery', async (req, res) => {
       })
     ]);
 
+    const io = req.app?.get('io');
+    if (io) {
+      io.emit('delivery_assigned', {
+        partnerId: deliveryPartnerId,
+        orderId: req.params.id,
+        invoiceNumber: orderRaw.invoiceNumber,
+        message: `You have been assigned order ${orderRaw.invoiceNumber || req.params.id.slice(-6).toUpperCase()}`
+      });
+    }
+
     res.json({ success: true, message: 'Delivery partner assigned successfully' });
   } catch (error) {
     res.status(500).json({ message: 'Server error' });
@@ -300,6 +310,16 @@ router.post('/orders/:id/reassign-delivery', async (req, res) => {
     }
 
     await prisma.$transaction(transactionTasks);
+
+    const io = req.app?.get('io');
+    if (io) {
+      io.emit('delivery_assigned', {
+        partnerId: deliveryPartnerId,
+        orderId: req.params.id,
+        invoiceNumber: orderRaw.invoiceNumber,
+        message: `You have been assigned order ${orderRaw.invoiceNumber || req.params.id.slice(-6).toUpperCase()}`
+      });
+    }
 
     res.json({ success: true, message: 'Delivery partner reassigned successfully' });
   } catch (error) {

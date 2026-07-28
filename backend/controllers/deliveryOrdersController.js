@@ -132,6 +132,22 @@ export const updateOrderStatus = async (req, res) => {
       }
     });
 
+    const io = req.app?.get('io');
+    if (io) {
+      io.emit('admin_notification', {
+        title: `Order ${action}`,
+        message: `Delivery partner has marked order ${updatedOrder.invoiceNumber || orderId.slice(-6).toUpperCase()} as ${action}`,
+        type: 'order',
+        link: `/admin/orders?search=${updatedOrder.invoiceNumber || orderId}`
+      });
+      // also emit the generic update
+      io.emit('order_status_updated', {
+        orderId,
+        status: updatedOrder.status,
+        action
+      });
+    }
+
     res.json({ success: true, order: updatedOrder, message: `Successfully marked as ${action}` });
   } catch (error) {
     console.error(error);

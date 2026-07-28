@@ -13,6 +13,7 @@ const DeliveryPartners = () => {
   const [partners, setPartners] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('All');
 
   // Modal states
   const [modalOpen, setModalOpen] = useState(false);
@@ -25,6 +26,8 @@ const DeliveryPartners = () => {
     email: '',
     mobile: '',
     vehicleNumber: '',
+    vehicleType: 'Two Wheeler',
+    emergencyContact: '',
     status: 'Available',
     isActive: true
   });
@@ -56,6 +59,8 @@ const DeliveryPartners = () => {
         email: partner.email,
         mobile: partner.mobile,
         vehicleNumber: partner.vehicleNumber || '',
+        vehicleType: partner.vehicleType || 'Two Wheeler',
+        emergencyContact: partner.emergencyContact || '',
         status: partner.status,
         isActive: partner.isActive
       });
@@ -66,6 +71,8 @@ const DeliveryPartners = () => {
         email: '',
         mobile: '',
         vehicleNumber: '',
+        vehicleType: 'Two Wheeler',
+        emergencyContact: '',
         status: 'Available',
         isActive: true
       });
@@ -120,11 +127,32 @@ const DeliveryPartners = () => {
     return <Navigate to="/admin/dashboard" replace />;
   }
 
-  const filteredPartners = partners.filter(p => 
-    p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    p.mobile.includes(searchQuery) ||
-    p.email.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredPartners = partners.filter(p => {
+    const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          p.mobile.includes(searchQuery) ||
+                          p.email.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesStatus = statusFilter === 'All' ? true :
+                          statusFilter === 'Inactive' ? !p.isActive :
+                          p.status === statusFilter;
+                          
+    return matchesSearch && matchesStatus;
+  });
+
+  const exportCSV = () => {
+    const headers = ['Employee ID', 'Name', 'Mobile', 'Email', 'Vehicle Number', 'Vehicle Type', 'Status'];
+    const rows = filteredPartners.map(p => [
+      p.employeeId, p.name, p.mobile, p.email, p.vehicleNumber || '-', p.vehicleType || '-', !p.isActive ? 'Inactive' : p.status
+    ]);
+    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `delivery_partners_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   return (
     <AdminLayout>
@@ -136,18 +164,26 @@ const DeliveryPartners = () => {
           </h1>
           <p className="text-sm text-gray-500 mt-1">Manage delivery personnel</p>
         </div>
-        <button
-          onClick={() => handleOpenModal()}
-          className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-xl hover:bg-green-700 transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          Add Partner
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={exportCSV}
+            className="flex items-center gap-2 bg-gray-100 text-gray-700 px-4 py-2 rounded-xl hover:bg-gray-200 transition-colors border border-gray-200 font-medium text-sm"
+          >
+            Export CSV
+          </button>
+          <button
+            onClick={() => handleOpenModal()}
+            className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-xl hover:bg-green-700 transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Add Partner
+          </button>
+        </div>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-6">
-        <div className="p-4 border-b border-gray-100 flex items-center bg-gray-50/50 rounded-t-xl">
-          <div className="relative flex-1 max-w-md">
+        <div className="p-4 border-b border-gray-100 flex items-center justify-between gap-4 bg-gray-50/50 rounded-t-xl flex-wrap">
+          <div className="relative flex-1 min-w-[250px] max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               type="text"
@@ -156,6 +192,20 @@ const DeliveryPartners = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all bg-white"
             />
+          </div>
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-gray-500 font-medium">Status:</label>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
+            >
+              <option value="All">All Partners</option>
+              <option value="Available">Available</option>
+              <option value="On Delivery">On Delivery</option>
+              <option value="Offline">Offline</option>
+              <option value="Inactive">Inactive</option>
+            </select>
           </div>
         </div>
 
@@ -280,12 +330,35 @@ const DeliveryPartners = () => {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all"
                   />
                 </div>
-                <div className="col-span-2">
+                <div className="col-span-2 sm:col-span-1">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Vehicle Number</label>
                   <input
                     type="text"
                     value={formData.vehicleNumber}
                     onChange={(e) => setFormData({...formData, vehicleNumber: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all"
+                  />
+                </div>
+                <div className="col-span-2 sm:col-span-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Vehicle Type</label>
+                  <select
+                    value={formData.vehicleType}
+                    onChange={(e) => setFormData({...formData, vehicleType: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all bg-white"
+                  >
+                    <option value="Two Wheeler">Two Wheeler</option>
+                    <option value="Three Wheeler">Three Wheeler</option>
+                    <option value="Four Wheeler">Four Wheeler</option>
+                    <option value="Bicycle">Bicycle</option>
+                  </select>
+                </div>
+                <div className="col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Emergency Contact Number</label>
+                  <input
+                    type="text"
+                    value={formData.emergencyContact}
+                    onChange={(e) => setFormData({...formData, emergencyContact: e.target.value})}
+                    placeholder="+91"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all"
                   />
                 </div>

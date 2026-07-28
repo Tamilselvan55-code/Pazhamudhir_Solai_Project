@@ -71,6 +71,11 @@ const Settings = () => {
     freeDeliveryThreshold: 500,
     deliveryCharges: 40,
     deliveryTiming: 'Same Day Delivery',
+    deliverySettings: {
+      maxActiveOrders: 3,
+      autoAssign: false,
+      workingHours: '06:00-22:00'
+    },
 
     // Order
     orderPrefix: 'ORD-',
@@ -144,6 +149,7 @@ const Settings = () => {
         ...data,
         lat: data.location?.lat ?? prev.lat,
         lon: data.location?.lon ?? prev.lon,
+        deliverySettings: data.deliverySettings || prev.deliverySettings,
         orderStatusColors: data.orderStatusColors ? {
           ...prev.orderStatusColors,
           ...(data.orderStatusColors instanceof Map ? Object.fromEntries(data.orderStatusColors) : data.orderStatusColors)
@@ -952,6 +958,44 @@ const Settings = () => {
                         onChange={handleInputChange}
                         className="admin-form-input text-sm font-bold"
                         min={0}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mt-6 border-t border-white/8 pt-6">
+                    <div className="col-span-1 sm:col-span-2">
+                      <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-2">Partner Assignment Rules</h3>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-[#94A3B8] uppercase tracking-wider mb-2">Max Active Orders per Partner</label>
+                      <input
+                        type="number"
+                        value={formData.deliverySettings.maxActiveOrders}
+                        onChange={(e) => handleNestedInputChange('deliverySettings', 'maxActiveOrders', Number(e.target.value))}
+                        className="admin-form-input text-sm font-bold"
+                        min={1}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-[#94A3B8] uppercase tracking-wider mb-2">Partner Working Hours</label>
+                      <input
+                        type="text"
+                        value={formData.deliverySettings.workingHours}
+                        onChange={(e) => handleNestedInputChange('deliverySettings', 'workingHours', e.target.value)}
+                        className="admin-form-input text-sm font-semibold"
+                        placeholder="e.g. 06:00-22:00"
+                      />
+                    </div>
+                    <div className="col-span-1 sm:col-span-2 flex items-center justify-between p-4 bg-white/4 rounded-xl border border-white/8 mt-2">
+                      <div>
+                        <p className="text-xs font-bold text-white">Auto Assignment Toggle</p>
+                        <p className="text-[10px] text-[#94A3B8] mt-0.5">Automatically assign orders to nearest available partners</p>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={formData.deliverySettings.autoAssign}
+                        onChange={(e) => handleNestedInputChange('deliverySettings', 'autoAssign', e.target.checked)}
+                        className="w-5 h-5 accent-[#22C55E] cursor-pointer"
                       />
                     </div>
                   </div>
