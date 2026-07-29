@@ -34,7 +34,7 @@ export const getDeliveryPartners = async (req, res) => {
 // @route   POST /api/admin/delivery-partners
 // @access  Private/Admin
 export const createDeliveryPartner = async (req, res) => {
-  const { name, email, mobile, vehicleNumber, vehicleType, emergencyContact, status } = req.body;
+  const { name, email, mobile, vehicleNumber, vehicleType, emergencyContact, status, profileImage } = req.body;
 
   try {
     const existingPartner = await prisma.deliveryPartner.findFirst({
@@ -66,7 +66,8 @@ export const createDeliveryPartner = async (req, res) => {
         vehicleNumber,
         vehicleType: vehicleType || 'Two Wheeler',
         emergencyContact,
-        status: status || 'Available'
+        status: status || 'Available',
+        profileImage
       }
     });
 
@@ -83,7 +84,7 @@ export const createDeliveryPartner = async (req, res) => {
 // @access  Private/Admin
 export const updateDeliveryPartner = async (req, res) => {
   const { id } = req.params;
-  const { name, email, mobile, vehicleNumber, vehicleType, emergencyContact, status, isActive } = req.body;
+  const { name, email, mobile, vehicleNumber, vehicleType, emergencyContact, status, isActive, profileImage } = req.body;
 
   try {
     const partner = await prisma.deliveryPartner.findUnique({ where: { id } });
@@ -103,6 +104,7 @@ export const updateDeliveryPartner = async (req, res) => {
         emergencyContact: emergencyContact !== undefined ? emergencyContact : partner.emergencyContact,
         status: status || partner.status,
         isActive: isActive !== undefined ? isActive : partner.isActive,
+        profileImage: profileImage !== undefined ? profileImage : partner.profileImage,
       }
     });
 
@@ -297,7 +299,7 @@ export const paySettlement = async (req, res) => {
 export const verifyDeliveryPartnerDocument = async (req, res) => {
   try {
     const partnerId = req.params.id;
-    const { status, rejectionReason } = req.body; // status: 'Approved' or 'Rejected'
+    const { status, documentType, rejectionReason } = req.body; // status: 'Approved' or 'Rejected', documentType: e.g. 'Aadhaar'
 
     if (!['Approved', 'Rejected'].includes(status)) {
       return res.status(400).json({ message: 'Invalid status' });
@@ -311,28 +313,116 @@ export const verifyDeliveryPartnerDocument = async (req, res) => {
       return res.status(404).json({ message: 'No documents uploaded by this partner.' });
     }
 
-    await prisma.$transaction([
-      prisma.deliveryPartnerDocument.update({
-        where: { partnerId },
-        data: {
-          status,
-          rejectionReason: status === 'Rejected' ? rejectionReason : null,
-          verifiedAt: new Date(),
-          verifierName: req.admin?.name || 'Admin'
-        }
-      }),
-      prisma.deliveryPartner.update({
-        where: { id: partnerId },
-        data: {
-          isVerified: status === 'Approved',
-          status: status === 'Rejected' ? 'Inactive' : undefined
-        }
-      })
-    ]);
+    // Determine which status field to update based on documentType
+    let updateData = {};
+    if (documentType === 'Aadhaar') {
+      updateData.governmentIdStatus = status;
+    } else if (documentType === 'Driving License') {
+      updateData.drivingLicenseStatus = status;
+    } else if (documentType === 'RC Book') {
+      updateData.vehicleRegistrationStatus = status;
+    } else if (documentType === 'Vehicle Insurance') {
+      updateData.insuranceCertificateStatus = status;
+    } else {
+       // Overall document status fallback if no documentType provided
+       updateData.status = status;
+    }
 
-    res.json({ success: true, message: `Partner documents ${status.toLowerCase()}` });
+    if (status === 'Rejected') {
+      updateData.rejectionReason = rejectionReason;
+    }
+
+    updateData.verifiedAt = new Date();
+    updateData.verifierName = req.admin?.name || 'Admin';
+
+    const updatedDoc = await prisma.deliveryPartnerDocument.update({
+      where: { partnerId },
+      data: updateData
+    });
+
+    // Check overall verification
+    // A partner is fully verified if Aadhaar, Driving License, and RC Book are Approved.
+    // Insurance is optional.
+    const isOverallVerified = 
+      updatedDoc.governmentIdStatus === 'Approved' && 
+      updatedDoc.drivingLicenseStatus === 'Approved' && 
+      updatedDoc.vehicleRegistrationStatus === 'Approved';
+    
+    // Overall status of the document bundle
+    const overallDocStatus = isOverallVerified ? 'Approved' : (status === 'Rejected' ? 'Rejected' : 'Pending');
+
+    if (updatedDoc.status !== overallDocStatus) {
+      await prisma.deliveryPartnerDocument.update({
+        where: { partnerId },
+        data: { status: overallDocStatus }
+      });
+    }
+
+    await prisma.deliveryPartner.update({
+      where: { id: partnerId },
+      data: {
+        isVerified: isOverallVerified,
+        status: (overallDocStatus === 'Rejected') ? 'Inactive' : undefined
+      }
+    });
+
+    res.json({ success: true, message: `Document ${documentType || ''} ${status.toLowerCase()}`, document: updatedDoc });
   } catch (error) {
     console.error('Error verifying partner document:', error);
+    res.status(500).json({ message: 'Server Error' });
+  }
+};
+
+// @desc    Update delivery partner document URLs
+// @route   PUT /api/admin/delivery-partners/:id/documents
+// @access  Private/Admin
+export const updateDeliveryPartnerDocument = async (req, res) => {
+  try {
+    const partnerId = req.params.id;
+    const { documentType, documentUrl } = req.body;
+
+    let document = await prisma.deliveryPartnerDocument.findUnique({
+      where: { partnerId }
+    });
+
+    if (!document) {
+      document = await prisma.deliveryPartnerDocument.create({
+        data: { partnerId }
+      });
+    }
+
+    let updateData = {};
+    if (documentType === 'Aadhaar') {
+      updateData.governmentId = documentUrl;
+      updateData.governmentIdStatus = 'Pending';
+    } else if (documentType === 'Driving License') {
+      updateData.drivingLicense = documentUrl;
+      updateData.drivingLicenseStatus = 'Pending';
+    } else if (documentType === 'RC Book') {
+      updateData.vehicleRegistration = documentUrl;
+      updateData.vehicleRegistrationStatus = 'Pending';
+    } else if (documentType === 'Vehicle Insurance') {
+      updateData.insuranceCertificate = documentUrl;
+      updateData.insuranceCertificateStatus = 'Pending';
+    }
+
+    // Changing a document sets overall status back to Pending if it was Approved
+    updateData.status = 'Pending';
+    
+    const updatedDoc = await prisma.deliveryPartnerDocument.update({
+      where: { partnerId },
+      data: updateData
+    });
+
+    // Reset partner overall verification if a required document is changed
+    await prisma.deliveryPartner.update({
+      where: { id: partnerId },
+      data: { isVerified: false }
+    });
+
+    res.json({ success: true, message: 'Document updated successfully', document: updatedDoc });
+  } catch (error) {
+    console.error('Error updating partner document:', error);
     res.status(500).json({ message: 'Server Error' });
   }
 };

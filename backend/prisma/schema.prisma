@@ -443,6 +443,10 @@ model DeliveryPartnerDocument {
   insuranceCertificate String?
   vehiclePhoto         String?
   status               String   @default("Pending") // Pending, Approved, Rejected
+  drivingLicenseStatus String   @default("Pending") // Pending, Approved, Rejected
+  governmentIdStatus   String   @default("Pending") // Pending, Approved, Rejected
+  vehicleRegistrationStatus String @default("Pending") // Pending, Approved, Rejected
+  insuranceCertificateStatus String @default("Pending") // Pending, Approved, Rejected
   rejectionReason      String?
   verifiedAt           DateTime?
   verifierName         String?

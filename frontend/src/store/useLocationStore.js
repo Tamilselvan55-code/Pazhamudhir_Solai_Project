@@ -54,48 +54,32 @@ const verifyWithServer = async (lat, lon) => {
   }
 };
 
-// ── Reverse geocode via Google Maps Geocoding API ─────────────────────────────
-const reverseGeocodeGoogle = async (lat, lon) => {
-  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+// ── Free Reverse geocode via OpenStreetMap Nominatim ──────────────────────────
+const reverseGeocodeFree = async (lat, lon) => {
   try {
     const res = await fetch(
-      `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lon}&key=${apiKey}`
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`,
+      { headers: { 'Accept-Language': 'en' } }
     );
-    if (!res.ok) throw new Error('Google geocoding failed');
+    if (!res.ok) throw new Error('OSM geocoding failed');
     const data = await res.json();
-    if (data.status !== 'OK' || !data.results || data.results.length === 0) {
-      throw new Error(data.error_message || 'No results from Google Geocoding');
+    if (data.error) {
+      throw new Error(data.error);
     }
-    const result = data.results[0];
-    const components = result.address_components || [];
     
-    let city = '';
-    let state = '';
-    let pincode = '';
-    
-    for (const comp of components) {
-      const types = comp.types || [];
-      if (types.includes('postal_code')) {
-        pincode = comp.long_name;
-      } else if (types.includes('locality')) {
-        city = comp.long_name;
-      } else if (!city && types.includes('administrative_area_level_3')) {
-        city = comp.long_name;
-      } else if (!city && types.includes('sublocality_level_1')) {
-        city = comp.long_name;
-      } else if (types.includes('administrative_area_level_1')) {
-        state = comp.long_name;
-      }
-    }
+    const address = data.address || {};
+    const city = address.city || address.town || address.village || address.county || '';
+    const state = address.state || '';
+    const pincode = address.postcode || '';
     
     return {
-      fullAddress: result.formatted_address || `${lat.toFixed(5)}, ${lon.toFixed(5)}`,
+      fullAddress: data.display_name || `${lat.toFixed(5)}, ${lon.toFixed(5)}`,
       city,
       state,
       pincode
     };
   } catch (err) {
-    console.error('Google reverse geocoding error:', err);
+    console.error('Free reverse geocoding error:', err);
     return {
       fullAddress: `${lat.toFixed(5)}, ${lon.toFixed(5)}`,
       city: '',
@@ -204,7 +188,7 @@ const useLocationStore = create(
 
               // Run reverse geocode + server verification in parallel
               const [addrInfo, deliveryData] = await Promise.all([
-                reverseGeocodeGoogle(latitude, longitude),
+                reverseGeocodeFree(latitude, longitude),
                 fetchDeliveryData(latitude, longitude),
               ]);
 

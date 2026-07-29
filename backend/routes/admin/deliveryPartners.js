@@ -7,7 +7,8 @@ import {
   getDeliveryAnalytics,
   getAllDeliveryEarnings,
   paySettlement,
-  verifyDeliveryPartnerDocument
+  verifyDeliveryPartnerDocument,
+  updateDeliveryPartnerDocument
 } from '../../controllers/admin/deliveryPartnerController.js';
 
 const router = express.Router();
@@ -27,5 +28,6 @@ router.route('/delivery-partners/:id')
 
 router.put('/delivery-partners/:id/reset-password', resetPassword);
 router.post('/delivery-partners/:id/verify', verifyDeliveryPartnerDocument);
+router.put('/delivery-partners/:id/documents', updateDeliveryPartnerDocument);
 
 export default router;

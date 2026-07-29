@@ -3,7 +3,9 @@ import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Truck, Plus, Search, Edit2, Shield, User, Loader2, FileText, CheckCircle, XCircle, ArrowDownToLine } from 'lucide-react';
 import AdminLayout from '../../components/Admin/AdminLayout';
-import DocumentReviewModal from '../../components/Admin/DocumentReviewModal';
+import DocumentManagementModal from '../../components/Admin/DocumentManagementModal';
+import VehicleTypeSelector from '../../components/Admin/VehicleTypeSelector';
+import DeliveryPartnerSuccessModal from '../../components/Admin/DeliveryPartnerSuccessModal';
 import useAuthStore from '../../store/useAuthStore';
 import axios from 'axios';
 import useModal from '../../hooks/useModal';
@@ -21,6 +23,11 @@ const DeliveryPartners = () => {
   const [resetModalOpen, setResetModalOpen] = useState(false);
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
   const [selectedPartner, setSelectedPartner] = useState(null);
+
+  // Delivery Partner Success Modal state
+  const [successModalOpen, setSuccessModalOpen] = useState(false);
+  const [createdPartnerData, setCreatedPartnerData] = useState(null);
+  const [vehicleError, setVehicleError] = useState('');
   
   // Form states
   const [formData, setFormData] = useState({
@@ -54,6 +61,7 @@ const DeliveryPartners = () => {
   };
 
   const handleOpenModal = (partner = null) => {
+    setVehicleError('');
     if (partner) {
       setSelectedPartner(partner);
       setFormData({
@@ -84,6 +92,11 @@ const DeliveryPartners = () => {
 
   const handleSave = async (e) => {
     e.preventDefault();
+    if (!formData.vehicleType) {
+      setVehicleError('Vehicle selection is mandatory.');
+      return;
+    }
+    setVehicleError('');
     setActionLoading(true);
     
     try {
@@ -92,20 +105,33 @@ const DeliveryPartners = () => {
           headers: { Authorization: `Bearer ${adminInfo.token}` }
         });
         toast('Delivery partner updated successfully', 'success');
+        setModalOpen(false);
+        fetchPartners();
       } else {
         const { data } = await axios.post(`${API_BASE}/admin/delivery-partners`, formData, {
           headers: { Authorization: `Bearer ${adminInfo.token}` }
         });
-        toast('Delivery partner created successfully', 'success');
-        window.alert(`Important: The temporary password for ${data.name} is: ${data.tempPassword}\nPlease share this with the partner.`);
+        setModalOpen(false);
+        setCreatedPartnerData({
+          name: data.name || formData.name,
+          mobile: data.mobile || formData.mobile,
+          email: data.email || formData.email,
+          tempPassword: data.tempPassword
+        });
+        setSuccessModalOpen(true);
       }
-      setModalOpen(false);
-      fetchPartners();
     } catch (error) {
       toast(error.response?.data?.message || 'Failed to save delivery partner', 'error');
     } finally {
       setActionLoading(false);
     }
+  };
+
+  const handleSuccessDone = () => {
+    setSuccessModalOpen(false);
+    setCreatedPartnerData(null);
+    fetchPartners();
+    toast('Delivery Partner created successfully.', 'success');
   };
 
   const handleResetPassword = async (e) => {
@@ -221,9 +247,13 @@ const DeliveryPartners = () => {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-white/8 text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider bg-white/4">
-                  <th className="py-4 px-6 w-1/4">Name / Contact</th>
-                  <th className="py-4 px-6">Vehicle Number</th>
-                  <th className="py-4 px-6">Status</th>
+                  <th className="py-4 px-6">Photo</th>
+                  <th className="py-4 px-6">Name</th>
+                  <th className="py-4 px-6">Partner ID</th>
+                  <th className="py-4 px-6">Phone</th>
+                  <th className="py-4 px-6">Vehicle</th>
+                  <th className="py-4 px-6">Verification Status</th>
+                  <th className="py-4 px-6">Current Status</th>
                   <th className="py-4 px-6 text-right">Actions</th>
                 </tr>
               </thead>
@@ -238,21 +268,44 @@ const DeliveryPartners = () => {
                   filteredPartners.map(partner => (
                     <tr key={partner.id} className="admin-table-row group">
                       <td className="py-4 px-6">
-                        <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 rounded-[12px] bg-[#F59E0B]/20 border border-[#F59E0B]/30 flex items-center justify-center text-[#F59E0B] font-black shrink-0 shadow-sm transition-transform group-hover:scale-110">
+                        {partner.profileImage ? (
+                          <img src={partner.profileImage} alt={partner.name} className="w-10 h-10 rounded-full object-cover shadow-sm transition-transform group-hover:scale-110" />
+                        ) : (
+                          <div className="w-10 h-10 rounded-full bg-[#F59E0B]/20 border border-[#F59E0B]/30 flex items-center justify-center text-[#F59E0B] font-black shrink-0 shadow-sm transition-transform group-hover:scale-110">
                             {partner.name.charAt(0).toUpperCase()}
                           </div>
-                          <div>
-                            <div className="text-sm font-bold text-white group-hover:text-[#22C55E] transition-colors">
-                              {partner.name} <span className="text-[10px] text-[#94A3B8] font-normal">({partner.employeeId})</span>
-                            </div>
-                            <div className="text-[11px] text-[#94A3B8] mt-0.5">{partner.mobile}</div>
-                            <div className="text-[11px] text-[#94A3B8]">{partner.email}</div>
-                          </div>
+                        )}
+                      </td>
+                      <td className="py-4 px-6">
+                        <div className="text-sm font-bold text-white group-hover:text-[#22C55E] transition-colors">
+                          {partner.name}
                         </div>
+                        <div className="text-[10px] text-[#94A3B8]">{partner.email}</div>
+                      </td>
+                      <td className="py-4 px-6 text-xs text-[#94A3B8] font-mono">
+                        {partner.employeeId}
+                      </td>
+                      <td className="py-4 px-6 text-xs text-[#94A3B8]">
+                        {partner.mobile}
                       </td>
                       <td className="py-4 px-6 text-[11px] font-mono text-[#94A3B8]">
-                        {partner.vehicleNumber || '-'}
+                        {partner.vehicleNumber || '-'} <br/>
+                        <span className="text-[10px] text-[#94A3B8]/70 font-sans">{partner.vehicleType}</span>
+                      </td>
+                      <td className="py-4 px-6">
+                        {partner.isVerified ? (
+                          <span className="px-2.5 py-1 inline-flex text-[10px] font-bold rounded-full bg-green-500/20 text-green-400 border border-green-500/30 uppercase">
+                            🟢 Verified
+                          </span>
+                        ) : partner.documents?.status === 'Rejected' ? (
+                          <span className="px-2.5 py-1 inline-flex text-[10px] font-bold rounded-full bg-red-500/20 text-red-400 border border-red-500/30 uppercase">
+                            🔴 Rejected
+                          </span>
+                        ) : (
+                          <span className="px-2.5 py-1 inline-flex text-[10px] font-bold rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 uppercase">
+                            🟡 Pending
+                          </span>
+                        )}
                       </td>
                       <td className="py-4 px-6">
                         <span className={`px-2.5 py-1 inline-flex text-[10px] font-bold rounded-full ${
@@ -263,16 +316,6 @@ const DeliveryPartners = () => {
                         }`}>
                           {!partner.isActive ? 'Inactive' : partner.status}
                         </span>
-                        {partner.documents?.status === 'Pending' && (
-                          <span className="ml-2 px-2 py-0.5 inline-flex text-[9px] font-bold rounded-full bg-[#F59E0B]/20 text-[#F59E0B] border border-[#F59E0B]/30 uppercase tracking-wider">
-                            Docs Pending
-                          </span>
-                        )}
-                        {!partner.isVerified && partner.documents?.status !== 'Pending' && (
-                          <span className="ml-2 px-2 py-0.5 inline-flex text-[9px] font-bold rounded-full bg-[#EF4444]/20 text-[#EF4444] border border-[#EF4444]/30 uppercase tracking-wider">
-                            Unverified
-                          </span>
-                        )}
                       </td>
                       <td className="py-4 px-6 text-right space-x-2">
                         <button
@@ -308,88 +351,96 @@ const DeliveryPartners = () => {
 
       {/* Edit / Create Modal */}
       {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-              <h3 className="text-lg font-bold text-gray-900">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="bg-[#0F172A] border border-slate-700/60 rounded-3xl shadow-2xl w-full max-w-xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="px-6 py-4 border-b border-slate-700/60 flex justify-between items-center bg-slate-900/60">
+              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                <Truck className="w-5 h-5 text-[#22C55E]" />
                 {selectedPartner ? 'Edit Delivery Partner' : 'Add Delivery Partner'}
               </h3>
-              <button onClick={() => setModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+              <button 
+                onClick={() => setModalOpen(false)} 
+                className="text-slate-400 hover:text-white transition-colors p-1.5 rounded-lg hover:bg-white/10"
+              >
                 &times;
               </button>
             </div>
             
-            <form onSubmit={handleSave} className="p-6 space-y-4">
+            <form onSubmit={handleSave} className="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-1">Full Name <span className="text-red-400">*</span></label>
                   <input
                     type="text"
                     required
                     value={formData.name}
                     onChange={(e) => setFormData({...formData, name: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all text-gray-900"
+                    className="w-full px-3.5 py-2.5 bg-white/5 border border-white/10 rounded-xl focus:border-[#22C55E] outline-none transition-all text-white placeholder-slate-500 text-sm"
+                    placeholder="Enter partner name"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Mobile Number</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-1">Mobile Number <span className="text-red-400">*</span></label>
                   <input
                     type="text"
                     required
                     value={formData.mobile}
                     onChange={(e) => setFormData({...formData, mobile: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all text-gray-900"
+                    className="w-full px-3.5 py-2.5 bg-white/5 border border-white/10 rounded-xl focus:border-[#22C55E] outline-none transition-all text-white placeholder-slate-500 text-sm"
+                    placeholder="Mobile number"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-1">Email <span className="text-red-400">*</span></label>
                   <input
                     type="email"
                     required
                     value={formData.email}
                     onChange={(e) => setFormData({...formData, email: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all text-gray-900"
+                    className="w-full px-3.5 py-2.5 bg-white/5 border border-white/10 rounded-xl focus:border-[#22C55E] outline-none transition-all text-white placeholder-slate-500 text-sm"
+                    placeholder="Email address"
                   />
                 </div>
                 <div className="col-span-2 sm:col-span-1">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Vehicle Number</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-1">Vehicle Number</label>
                   <input
                     type="text"
                     value={formData.vehicleNumber}
                     onChange={(e) => setFormData({...formData, vehicleNumber: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all text-gray-900"
+                    className="w-full px-3.5 py-2.5 bg-white/5 border border-white/10 rounded-xl focus:border-[#22C55E] outline-none transition-all text-white placeholder-slate-500 text-sm"
+                    placeholder="e.g. TN-01-AB-1234"
                   />
                 </div>
                 <div className="col-span-2 sm:col-span-1">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Vehicle Type</label>
-                  <select
-                    value={formData.vehicleType}
-                    onChange={(e) => setFormData({...formData, vehicleType: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all bg-white text-gray-900"
-                  >
-                    <option value="Two Wheeler">Two Wheeler</option>
-                    <option value="Three Wheeler">Three Wheeler</option>
-                    <option value="Four Wheeler">Four Wheeler</option>
-                    <option value="Bicycle">Bicycle</option>
-                  </select>
-                </div>
-                <div className="col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Emergency Contact Number</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-1">Emergency Contact</label>
                   <input
                     type="text"
                     value={formData.emergencyContact}
                     onChange={(e) => setFormData({...formData, emergencyContact: e.target.value})}
                     placeholder="+91"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all text-gray-900"
+                    className="w-full px-3.5 py-2.5 bg-white/5 border border-white/10 rounded-xl focus:border-[#22C55E] outline-none transition-all text-white placeholder-slate-500 text-sm"
                   />
                 </div>
+
+                {/* Premium Vehicle Type Selector */}
+                <div className="col-span-2">
+                  <VehicleTypeSelector
+                    value={formData.vehicleType}
+                    onChange={(val) => {
+                      setFormData({ ...formData, vehicleType: val });
+                      if (val) setVehicleError('');
+                    }}
+                    error={vehicleError}
+                  />
+                </div>
+
                 {selectedPartner && (
-                  <div className="col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                  <div className="col-span-2 sm:col-span-1">
+                    <label className="block text-sm font-medium text-slate-300 mb-1">Status</label>
                     <select
                       value={formData.status}
                       onChange={(e) => setFormData({...formData, status: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all bg-white text-gray-900"
+                      className="w-full px-3.5 py-2.5 bg-[#1E293B] border border-white/10 rounded-xl focus:border-[#22C55E] outline-none transition-all text-white text-sm"
                     >
                       <option value="Available">Available</option>
                       <option value="On Delivery">On Delivery</option>
@@ -399,32 +450,31 @@ const DeliveryPartners = () => {
                   </div>
                 )}
                 {selectedPartner && (
-                  <div className="col-span-2 flex items-center mt-2">
-                    <input
-                      type="checkbox"
-                      id="isActive"
-                      checked={formData.isActive}
-                      onChange={(e) => setFormData({...formData, isActive: e.target.checked})}
-                      className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
-                    />
-                    <label htmlFor="isActive" className="ml-2 block text-sm text-gray-900">
-                      Active Account
+                  <div className="col-span-2 sm:col-span-1 flex items-center pt-6">
+                    <label className="flex items-center gap-2 cursor-pointer text-slate-300 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={formData.isActive}
+                        onChange={(e) => setFormData({...formData, isActive: e.target.checked})}
+                        className="h-4 w-4 rounded accent-[#22C55E]"
+                      />
+                      <span>Active Account</span>
                     </label>
                   </div>
                 )}
               </div>
-              <div className="pt-4 flex justify-end space-x-3">
+              <div className="pt-4 flex justify-end space-x-3 border-t border-slate-700/40 mt-4">
                 <button
                   type="button"
                   onClick={() => setModalOpen(false)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium"
+                  className="px-4 py-2 border border-slate-700/80 rounded-xl text-slate-300 hover:bg-white/5 font-medium text-sm transition-all"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={actionLoading}
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium disabled:opacity-70 flex items-center gap-2"
+                  className="px-5 py-2 bg-[#22C55E] hover:bg-[#16A34A] text-white rounded-xl font-bold text-sm disabled:opacity-70 flex items-center gap-2 transition-all shadow-lg shadow-[#22C55E]/20"
                 >
                   {actionLoading && <Loader2 className="w-4 h-4 animate-spin" />}
                   Save Partner
@@ -435,33 +485,42 @@ const DeliveryPartners = () => {
         </div>
       )}
 
+      {/* Delivery Partner Success Dialog */}
+      <DeliveryPartnerSuccessModal
+        isOpen={successModalOpen}
+        onClose={handleSuccessDone}
+        partnerData={createdPartnerData}
+      />
+
       {/* Reset Password Modal */}
       {resetModalOpen && selectedPartner && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-              <h3 className="text-lg font-bold text-gray-900">Reset Password</h3>
-              <button onClick={() => setResetModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="bg-[#0F172A] border border-slate-700/60 rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="px-6 py-4 border-b border-slate-700/60 flex justify-between items-center bg-slate-900/60">
+              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                <Shield className="w-5 h-5 text-orange-400" /> Reset Password
+              </h3>
+              <button onClick={() => setResetModalOpen(false)} className="text-slate-400 hover:text-white transition-colors p-1.5 rounded-lg hover:bg-white/10">
                 &times;
               </button>
             </div>
             
             <form onSubmit={handleResetPassword} className="p-6 space-y-4">
-              <p className="text-sm text-gray-600">
-                Clicking reset will generate a new temporary password for <span className="font-semibold text-gray-900">{selectedPartner.name}</span>. You will be able to copy the new password after generating it.
+              <p className="text-sm text-slate-300 leading-relaxed">
+                Clicking reset will generate a new temporary password for <span className="font-semibold text-white">{selectedPartner.name}</span>. You will be able to copy the new password after generating it.
               </p>
-              <div className="pt-4 flex justify-end space-x-3">
+              <div className="pt-4 flex justify-end space-x-3 border-t border-slate-700/40">
                 <button
                   type="button"
                   onClick={() => setResetModalOpen(false)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium"
+                  className="px-4 py-2 border border-slate-700/80 rounded-xl text-slate-300 hover:bg-white/5 font-medium text-sm transition-all"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={actionLoading}
-                  className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 font-medium disabled:opacity-70 flex items-center gap-2"
+                  className="px-5 py-2 bg-orange-600 text-white rounded-xl hover:bg-orange-700 font-bold text-sm disabled:opacity-70 flex items-center gap-2 transition-all shadow-lg shadow-orange-600/20"
                 >
                   {actionLoading && <Loader2 className="w-4 h-4 animate-spin" />}
                   Reset
@@ -472,8 +531,8 @@ const DeliveryPartners = () => {
         </div>
       )}
 
-      {/* Document Review Modal */}
-      <DocumentReviewModal 
+      {/* Document Management Modal */}
+      <DocumentManagementModal 
         isOpen={reviewModalOpen} 
         onClose={() => setReviewModalOpen(false)} 
         partner={selectedPartner}
@@ -485,3 +544,4 @@ const DeliveryPartners = () => {
 };
 
 export default DeliveryPartners;
+

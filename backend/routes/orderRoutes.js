@@ -121,9 +121,15 @@ router.post('/', protect, checkMaintenanceAndFeature('disableOrderPlacement'), c
       isStoreOpen = false;
     } else {
       const now = new Date();
-      const currentHour = now.getHours();
-      const currentMinute = now.getMinutes();
-      const currentTime = `${currentHour.toString().padStart(2, '0')}:${currentMinute.toString().padStart(2, '0')}`;
+      const formatter = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'Asia/Kolkata',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      });
+      let [currentHour, currentMinute] = formatter.format(now).split(':');
+      if (currentHour === '24') currentHour = '00';
+      const currentTime = `${currentHour.padStart(2, '0')}:${currentMinute.padStart(2, '0')}`;
       
       if (openingTime <= closingTime) {
         isStoreOpen = currentTime >= openingTime && currentTime <= closingTime;

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { API_BASE, API_URL } from '../../config/api';
@@ -12,7 +12,6 @@ const DeliveryDashboard = () => {
   const [passwordData, setPasswordData] = useState({ currentPassword: '', newPassword: '' });
   const [passwordStatus, setPasswordStatus] = useState('');
   const [passwordLoading, setPasswordLoading] = useState(false);
-  const [optimizeRoute, setOptimizeRoute] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -148,10 +147,19 @@ const DeliveryDashboard = () => {
             {/* Profile Card */}
             <div className="bg-white overflow-hidden shadow-sm rounded-2xl border border-gray-100">
               <div className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <h3 className="text-lg leading-6 font-medium text-gray-900">Profile</h3>
-                    <button onClick={() => navigate('/delivery/profile')} className="text-xs font-semibold text-orange-600 hover:text-orange-700 bg-orange-50 px-2 py-1 rounded-md">Edit Profile</button>
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-4">
+                    {partner?.profileImage ? (
+                      <img src={partner?.profileImage} alt={partner?.name} className="w-14 h-14 rounded-full object-cover shadow-sm border border-gray-200" />
+                    ) : (
+                      <div className="w-14 h-14 rounded-full bg-orange-100 border border-orange-200 flex items-center justify-center text-orange-600 font-bold text-xl shrink-0 shadow-sm">
+                        {partner?.name?.charAt(0).toUpperCase() || 'D'}
+                      </div>
+                    )}
+                    <div>
+                      <h3 className="text-lg leading-6 font-medium text-gray-900">Profile</h3>
+                      <button onClick={() => navigate('/delivery/profile')} className="text-xs font-semibold text-orange-600 hover:text-orange-700 bg-orange-50 px-2 py-0.5 rounded-md mt-1">Edit Profile</button>
+                    </div>
                   </div>
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${partner?.status === 'Available' ? 'bg-green-100 text-green-800' : partner?.status === 'On Delivery' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}`}>
                     {partner?.status}
@@ -298,6 +306,7 @@ const AssignedOrders = ({ token, partner }) => {
   const [orders, setOrders] = useState([]);
   const [historyOrders, setHistoryOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [optimizeRoute, setOptimizeRoute] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('Assigned');
   const [actionLoading, setActionLoading] = useState(null);
@@ -389,15 +398,28 @@ const AssignedOrders = ({ token, partner }) => {
     return () => socket.disconnect();
   }, [token]);
 
+  // Use a ref for orders to prevent resetting watchPosition on every order update
+  const ordersRef = useRef(orders);
+  useEffect(() => {
+    ordersRef.current = orders;
+  }, [orders]);
+
   // Geolocation streaming during active delivery (Phase 10 & 11)
   useEffect(() => {
     if (!token || !partner || partner.status !== 'On Delivery') return;
     if (!('geolocation' in navigator)) return;
 
+    let lastSent = 0;
+
     const watchId = navigator.geolocation.watchPosition(
       (pos) => {
+        const now = Date.now();
+        // Throttle API calls to max once every 10 seconds
+        if (now - lastSent < 10000) return;
+        lastSent = now;
+
         const { latitude: lat, longitude: lon, heading, speed } = pos.coords;
-        const activeOrder = orders.find(o => o.pickedUpAt && !o.isDelivered);
+        const activeOrder = ordersRef.current.find(o => o.pickedUpAt && !o.isDelivered);
         
         axios.post(`${API_BASE}/delivery/location`, { 
           lat, 
@@ -414,7 +436,7 @@ const AssignedOrders = ({ token, partner }) => {
     );
 
     return () => navigator.geolocation.clearWatch(watchId);
-  }, [token, partner?.status, orders]);
+  }, [token, partner?.status]);
 
   const handleAction = async (orderId, action) => {
     setActionLoading(orderId);
@@ -488,12 +510,12 @@ const AssignedOrders = ({ token, partner }) => {
       // but if we have lat/lon we can do basic Euclidean distance for local optimization.
       
       const calcDist = (a, b) => {
-        if (a.lat && a.lon && b.lat && b.lon) {
+        if (a && b && a.lat && a.lon && b.lat && b.lon) {
           const dx = parseFloat(a.lat) - parseFloat(b.lat);
           const dy = parseFloat(a.lon) - parseFloat(b.lon);
           return Math.sqrt(dx * dx + dy * dy);
         }
-        return Math.abs((a.distanceFromStore || 0) - (b.distanceFromStore || 0));
+        return Math.abs((a?.distanceFromStore || 0) - (b?.distanceFromStore || 0));
       };
 
       const unvisited = [...active];
@@ -509,7 +531,7 @@ const AssignedOrders = ({ token, partner }) => {
         let minDist = Infinity;
         
         for (let i = 0; i < unvisited.length; i++) {
-          const dist = calcDist(current.shippingAddress || {}, unvisited[i].shippingAddress || {});
+          const dist = calcDist(current?.shippingAddress || {}, unvisited[i]?.shippingAddress || {});
           if (dist < minDist) {
             minDist = dist;
             nearestIdx = i;
