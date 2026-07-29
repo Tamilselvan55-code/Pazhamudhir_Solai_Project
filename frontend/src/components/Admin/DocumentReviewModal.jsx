@@ -2,17 +2,19 @@ import React, { useState } from 'react';
 import { X, CheckCircle, XCircle, FileText, AlertTriangle } from 'lucide-react';
 import axios from 'axios';
 import { API_BASE } from '../../config/api';
+import useModal from '../../hooks/useModal';
 
 const DocumentReviewModal = ({ isOpen, onClose, partner, token, onVerify }) => {
   const [loading, setLoading] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
   const [showRejectInput, setShowRejectInput] = useState(false);
+  const { toast } = useModal();
 
   if (!isOpen || !partner) return null;
 
   const handleVerify = async (status) => {
     if (status === 'Rejected' && !rejectReason.trim()) {
-      alert('Please provide a reason for rejection.');
+      toast('error', 'Please provide a reason for rejection.');
       return;
     }
 
@@ -26,9 +28,10 @@ const DocumentReviewModal = ({ isOpen, onClose, partner, token, onVerify }) => {
       });
       onVerify();
       onClose();
+      toast('success', `Partner documents ${status.toLowerCase()} successfully.`);
     } catch (err) {
       console.error('Error verifying docs:', err);
-      alert('Failed to verify documents');
+      toast('error', err.response?.data?.message || 'Failed to verify documents');
     } finally {
       setLoading(false);
     }

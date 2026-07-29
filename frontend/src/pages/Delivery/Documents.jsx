@@ -120,7 +120,9 @@ const DocumentCard = ({ title, fieldKey, value, status, isVerified, onChange }) 
 };
 
 const DeliveryDocuments = () => {
-  const { partner } = useOutletContext();
+  const { partner, setPartner } = useOutletContext();
+  const navigate = useNavigate();
+  const { openModal } = useModal();
   const [docs, setDocs] = useState(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -172,7 +174,6 @@ const DeliveryDocuments = () => {
     e.preventDefault();
     setError('');
     
-    // Validate all required
     const required = ['drivingLicense', 'governmentId', 'vehicleRegistration', 'vehiclePhoto'];
     for (const req of required) {
       if (!formData[req]) {
@@ -187,7 +188,9 @@ const DeliveryDocuments = () => {
         headers: { Authorization: `Bearer ${getToken()}` }
       });
       setDocs(data.documents);
-      alert('Documents submitted successfully!');
+      setPartner(prev => ({ ...prev, status: 'Pending' }));
+      openModal('Success', 'Documents submitted successfully! Your account is now under review.', 'success');
+      setTimeout(() => navigate('/delivery/profile'), 2000);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to submit documents.');
     } finally {

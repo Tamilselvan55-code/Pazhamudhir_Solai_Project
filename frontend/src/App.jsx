@@ -54,6 +54,8 @@ const DeliveryOrders = lazy(() => import('./pages/Delivery/Orders'));
 const DeliveryProfile = lazy(() => import('./pages/Delivery/Profile'));
 const DeliveryEarnings = lazy(() => import('./pages/Delivery/Earnings'));
 const DeliveryDocuments = lazy(() => import('./pages/Delivery/Documents'));
+const DeliverySettings = lazy(() => import('./pages/Delivery/Settings'));
+const DeliveryNotifications = lazy(() => import('./pages/Delivery/Notifications'));
 
 const AdminRedirectHandler = () => {
   const { adminInfo, userInfo } = useAuthStore();
@@ -220,6 +222,8 @@ function App() {
               <Route path="/delivery/earnings" element={<DeliveryEarnings />} />
               <Route path="/delivery/profile" element={<DeliveryProfile />} />
               <Route path="/delivery/documents" element={<DeliveryDocuments />} />
+              <Route path="/delivery/settings" element={<DeliverySettings />} />
+              <Route path="/delivery/notifications" element={<DeliveryNotifications />} />
             </Route>
             
             <Route path="/admin/login" element={<AdminLogin />} />

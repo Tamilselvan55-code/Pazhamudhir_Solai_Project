@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { AlertCircle, Upload, CheckCircle, Clock, XCircle, FileImage, ShieldAlert } from 'lucide-react';
 import axios from 'axios';
 import { API_BASE } from '../../config/api';
+import useModal from '../../hooks/useModal';
 
 const DocumentVerification = ({ token, isVerified }) => {
   const [docs, setDocs] = useState(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
+  const { toast } = useModal();
 
   // Form state
   const [formData, setFormData] = useState({
@@ -55,9 +57,9 @@ const DocumentVerification = ({ token, isVerified }) => {
         headers: { Authorization: `Bearer ${token}` }
       });
       setDocs(data.documents);
-      alert('Documents submitted successfully for verification.');
+      toast('success', 'Documents submitted successfully for verification.');
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to submit documents.');
+      toast('error', err.response?.data?.message || 'Failed to submit documents.');
     } finally {
       setUploading(false);
     }

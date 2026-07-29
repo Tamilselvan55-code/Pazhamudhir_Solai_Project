@@ -7,6 +7,7 @@ import { io } from 'socket.io-client';
 import { API_URL, API_BASE } from '../../config/api';
 import axios from 'axios';
 import useAuthStore from '../../store/useAuthStore';
+import useModal from '../../hooks/useModal';
 
 const getStatusBadge = (status) => {
   const colors = {
@@ -24,8 +25,9 @@ const getStatusBadge = (status) => {
   return colors[status] || 'bg-gray-100 text-gray-800 border-gray-200';
 };
 
-const OrderDetailsModal = ({ order, onClose, onDownloadInvoice }) => {
+const OrderDetailsModal = ({ order, onClose, onDownloadInvoice, onRatingUpdate }) => {
   const { userInfo } = useAuthStore();
+  const { toast } = useModal();
   const [currentOrder, setCurrentOrder] = useState(order);
   const [showLiveTrack, setShowLiveTrack] = useState(false);
   const [partnerLoc, setPartnerLoc] = useState(null);
@@ -104,8 +106,10 @@ const OrderDetailsModal = ({ order, onClose, onDownloadInvoice }) => {
       await axios.post(`${API_BASE}/orders/${orderId}/rate`, { rating, review }, { headers });
       setRatingSubmitted(true);
       setCurrentOrder(prev => ({ ...prev, customerRating: rating, customerReview: review }));
+      if (onRatingUpdate) onRatingUpdate();
+      toast('success', 'Rating submitted successfully');
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to submit rating');
+      toast('error', err.response?.data?.message || 'Failed to submit rating');
     } finally {
       setRatingSubmitting(false);
     }

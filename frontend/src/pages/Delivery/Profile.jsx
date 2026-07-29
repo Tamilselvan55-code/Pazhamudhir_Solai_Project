@@ -6,10 +6,12 @@ import {
   User, Shield, FileText, Settings, LogOut, ChevronRight, KeyRound, 
   MapPin, Phone, Car, HelpCircle, FileCheck, Moon 
 } from 'lucide-react';
+import useModal from '../../hooks/useModal';
 
 const DeliveryProfile = () => {
   const { partner } = useOutletContext();
   const navigate = useNavigate();
+  const { userAlert, toast } = useModal();
 
   const [passwordData, setPasswordData] = useState({ currentPassword: '', newPassword: '' });
   const [passwordStatus, setPasswordStatus] = useState('');
@@ -122,7 +124,7 @@ const DeliveryProfile = () => {
             </div>
             <ChevronRight className="w-5 h-5 text-gray-400" />
           </button>
-          <button onClick={() => alert('Dark mode coming soon!')} className="w-full flex items-center justify-between p-5 hover:bg-gray-50 transition-colors border-b border-gray-50 text-left">
+          <button onClick={() => userAlert('Coming Soon', 'Dark mode is under development.')} className="w-full flex items-center justify-between p-5 hover:bg-gray-50 transition-colors border-b border-gray-50 text-left">
             <div className="flex items-center gap-4">
               <div className="w-10 h-10 bg-indigo-50 rounded-full flex items-center justify-center">
                 <Moon className="w-5 h-5 text-indigo-600" />
@@ -131,7 +133,7 @@ const DeliveryProfile = () => {
             </div>
             <ChevronRight className="w-5 h-5 text-gray-400" />
           </button>
-          <button onClick={() => alert('Support coming soon!')} className="w-full flex items-center justify-between p-5 hover:bg-gray-50 transition-colors text-left">
+          <button onClick={() => userAlert('Coming Soon', 'Support center is under development.')} className="w-full flex items-center justify-between p-5 hover:bg-gray-50 transition-colors text-left">
             <div className="flex items-center gap-4">
               <div className="w-10 h-10 bg-teal-50 rounded-full flex items-center justify-center">
                 <HelpCircle className="w-5 h-5 text-teal-600" />

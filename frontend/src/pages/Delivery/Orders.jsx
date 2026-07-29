@@ -3,6 +3,7 @@ import { useOutletContext } from 'react-router-dom';
 import axios from 'axios';
 import { API_BASE, API_URL } from '../../config/api';
 import { io } from 'socket.io-client';
+import useModal from '../../hooks/useModal';
 import { 
   Package, MapPin, Navigation, Phone, Search, 
   MessageCircle, Clock, AlertCircle, X, Check, ShieldCheck 
@@ -10,6 +11,7 @@ import {
 
 const DeliveryOrders = () => {
   const { partner } = useOutletContext();
+  const { userConfirm, toast } = useModal();
   const [orders, setOrders] = useState([]);
   const [historyOrders, setHistoryOrders] = useState([]);
   const [activeTab, setActiveTab] = useState('Active');
@@ -173,14 +175,15 @@ const DeliveryOrders = () => {
       }
       fetchOrders();
     } catch (err) {
-      alert(err.response?.data?.message || `Failed to mark ${action}`);
+      toast('error', err.response?.data?.message || `Failed to mark ${action}`);
     } finally {
       setActionLoading(null);
     }
   };
 
   const handleReject = async (orderId) => {
-    if (!window.confirm('Reject this delivery?')) return;
+    const isConfirmed = await userConfirm('Reject Order', 'Are you sure you want to reject this delivery?', { danger: true });
+    if (!isConfirmed) return;
     setActionLoading(orderId);
     try {
       await axios.post(`${API_BASE}/delivery/orders/${orderId}/reject`, {}, {
@@ -189,7 +192,7 @@ const DeliveryOrders = () => {
       setIncomingOrder(null);
       fetchOrders();
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to reject assignment');
+      toast('error', err.response?.data?.message || 'Failed to reject assignment');
     } finally {
       setActionLoading(null);
     }
@@ -197,7 +200,7 @@ const DeliveryOrders = () => {
 
   const handleVerifyOtp = async (e) => {
     e.preventDefault();
-    if (otpModalData.otp.length !== 4) return alert('Enter a 4-digit OTP.');
+    if (otpModalData.otp.length !== 4) return toast('warning', 'Enter a 4-digit OTP.');
     setOtpLoading(true);
     try {
       await axios.post(`${API_BASE}/delivery/orders/${otpModalData.orderId}/verify-otp`, { otp: otpModalData.otp }, {
@@ -206,7 +209,7 @@ const DeliveryOrders = () => {
       setOtpModalData({ isOpen: false, orderId: null, otp: '' });
       fetchOrders();
     } catch (err) {
-      alert(err.response?.data?.message || 'Invalid OTP');
+      toast('error', err.response?.data?.message || 'Invalid OTP');
     } finally {
       setOtpLoading(false);
     }

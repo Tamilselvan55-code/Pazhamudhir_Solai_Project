@@ -6,9 +6,11 @@ import useAuthStore from '../../store/useAuthStore';
 import axios from 'axios';
 import { API_BASE } from '../../config/api';
 import { StatCard } from '../../components/Admin/DashboardShared';
+import useModal from '../../hooks/useModal';
 
 const DeliveryEarnings = () => {
   const { adminInfo } = useAuthStore();
+  const { adminPrompt, toast } = useModal();
   const [earnings, setEarnings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -33,7 +35,7 @@ const DeliveryEarnings = () => {
   };
 
   const handleSettle = async (partnerId) => {
-    const ref = prompt("Enter payment reference number (optional):");
+    const ref = await adminPrompt("Enter Reference", "Enter payment reference number (optional):");
     if (ref === null) return;
 
     setSettleLoading(partnerId);
@@ -43,7 +45,7 @@ const DeliveryEarnings = () => {
       });
       fetchEarnings();
     } catch (error) {
-      alert(error.response?.data?.message || 'Failed to process settlement');
+      toast('error', error.response?.data?.message || 'Failed to process settlement');
     } finally {
       setSettleLoading(null);
     }

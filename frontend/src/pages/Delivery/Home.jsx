@@ -3,6 +3,7 @@ import { useOutletContext, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { API_BASE } from '../../config/api';
 import { IndianRupee, PackageCheck, Package, Clock, Wallet, Star, CheckCircle, Target, Loader2 } from 'lucide-react';
+import useModal from '../../hooks/useModal';
 
 const DeliveryHome = () => {
   const { partner, setPartner } = useOutletContext();
@@ -42,7 +43,7 @@ const DeliveryHome = () => {
       setPartner(data);
     } catch (error) {
       console.error('Failed to update status', error);
-      alert('Failed to update status');
+      toast('error', 'Failed to update status');
     }
   };
 

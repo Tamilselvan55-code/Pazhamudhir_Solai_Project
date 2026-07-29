@@ -5,7 +5,7 @@ import { API_BASE } from '../../config/api';
 import useModal from '../../hooks/useModal';
 
 const DocumentManagementModal = ({ isOpen, onClose, partner, token, onVerify }) => {
-  const { toast } = useModal();
+  const { toast, adminConfirm } = useModal();
   const [loadingDoc, setLoadingDoc] = useState(null);
   const [rejectReason, setRejectReason] = useState('');
   const [rejectDocType, setRejectDocType] = useState(null);
@@ -93,7 +93,8 @@ const DocumentManagementModal = ({ isOpen, onClose, partner, token, onVerify }) 
   };
 
   const handleRemove = async (type) => {
-    if (!window.confirm(`Are you sure you want to remove ${type}?`)) return;
+    const isConfirmed = await adminConfirm("Delete Confirmation", `Are you sure you want to remove ${type}?`, { danger: true });
+    if (!isConfirmed) return;
     
     try {
       setLoadingDoc(type);
