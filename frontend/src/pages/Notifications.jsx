@@ -6,6 +6,7 @@ import {
   CreditCard, Shield, User, Search, Trash2, CheckCircle, 
   ArrowLeft, SlidersHorizontal, Settings, AlertCircle
 } from 'lucide-react';
+import useSettingsStore from '../store/useSettingsStore';
 import useNotificationStore from '../store/useNotificationStore';
 import useAuthStore from '../store/useAuthStore';
 
@@ -39,6 +40,7 @@ const priorityColors = {
 
 const Notifications = () => {
   const { userInfo } = useAuthStore();
+  const settings = useSettingsStore(s => s.settings);
   const navigate = useNavigate();
 
   const {
@@ -48,7 +50,7 @@ const Notifications = () => {
     page,
     totalPages,
     loading,
-    settings,
+    settings: notificationSettings,
     fetchNotifications,
     fetchSettings,
     updateSettings,
@@ -77,27 +79,27 @@ const Notifications = () => {
   });
 
   useEffect(() => {
-    document.title = 'Notifications | Tiruchendur Murugan Pazhamudhir Solai';
+    document.title = `Notifications | ${settings?.storeName || 'Tiruchendur Murugan Pazhamudhir Solai'}`;
     if (!userInfo) {
       navigate('/login');
       return;
     }
     initSocket(userInfo._id);
     fetchSettings();
-  }, [userInfo, initSocket, fetchSettings, navigate]);
+  }, [userInfo, initSocket, fetchSettings, navigate, settings?.storeName]);
 
   useEffect(() => {
-    if (settings) {
+    if (notificationSettings) {
       setPrefs({
-        orderNotifications: settings.orderNotifications ?? true,
-        offerNotifications: settings.offerNotifications ?? true,
-        deliveryNotifications: settings.deliveryNotifications ?? true,
-        securityNotifications: settings.securityNotifications ?? true,
-        promotionalNotifications: settings.promotionalNotifications ?? true,
-        generalNotifications: settings.generalNotifications ?? true
+        orderNotifications: notificationSettings.orderNotifications ?? true,
+        offerNotifications: notificationSettings.offerNotifications ?? true,
+        deliveryNotifications: notificationSettings.deliveryNotifications ?? true,
+        securityNotifications: notificationSettings.securityNotifications ?? true,
+        promotionalNotifications: notificationSettings.promotionalNotifications ?? true,
+        generalNotifications: notificationSettings.generalNotifications ?? true
       });
     }
-  }, [settings]);
+  }, [notificationSettings]);
 
   // Fetch notifications on filter/page change
   useEffect(() => {
@@ -172,7 +174,7 @@ const Notifications = () => {
 
   return (
     <>
-      <SEO title="Notifications | Tiruchendur Murugan Pazhamudhir Solai" description="View your notifications and alerts." canonicalPath="/notifications" />
+      <SEO title={`Notifications | ${settings?.storeName || 'Tiruchendur Murugan Pazhamudhir Solai'}`} description="View your notifications and alerts." canonicalPath="/notifications" />
       <div className="min-h-screen pb-24 pt-4 sm:pt-8 px-3 sm:px-4 lg:px-8" style={{ background: '#f7fdf7' }}>
 
       <div className="max-w-4xl mx-auto">
@@ -429,7 +431,7 @@ const Notifications = () => {
             <div className="border-b border-gray-50 pb-6 mb-6">
               <h1 className="text-2xl font-black text-gray-800">Notification Settings</h1>
               <p className="text-xs text-gray-500 mt-1">
-                Customize how and when you receive notifications from Tiruchendur Murugan Pazhamudhir Solai.
+                Customize how and when you receive notifications from {settings?.storeName || 'Tiruchendur Murugan Pazhamudhir Solai'}.
               </p>
             </div>
 

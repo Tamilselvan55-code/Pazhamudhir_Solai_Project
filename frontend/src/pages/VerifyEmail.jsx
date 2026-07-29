@@ -4,6 +4,7 @@ import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { Mail, CheckCircle2, AlertCircle, Loader2, ArrowLeft, RefreshCw, Edit2 } from 'lucide-react';
 import axios from 'axios';
 import useAuthStore from '../store/useAuthStore';
+import useSettingsStore from '../store/useSettingsStore';
 
 const maskEmail = (emailStr) => {
   if (!emailStr) return 'your email';
@@ -18,6 +19,7 @@ const maskEmail = (emailStr) => {
 const VerifyEmail = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const settings = useSettingsStore(s => s.settings);
   const email = location.state?.email || '';
 
   // Redirect to register if no email is found in navigation state
@@ -251,8 +253,17 @@ const VerifyEmail = () => {
                 🥭
               </div>
               <div className="text-center">
-                <span className="font-black text-xs uppercase tracking-widest text-green-700 block">Tiruchendur Murugan</span>
-                <span className="font-extrabold text-[10px] text-gray-400 uppercase tracking-widest block mt-0.5">Pazhamudhir Solai</span>
+                {settings?.storeName ? (
+                  <>
+                    <span className="font-black text-xs uppercase tracking-widest text-green-700 block">{settings.storeName.split(' ').slice(0, 2).join(' ')}</span>
+                    <span className="font-extrabold text-[10px] text-gray-400 uppercase tracking-widest block mt-0.5">{settings.storeName.split(' ').slice(2).join(' ')}</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="font-black text-xs uppercase tracking-widest text-green-700 block">Tiruchendur Murugan</span>
+                    <span className="font-extrabold text-[10px] text-gray-400 uppercase tracking-widest block mt-0.5">Pazhamudhir Solai</span>
+                  </>
+                )}
               </div>
               <div className="text-5xl pt-2 select-none animate-pulse">📧</div>
               <h2 className="text-2xl font-black text-gray-900 tracking-tight">Verify Your Email</h2>

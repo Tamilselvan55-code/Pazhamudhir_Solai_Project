@@ -6,17 +6,19 @@ import {
   CheckCircle, Loader2, Sparkles, Truck, CircleDollarSign 
 } from 'lucide-react';
 import useAuthStore from '../store/useAuthStore';
+import useSettingsStore from '../store/useSettingsStore';
 import axios from 'axios';
 
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { login, loading } = useAuthStore();
+  const settings = useSettingsStore(s => s.settings);
   const successMsg = location.state?.successMsg || '';
 
   useEffect(() => {
-    document.title = 'Login | Tiruchendur Murugan Pazhamudhir Solai';
-  }, []);
+    document.title = `Login | ${settings?.storeName || 'Tiruchendur Murugan Pazhamudhir Solai'}`;
+  }, [settings?.storeName]);
 
   const [form, setForm] = useState({ phoneNumber: '', password: '' });
   const [errors, setErrors] = useState({});
@@ -128,10 +130,19 @@ const Login = () => {
           </div>
           
           <div className="pt-8">
-            <h2 className="text-4xl font-extrabold leading-tight tracking-tight">
-              Tiruchendur Murugan <br/>
-              <span className="text-green-200">Pazhamudhir Solai</span>
-            </h2>
+            <h1 className="text-3xl font-extrabold text-white mb-2 leading-tight">
+              {settings?.storeName ? (
+                <>
+                  {settings.storeName.split(' ').slice(0, 2).join(' ')} <br/>
+                  <span className="text-green-300">{settings.storeName.split(' ').slice(2).join(' ')}</span>
+                </>
+              ) : (
+                <>
+                  Tiruchendur Murugan <br/>
+                  <span className="text-green-300">Pazhamudhir Solai</span>
+                </>
+              )}
+            </h1>
             <p className="text-green-100 text-sm mt-3 font-medium">
               Fresh Vegetables • Fruits • Grocery
             </p>
@@ -175,8 +186,8 @@ const Login = () => {
         </div>
 
         {/* Bottom footer text */}
-        <div className="relative z-10 text-xs text-green-100/60 font-medium">
-          © {new Date().getFullYear()} Tiruchendur Murugan Pazhamudhir Solai
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-center text-white/50 text-[10px] w-full px-4 font-medium hidden lg:block">
+          © {new Date().getFullYear()} {settings?.websiteName || 'Tiruchendur Murugan Pazhamudhir Solai'}
         </div>
       </div>
 

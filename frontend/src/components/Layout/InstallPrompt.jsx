@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Download, X } from 'lucide-react';
+import useSettingsStore from '../../store/useSettingsStore';
 
 const InstallPrompt = () => {
+  const settings = useSettingsStore(s => s.settings);
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showPrompt, setShowPrompt] = useState(false);
 
@@ -42,7 +44,7 @@ const InstallPrompt = () => {
           🛒
         </div>
         <div className="min-w-0">
-          <p className="text-sm font-bold truncate">Tiruchendur Murugan Pazhamudhir Solai</p>
+          <p className="text-sm font-bold truncate">{settings?.websiteName || 'Tiruchendur Murugan Pazhamudhir Solai'}</p>
           <p className="text-xs text-gray-400 truncate">Install app for fast mobile ordering</p>
         </div>
       </div>

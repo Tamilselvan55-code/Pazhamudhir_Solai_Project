@@ -18,8 +18,7 @@ axios.interceptors.request.use((config) => {
 });
 
 
-console.log('%c🌿 Tiruchendur Murugan Pazhamudhir Solai 🌿', 'color: #16a34a; font-size: 16px; font-weight: bold;');
-console.log('%cWelcome to www.tiruchendurmuruganpazhamudhirsolai.com', 'color: #4b5563; font-size: 12px;');
+console.log('%c🌿 Enterprise Grocery Management System 🌿', 'color: #16a34a; font-size: 16px; font-weight: bold;');
 
 
 

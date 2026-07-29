@@ -6,6 +6,7 @@ import useModal from '../../hooks/useModal';
 import useGuestGuard from '../../hooks/useGuestGuard';
 import { formatCurrency } from '../../utils/currency';
 import ProductImage from './ProductImage';
+import ProductPopup from './ProductPopup';
 
 const ProductCard = ({ product }) => {
   const { cartItems, addToCart, updateQuantity } = useCartStore();
@@ -14,16 +15,17 @@ const ProductCard = ({ product }) => {
   const { requireAuth } = useGuestGuard();
   
   const [isAnimatingHeart, setIsAnimatingHeart] = React.useState(false);
+  const [isPopupOpen, setIsPopupOpen] = React.useState(false);
 
   const cartItem = cartItems.find(item => item.product === product._id);
   const quantity = cartItem ? cartItem.quantity : 0;
   const isInStock = product.inStock !== false;
   const isWishlisted = isInWishlist(product._id);
 
-  // Guard: only add to cart if user is logged in
-  const handleAddToCart = () => {
-    if (!requireAuth('Please log in to add products to your cart.')) return;
-    addToCart(product);
+  // Guard: open popup instead of adding directly
+  const handleAddClick = (e) => {
+    e.stopPropagation();
+    setIsPopupOpen(true);
   };
 
   const handleToggleWishlist = async (e) => {
@@ -45,7 +47,11 @@ const ProductCard = ({ product }) => {
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col transition-all duration-200 hover:shadow-lg hover:-translate-y-1 group">
+    <>
+    <div 
+      onClick={() => setIsPopupOpen(true)}
+      className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col transition-all duration-200 hover:shadow-lg hover:-translate-y-1 group cursor-pointer"
+    >
       {/* Image */}
       <div className="relative w-full h-[110px] sm:h-[140px] md:h-[160px] lg:h-[180px] flex items-center justify-center bg-white overflow-hidden p-[8px] sm:p-[12px]" style={{ borderRadius: '12px 12px 0 0' }}>
         <ProductImage
@@ -120,7 +126,7 @@ const ProductCard = ({ product }) => {
 
           {quantity === 0 ? (
             <button
-              onClick={handleAddToCart}
+              onClick={handleAddClick}
               disabled={!isInStock}
               className="bg-green-600 text-white text-[10px] font-bold px-3 py-1.5 rounded-xl shadow hover:bg-green-700 active:scale-95 transition-all flex items-center gap-1 disabled:bg-gray-300"
             >
@@ -129,7 +135,8 @@ const ProductCard = ({ product }) => {
           ) : (
             <div className="flex items-center bg-green-600 text-white rounded-xl shadow overflow-hidden">
               <button
-                onClick={async () => {
+                onClick={async (e) => {
+                  e.stopPropagation();
                   if (quantity <= 1) {
                     const ok = await userConfirm('Remove Item?', 'Do you want to remove this item from your cart?', { danger: true, confirmLabel: 'Remove' });
                     if (ok) updateQuantity(product._id, 0);
@@ -143,7 +150,10 @@ const ProductCard = ({ product }) => {
               </button>
               <span className="px-2 text-xs font-bold min-w-[1.5rem] text-center">{quantity}</span>
               <button
-                onClick={() => updateQuantity(product._id, quantity + 1)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  updateQuantity(product._id, quantity + 1);
+                }}
                 className="p-1.5 hover:bg-green-700 active:bg-green-800 transition-colors"
               >
                 <Plus className="w-3 h-3" />
@@ -153,6 +163,13 @@ const ProductCard = ({ product }) => {
         </div>
       </div>
     </div>
+    
+    <ProductPopup 
+      product={product} 
+      isOpen={isPopupOpen} 
+      onClose={() => setIsPopupOpen(false)} 
+    />
+    </>
   );
 };
 

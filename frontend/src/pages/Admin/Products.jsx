@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import AdminLayout from '../../components/Admin/AdminLayout';
 import useAuthStore from '../../store/useAuthStore';
+import useSettingsStore from '../../store/useSettingsStore';
 import useModal from '../../hooks/useModal';
 import { formatCurrency } from '../../utils/currency';
 
@@ -28,6 +29,7 @@ const CATEGORIES = [
 
 const Products = () => {
   const { adminInfo } = useAuthStore();
+  const settings = useSettingsStore(s => s.settings);
   const location = useLocation();
   const { adminAlert, adminConfirm, adminPrompt } = useModal();
   const jsonImportInputRef = useRef(null);
@@ -480,7 +482,7 @@ const Products = () => {
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.setAttribute('download', `tiruchendur_murugan_pazhamudhir_solai_products_${Date.now()}.csv`);
+    link.setAttribute('download', `${(settings?.storeName || 'Products').replace(/\s+/g, '_').toLowerCase()}_products_${Date.now()}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

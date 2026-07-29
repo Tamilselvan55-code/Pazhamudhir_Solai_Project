@@ -1,11 +1,13 @@
 import React from 'react';
 import { X, Printer, Download } from 'lucide-react';
-import { formatCurrency } from '../../utils/currency';
 import { generateInvoicePDF } from '../../utils/pdfGenerator';
-import { formatDisplayAddress, formatDisplayAddressLines } from '../../utils/addressFormatter';
+import { formatDisplayAddressLines } from '../../utils/addressFormatter';
+import useSettingsStore from '../../store/useSettingsStore';
 
-const InvoiceModal = ({ order, userInfo, onClose }) => {
-  if (!order) return null;
+const InvoiceModal = ({ order, isOpen, onClose }) => {
+  const settings = useSettingsStore(s => s.settings);
+
+  if (!isOpen || !order) return null;
 
   const orderDate = new Date(order.createdAt).toLocaleDateString('en-GB', {
     day: 'numeric',
@@ -27,23 +29,19 @@ const InvoiceModal = ({ order, userInfo, onClose }) => {
         <div className="p-4 border-b border-gray-100 flex items-center justify-between print:hidden">
           <h3 className="text-base font-bold text-gray-800">Tax Invoice / Bill</h3>
           <div className="flex items-center gap-2">
-            {userInfo?.role === 'admin' && (
-              <>
-                <button
-                  onClick={handlePrint}
-                  className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 shadow-md transition-colors"
-                >
-                  <Printer className="w-4 h-4" /> Print
-                </button>
-                <button
-                  onClick={() => generateInvoicePDF(order, userInfo)}
-                  className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 shadow-md transition-colors"
-                  title="Download Supermarket Bill PDF"
-                >
-                  <Download className="w-4 h-4" /> Download PDF Bill
-                </button>
-              </>
-            )}
+            <button
+              onClick={handlePrint}
+              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 shadow-md transition-colors"
+            >
+              <Printer className="w-4 h-4" /> Print
+            </button>
+            <button
+              onClick={() => generateInvoicePDF(order, settings)}
+              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 shadow-md transition-colors"
+              title="Download Supermarket Bill PDF"
+            >
+              <Download className="w-4 h-4" /> Download PDF Bill
+            </button>
             <button
               onClick={onClose}
               className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
@@ -62,20 +60,17 @@ const InvoiceModal = ({ order, userInfo, onClose }) => {
                 TM
               </div>
               <div className="text-center md:text-left">
-                <h2 className="text-2xl font-black text-emerald-800 tracking-tight leading-none">
-                  TIRUCHENDUR MURUGAN
+                <h2 className="text-xl sm:text-2xl font-black text-emerald-800 tracking-tight leading-none uppercase">
+                  {settings?.storeName || 'TIRUCHENDUR MURUGAN PAZHAMUDHIR SOLAI'}
                 </h2>
-                <h3 className="text-lg font-bold text-emerald-800 tracking-wide mt-1">
-                  PAZHAMUDHIR SOLAI
-                </h3>
                 <p className="text-xs font-semibold text-slate-600 mt-1.5">
-                  →─── Grocery & Fresh Vegetables Store ───←
+                  →─── {settings?.tagline || 'Grocery & Fresh Vegetables Store'} ───←
                 </p>
                 <p className="text-xs text-slate-500 mt-1">
-                  📍 Sriperumbudur, Tamil Nadu - 602105
+                  📍 {settings?.storeAddress || 'Sriperumbudur, Tamil Nadu - 602105'}
                 </p>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  📞 +91 94443 62453 | ✉ contact@tmstore.com | 🌐 www.tmstore.com
+                  📞 {settings?.phone || '+91 94443 62453'} | ✉ {settings?.email || 'contact@tmstore.com'} | 🌐 {settings?.websiteUrl || 'www.tmstore.com'}
                 </p>
               </div>
             </div>
@@ -99,9 +94,9 @@ const InvoiceModal = ({ order, userInfo, onClose }) => {
                 <span>👤</span> CUSTOMER DETAILS
               </div>
               <div className="p-3 space-y-1 text-slate-700 font-medium">
-                <div className="flex"><span className="w-20 text-slate-400">Name :</span> <span className="font-bold text-slate-900">{order.recipient?.name || userInfo?.fullName || 'Customer'}</span></div>
-                <div className="flex"><span className="w-20 text-slate-400">Phone :</span> <span>{order.recipient?.phone || userInfo?.phoneNumber || 'N/A'}</span></div>
-                <div className="flex"><span className="w-20 text-slate-400">Email :</span> <span>{userInfo?.email || 'N/A'}</span></div>
+                <div className="flex"><span className="w-20 text-slate-400">Name :</span> <span className="font-bold text-slate-900">{order.recipient?.name || 'Customer'}</span></div>
+                <div className="flex"><span className="w-20 text-slate-400">Phone :</span> <span>{order.recipient?.phone || 'N/A'}</span></div>
+                <div className="flex"><span className="w-20 text-slate-400">Email :</span> <span>{order.recipient?.email || 'N/A'}</span></div>
               </div>
             </div>
 
@@ -251,11 +246,11 @@ const InvoiceModal = ({ order, userInfo, onClose }) => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs pt-2 pb-6">
             <div>
               <h5 className="font-bold text-slate-800 uppercase mb-2">TERMS & CONDITIONS</h5>
-              <ul className="space-y-1 text-[11px] text-slate-500">
-                <li>• Goods once sold will not be taken back.</li>
-                <li>• Please check items before accepting delivery.</li>
-                <li>• Keep this invoice for future reference.</li>
-                <li>• Subject to Sriperumbudur jurisdiction only.</li>
+              <ul className="list-disc list-inside mt-2 space-y-1 ml-1 text-slate-600">
+                <li>Goods once sold will not be taken back without original invoice.</li>
+                <li>Please check items before accepting delivery.</li>
+                <li>Keep this invoice for future reference.</li>
+                <li>Subject to {settings?.city || 'Sriperumbudur'} jurisdiction only.</li>
               </ul>
             </div>
             <div className="text-center flex flex-col items-center justify-center">

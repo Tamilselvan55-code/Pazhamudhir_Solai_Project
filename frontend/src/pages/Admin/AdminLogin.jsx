@@ -2,13 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Shield, Mail, Lock, Eye, EyeOff, AlertCircle, Loader2, ArrowLeft } from 'lucide-react';
 import useAuthStore from '../../store/useAuthStore';
+import useSettingsStore from '../../store/useSettingsStore';
 
 const AdminLogin = () => {
   const navigate = useNavigate();
   const { adminLogin, loading } = useAuthStore();
+  const { settings } = useSettingsStore();
 
   useEffect(() => {
-    document.title = 'Tiruchendur Murugan Pazhamudhir Solai - Admin Panel';
+    document.title = `${settings?.storeName || 'Tiruchendur Murugan Pazhamudhir Solai'} - Admin Panel`;
 
     let meta = document.querySelector('meta[name="robots"]');
     let created = false;
@@ -30,7 +32,7 @@ const AdminLogin = () => {
         }
       }
     };
-  }, []);
+  }, [settings?.storeName]);
 
   const [form, setForm] = useState({ email: '', password: '' });
   const [errors, setErrors] = useState({});
@@ -111,10 +113,14 @@ const AdminLogin = () => {
 
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-slate-900 shadow-lg mb-4">
-            <Shield className="w-8 h-8 text-white" />
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-slate-900 shadow-lg mb-4 overflow-hidden">
+            {settings?.storeLogo ? (
+              <img src={settings.storeLogo} alt="Logo" className="w-full h-full object-cover" />
+            ) : (
+              <Shield className="w-8 h-8 text-white" />
+            )}
           </div>
-          <h1 className="text-2xl font-extrabold text-gray-900">Tiruchendur Murugan Pazhamudhir Solai</h1>
+          <h1 className="text-2xl font-extrabold text-gray-900">{settings?.storeName || 'Tiruchendur Murugan Pazhamudhir Solai'}</h1>
           <p className="text-gray-500 mt-1 text-sm">Admin Panel Login</p>
         </div>
 

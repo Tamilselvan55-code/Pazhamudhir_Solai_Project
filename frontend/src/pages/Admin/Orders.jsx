@@ -10,6 +10,7 @@ import AdminLayout from '../../components/Admin/AdminLayout';
 import useAuthStore from '../../store/useAuthStore';
 import axios from 'axios';
 import useModal from '../../hooks/useModal';
+import useSettingsStore from '../../store/useSettingsStore';
 import { formatCurrency } from '../../utils/currency';
 import { generateInvoicePDF } from '../../utils/pdfGenerator';
 import { formatDisplayAddress } from '../../utils/addressFormatter';
@@ -57,6 +58,7 @@ const ORDER_STATUSES = ['Waiting for Admin Approval', 'Order Confirmed', 'Out fo
 const OrderRow = ({ order, token, onUpdated }) => {
   const { adminAlert, toast } = useModal();
   const { adminInfo } = useAuthStore();
+  const settings = useSettingsStore(s => s.settings);
   const [expanded,       setExpanded]       = useState(false);
   const [statusUpdating, setStatusUpdating] = useState(false);
   const [error,          setError]          = useState('');
@@ -109,7 +111,7 @@ const OrderRow = ({ order, token, onUpdated }) => {
     printWindow.document.write(`
       <html>
         <head>
-          <title>Tiruchendur Murugan Pazhamudhir Solai Invoice - ${order.invoiceNumber || order._id}</title>
+          <title>{settings?.storeName || 'Tiruchendur Murugan Pazhamudhir Solai'} Invoice - ${order.invoiceNumber || order._id}</title>
           <style>
             body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 25px; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #eee; }
             .header { text-align: center; border-bottom: 2px dashed #16a34a; padding-bottom: 15px; margin-bottom: 15px; }
@@ -124,8 +126,8 @@ const OrderRow = ({ order, token, onUpdated }) => {
         </head>
         <body onload="window.print(); window.close();">
           <div class="header">
-            <h2 style="margin: 0; color: #16a34a;">Tiruchendur Murugan Pazhamudhir Solai</h2>
-            <p style="margin: 5px 0 0 0; font-size: 12px; color: #666;">Hyperlocal Groceries Delivery Portal</p>
+            <h2 style="margin: 0; color: #16a34a;">${settings?.storeName || 'Tiruchendur Murugan Pazhamudhir Solai'}</h2>
+            <p style="margin: 5px 0 0 0; font-size: 12px; color: #666;">${settings?.tagline || 'Hyperlocal Groceries Delivery Portal'}</p>
             <hr style="border: 0; border-top: 1px solid #eee; margin: 12px 0;" />
             <p style="margin: 0; font-size: 12px; font-weight: bold;">Invoice No: ${order.invoiceNumber || order._id}</p>
             <p style="margin: 2px 0 0 0; font-size: 11px; color: #888;">Placed At: ${new Date(order.createdAt).toLocaleString('en-IN')}</p>
@@ -162,7 +164,7 @@ const OrderRow = ({ order, token, onUpdated }) => {
             <p style="font-size: 11px; font-weight: normal; margin: 2px 0;">Payment Mode: CASH ON DELIVERY (COD)</p>
             <p style="font-size: 11px; font-weight: bold; margin: 2px 0; color: #16a34a;">Payment Status: ${order.paymentStatus === 'Paid' ? 'PAID' : 'PENDING'}</p>
             <p style="font-size: 11px; font-weight: bold; margin: 2px 0; color: #16a34a;">Current Status: ${order.status}</p>
-            <p style="font-size: 11px; margin: 15px 0 0 0; text-align: center; color: #666;">Thanks, Tiruchendur Murugan Pazhamudhir Solai Team</p>
+            <p style="font-size: 11px; margin: 15px 0 0 0; text-align: center; color: #666;">Thanks, ${settings?.storeName || 'Tiruchendur Murugan Pazhamudhir Solai'} Team</p>
           </div>
         </body>
       </html>
@@ -554,6 +556,8 @@ const OrderRow = ({ order, token, onUpdated }) => {
 /* ═══════════════════════════════════════════════════════════════════════════ */
 const Orders = () => {
   const { adminInfo } = useAuthStore();
+  const settings = useSettingsStore(s => s.settings);
+  const { adminAlert, adminConfirm } = useModal();
   const location = useLocation();
 
   const [orders,        setOrders]        = useState([]);

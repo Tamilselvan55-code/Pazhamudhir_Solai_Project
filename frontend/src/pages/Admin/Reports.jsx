@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import AdminLayout from '../../components/Admin/AdminLayout';
 import useAuthStore from '../../store/useAuthStore';
+import useSettingsStore from '../../store/useSettingsStore';
 import axios from 'axios';
 import * as XLSX from 'xlsx';
 import { formatCurrency } from '../../utils/currency';
@@ -58,6 +59,7 @@ const GrowthBadge = ({ pct }) => {
 // ─── Main Component ────────────────────────────────────────────────────────
 const Reports = () => {
   const { adminInfo } = useAuthStore();
+  const settings = useSettingsStore(s => s.settings);
 
   const [loading, setLoading]     = useState(true);
   const [error, setError]         = useState('');
@@ -146,7 +148,7 @@ const Reports = () => {
       return nr;
     });
     const titleRows = [
-      { [headings[0]]: 'TIRUCHENDUR MURUGAN PAZHAMUDHIR SOLAI' },
+      { [headings[0]]: (settings?.storeName || 'TIRUCHENDUR MURUGAN PAZHAMUDHIR SOLAI').toUpperCase() },
       { [headings[0]]: `${reportType} | Filter: ${dateFilter}` },
       { [headings[0]]: `Exported: ${new Date().toLocaleString('en-IN')} | Records: ${filteredTableData.length}` },
       {},

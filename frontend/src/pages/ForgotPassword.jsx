@@ -2,16 +2,18 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Mail, ShoppingBag, AlertCircle, CheckCircle, Loader2, ArrowLeft, Lock, Eye, EyeOff, RefreshCw } from 'lucide-react';
 import useAuthStore from '../store/useAuthStore';
+import useSettingsStore from '../store/useSettingsStore';
 
 const RESEND_COOLDOWN = 60; // seconds
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
   const { sendOtp, verifyOtp, resetPasswordOtp, loading } = useAuthStore();
+  const settings = useSettingsStore(s => s.settings);
 
   useEffect(() => {
-    document.title = 'Forgot Password | Tiruchendur Murugan Pazhamudhir Solai';
-  }, []);
+    document.title = `Forgot Password | ${settings?.storeName || 'Tiruchendur Murugan Pazhamudhir Solai'}`;
+  }, [settings?.storeName]);
 
   // ── Shared state ──────────────────────────────────────────────────
   const [step, setStep] = useState(1); // 1=email, 2=otp, 3=password
@@ -217,7 +219,7 @@ const ForgotPassword = () => {
             {step === 4 ? 'Password Updated!' : 'Forgot Password?'}
           </h1>
           <p className="text-gray-500 mt-1 text-sm">
-            {step === 1 && 'Enter your email to receive an OTP for Tiruchendur Murugan Pazhamudhir Solai'}
+            {step === 1 && `Enter your email to receive an OTP for ${settings?.websiteName || 'Tiruchendur Murugan Pazhamudhir Solai'}`}
             {step === 2 && 'Enter the 4-digit OTP sent to your email'}
             {step === 3 && 'Create a new password for your account'}
             {step === 4 && 'You can now login with your new password'}

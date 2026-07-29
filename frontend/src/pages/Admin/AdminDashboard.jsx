@@ -10,6 +10,7 @@ import axios from 'axios';
 import { io } from 'socket.io-client';
 import AdminLayout from '../../components/Admin/AdminLayout';
 import useAuthStore from '../../store/useAuthStore';
+import useSettingsStore from '../../store/useSettingsStore';
 import useModal from '../../hooks/useModal';
 import { formatCurrency } from '../../utils/currency';
 import { StatCard, CustomAreaChart } from '../../components/Admin/DashboardShared';
@@ -71,6 +72,7 @@ const ProductRow = ({ rank, name, sold, revenue, image }) => (
 /* ── Main Dashboard ───────────────────────────────────────────────────── */
 const AdminDashboard = () => {
   const { adminInfo } = useAuthStore();
+  const settings = useSettingsStore(s => s.settings);
   const { adminAlert } = useModal();
   const [stats, setStats] = useState(null);
   const [chartData, setChartData] = useState([]);
@@ -251,7 +253,7 @@ const AdminDashboard = () => {
           <h1 className="text-3xl font-black text-white flex items-center gap-2.5">
             {greeting}, {adminInfo.name?.split(' ')[0]} 👋
           </h1>
-          <p className="text-sm text-[#94A3B8] mt-1">Live enterprise metrics & overview for Tiruchendur Murugan Pazhamudhir Solai</p>
+          <p className="text-sm text-[#94A3B8] mt-1">Live enterprise metrics & overview for {settings?.storeName || 'Tiruchendur Murugan Pazhamudhir Solai'}</p>
         </div>
         <div className="flex items-center gap-2.5 text-xs text-white bg-white/4 px-4 py-3 rounded-[18px] border border-white/8 shadow-sm">
           <Calendar className="w-4 h-4 text-[#22C55E]" />

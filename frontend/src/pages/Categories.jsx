@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { API_BASE as config_API_BASE, UPLOADS_BASE } from '../config/api';
 import { Search, ChevronRight, PackageX } from 'lucide-react';
+import useSettingsStore from '../store/useSettingsStore';
 
 const CATEGORY_BANNERS = {
   'vegetables': 'https://images.unsplash.com/photo-1566385101042-1a0aa0c1268c?auto=format&fit=crop&w=800&q=80',
@@ -76,6 +77,7 @@ const Categories = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const settings = useSettingsStore(s => s.settings);
   const [activeChip, setActiveChip] = useState('All');
 
   useEffect(() => {
@@ -200,7 +202,7 @@ const Categories = () => {
 
   return (
     <>
-      <SEO title="Categories | Tiruchendur Murugan Pazhamudhir Solai" description="Browse all our fresh product categories." canonicalPath="/categories" />
+      <SEO title={`Categories | ${settings?.storeName || 'Tiruchendur Murugan Pazhamudhir Solai'}`} description="Browse all our fresh product categories." canonicalPath="/categories" />
       <div className="pb-28 max-w-7xl mx-auto px-3 sm:px-4 pt-3 sm:pt-4 animate-in fade-in duration-300">
       
       {/* Sticky Header */}

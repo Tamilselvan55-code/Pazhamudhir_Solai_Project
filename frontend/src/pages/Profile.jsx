@@ -5,6 +5,7 @@ import { useNavigate, Link, Navigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { ArrowLeft, ShoppingBag, Settings, LogOut } from 'lucide-react';
 import useAuthStore from '../store/useAuthStore';
+import useSettingsStore from '../store/useSettingsStore';
 
 import DashboardSidebar from '../components/Profile/DashboardSidebar';
 import DashboardOverviewTab from '../components/Profile/DashboardOverviewTab';
@@ -22,6 +23,7 @@ const Profile = () => {
   const { userInfo, logout } = useAuthStore();
   const navigate = useNavigate();
   const location = useLocation();
+  const settings = useSettingsStore(s => s.settings);
 
   const [activeTab, setActiveTab] = useState('dashboard');
   const [orders, setOrders] = useState([]);
@@ -93,7 +95,7 @@ const Profile = () => {
 
   return (
     <>
-      <SEO title="My Profile | Tiruchendur Murugan Pazhamudhir Solai" description="View your profile, orders, and wishlist." canonicalPath="/profile" />
+      <SEO title={`My Profile | ${settings?.storeName || 'Tiruchendur Murugan Pazhamudhir Solai'}`} description="View your profile, orders, and wishlist." canonicalPath="/profile" />
       <div className="min-h-screen pb-24 bg-[#f7fdf7]">
       {/* 1. Large Premium Profile Header */}
       <div className="bg-gradient-to-r from-green-600 to-emerald-500 rounded-b-[2rem] sm:rounded-b-[3rem] p-6 sm:p-10 text-white shadow-md relative mb-6 min-h-[140px] flex items-center pt-8 sm:pt-12">

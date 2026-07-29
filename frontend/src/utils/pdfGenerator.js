@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { formatDisplayAddress, formatDisplayAddressLines } from './addressFormatter';
+import useSettingsStore from '../store/useSettingsStore';
 
 // Format Indian Rupee currency safely
 const formatCurrencyPdf = (value) => {
@@ -215,22 +216,28 @@ export const generateInvoicePDF = async (order, userInfo) => {
   }
   curY += 27;
 
+  const settings = useSettingsStore.getState().settings || {};
+
   doc.setFont("helvetica", "bold");
   doc.setFontSize(16);
   doc.setTextColor(...darkGreen);
-  doc.text("TIRUCHENDUR MURUGAN PAZHAMUDHIR SOLAI", pageCenter, curY, { align: "center" });
+  doc.text((settings.storeName || "TIRUCHENDUR MURUGAN PAZHAMUDHIR SOLAI").toUpperCase(), pageCenter, curY, { align: "center" });
   curY += 5;
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(8.5);
   doc.setTextColor(...darkText);
-  doc.text("Fresh Fruits \u2022 Vegetables \u2022 Grocery \u2022 Dairy Products", pageCenter, curY, { align: "center" });
+  doc.text(settings.tagline || "Fresh Fruits \u2022 Vegetables \u2022 Grocery \u2022 Dairy Products", pageCenter, curY, { align: "center" });
   curY += 4.5;
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7);
   doc.setTextColor(...greyText);
-  doc.text("Sriperumbudur, Tamil Nadu - 602105  |  +91 94443 62453  |  contact@tmstore.com", pageCenter, curY, { align: "center" });
+  
+  const addressLine = settings.storeAddress || "Sriperumbudur, Tamil Nadu - 602105";
+  const phoneLine = settings.phone || "+91 94443 62453";
+  const emailLine = settings.email || "contact@tmstore.com";
+  doc.text(`${addressLine}  |  ${phoneLine}  |  ${emailLine}`, pageCenter, curY, { align: "center" });
   curY += 3.5;
 
   // Divider
@@ -529,7 +536,7 @@ export const generateInvoicePDF = async (order, userInfo) => {
   doc.setFont("helvetica", "italic");
   doc.setFontSize(8.5);
   doc.setTextColor(...brandGreen);
-  doc.text("Thank you for shopping with Tiruchendur Murugan Pazhamudhir Solai!", pageCenter, footerY - 4.5, { align: "center" });
+  doc.text(settings?.invoiceFooter || `Thank you for shopping with ${settings?.storeName || 'Tiruchendur Murugan Pazhamudhir Solai'}!`, pageCenter, footerY - 4.5, { align: "center" });
 
   const barH = 7.5;
   doc.setFillColor(...darkGreen);
@@ -558,12 +565,13 @@ export const generateReportPDF = (reportType, summary, dateFilter, tableData, ad
   let currentY = 15;
 
   // Header branding
+  const settings = useSettingsStore.getState().settings || {};
   doc.setFontSize(16);
   doc.setTextColor(22, 163, 74);
-  doc.text("Tiruchendur Murugan Pazhamudhir Solai", 14, currentY + 5);
+  doc.text(settings.storeName || "Tiruchendur Murugan Pazhamudhir Solai", 14, currentY + 5);
   doc.setFontSize(8);
   doc.setTextColor(100, 116, 139);
-  doc.text("Grocery & Fresh Vegetables Store | Management System", 14, currentY + 9);
+  doc.text(settings.tagline || "Grocery & Fresh Vegetables Store | Management System", 14, currentY + 9);
 
   doc.setDrawColor(226, 232, 240);
   doc.setLineWidth(0.6);
@@ -755,7 +763,7 @@ export const generateReportPDF = (reportType, summary, dateFilter, tableData, ad
     doc.line(14, 280, 196, 280);
     doc.setFontSize(8);
     doc.setTextColor(148, 163, 184);
-    doc.text("Official Report: Tiruchendur Murugan Pazhamudhir Solai Admin ERP System", 14, 286);
+    doc.text(`Official Report: ${settings.storeName || 'Tiruchendur Murugan Pazhamudhir Solai'} Admin ERP System`, 14, 286);
     doc.text(`Page ${i} of ${pageCount}`, 196, 286, { align: 'right' });
   }
 

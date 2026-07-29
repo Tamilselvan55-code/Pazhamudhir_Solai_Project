@@ -4,6 +4,7 @@ import {
   Loader2, Info,
 } from 'lucide-react';
 import { getStoreLocation, getDeliveryRadius } from '../../store/useLocationStore';
+import useSettingsStore from '../../store/useSettingsStore';
 import { GoogleMap, useJsApiLoader, Marker, Circle } from '@react-google-maps/api';
 
 /* ── Custom Marker Icons ──────────────────────────────────────────────────── */
@@ -63,6 +64,7 @@ const reverseGeocodeFree = async (lat, lon) => {
 
 /* ── MapLocationPicker Component ─────────────────────────────────────────── */
 const MapLocationPicker = ({ isOpen, onClose, onLocationSelect, initialLocation = null }) => {
+  const settings = useSettingsStore(s => s.settings);
   const mapInstanceRef = useRef(null);
 
   const [selectedLocation, setSelectedLocation] = useState(null);
@@ -462,7 +464,7 @@ const MapLocationPicker = ({ isOpen, onClose, onLocationSelect, initialLocation 
             >
               <div className="flex items-center gap-2">
                 <div className="w-3.5 h-3.5 rounded-full bg-green-600 border-2 border-white shadow-sm shrink-0" />
-                Store (Pazhamudhir Solai)
+                Store ({settings?.storeName || 'Pazhamudhir Solai'})
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-3.5 h-3.5 rounded-full bg-red-500 border-2 border-white shadow-sm shrink-0" />

@@ -289,7 +289,10 @@ const Home = () => {
 
   return (
     <>
-      <SEO title="Tiruchendur Murugan Pazhamudhir Solai | Fresh Fruits, Vegetables & Grocery Store" description="Buy fresh fruits, vegetables, groceries, dairy products, household essentials and more from Tiruchendur Murugan Pazhamudhir Solai." />
+      <SEO 
+        title={`${settings?.websiteName || 'Tiruchendur Murugan Pazhamudhir Solai'} | Fresh Fruits, Vegetables & Grocery Store`} 
+        description={settings?.storeDescription || 'Buy fresh fruits, vegetables, groceries, dairy products, household essentials and more.'} 
+      />
       <div className="pb-24 max-w-7xl mx-auto px-2 sm:px-3 md:px-4">
 
       {/* ── Hero ─────────────────────────────────────────────────────── */}

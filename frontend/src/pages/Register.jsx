@@ -7,6 +7,7 @@ import {
   ChevronRight, ArrowLeft, ShieldCheck, Check, Sparkles, Truck, CreditCard, Award
 } from 'lucide-react';
 import axios from 'axios';
+import useSettingsStore from '../store/useSettingsStore';
 
 // Password criteria checks
 const checkPasswordCriteria = (pwd) => {
@@ -22,10 +23,11 @@ const checkPasswordCriteria = (pwd) => {
 const Register = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const settings = useSettingsStore(s => s.settings);
 
   useEffect(() => {
-    document.title = 'Create Account | Tiruchendur Murugan Pazhamudhir Solai';
-  }, []);
+    document.title = `Create Account | ${settings?.storeName || 'Tiruchendur Murugan Pazhamudhir Solai'}`;
+  }, [settings?.storeName]);
 
   // Steps: 'register' or 'otp'
   const [step, setStep] = useState(location.state?.step || 'register');
@@ -317,8 +319,17 @@ const Register = () => {
                 🥭
               </div>
               <div>
-                <span className="font-black tracking-wider text-base block text-white">Tiruchendur Murugan</span>
-                <span className="text-[10px] uppercase font-extrabold tracking-widest text-green-100 block">Pazhamudhir Solai</span>
+                {settings?.storeName ? (
+                  <>
+                    <span className="font-black tracking-wider text-base block text-white">{settings.storeName.split(' ').slice(0, 2).join(' ')}</span>
+                    <span className="text-[10px] uppercase font-extrabold tracking-widest text-green-100 block">{settings.storeName.split(' ').slice(2).join(' ')}</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="font-black tracking-wider text-base block text-white">Tiruchendur Murugan</span>
+                    <span className="text-[10px] uppercase font-extrabold tracking-widest text-green-100 block">Pazhamudhir Solai</span>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -372,7 +383,7 @@ const Register = () => {
 
           {/* Footer branding */}
           <div className="relative z-10 text-[10px] text-green-200/60 font-semibold tracking-wide">
-            &copy; {new Date().getFullYear()} Tiruchendur Murugan Pazhamudhir Solai. All rights reserved.
+            &copy; {new Date().getFullYear()} {settings?.websiteName || 'Tiruchendur Murugan Pazhamudhir Solai'}. All rights reserved.
           </div>
         </div>
 

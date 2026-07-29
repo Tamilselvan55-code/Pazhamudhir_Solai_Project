@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { io as socketIO } from 'socket.io-client';
 import useAuthStore from '../../store/useAuthStore';
+import useSettingsStore from '../../store/useSettingsStore';
 import axios from 'axios';
 
 const SOCKET_URL = config_API_URL;
@@ -305,8 +306,9 @@ const AdminLayout = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { adminInfo, adminLogout, userInfo } = useAuthStore();
-  
-  // States
+  const settings = useSettingsStore(s => s.settings);
+
+  // Responsive states
   const [collapsed, setCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
@@ -357,7 +359,7 @@ const AdminLayout = ({ children }) => {
 
   // Permanent Dark Mode Effect
   useEffect(() => {
-    document.title = 'Tiruchendur Murugan Pazhamudhir Solai - Admin Panel';
+    document.title = `${settings?.storeName || 'Tiruchendur Murugan Pazhamudhir Solai'} - Admin Panel`;
     document.documentElement.classList.add('dark');
     localStorage.removeItem('admin-theme');
     return () => {
@@ -822,7 +824,7 @@ const AdminLayout = ({ children }) => {
 
         {/* ─── Footer ────────────────────────────────────────────────────── */}
         <footer className="px-8 py-6 border-t border-white/8 text-center text-xs font-medium text-[#94A3B8]">
-          <p>© {new Date().getFullYear()} Tiruchendur Murugan Pazhamudhir Solai • Enterprise Grocery Management System</p>
+          <p>© {new Date().getFullYear()} {settings?.storeName || 'Tiruchendur Murugan Pazhamudhir Solai'} • Enterprise Grocery Management System</p>
         </footer>
       </div>
     </div>

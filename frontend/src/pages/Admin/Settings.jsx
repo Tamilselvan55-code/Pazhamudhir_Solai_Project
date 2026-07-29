@@ -124,7 +124,20 @@ const Settings = () => {
     aboutUs: '',
     contactUs: '',
     privacyPolicy: '',
-    termsAndConditions: ''
+    termsAndConditions: '',
+    tagline: 'Fresh Fruits, Vegetables & Grocery Store',
+    gstNumber: '',
+    whatsappNumber: '',
+    websiteUrl: 'https://tiruchendurmurugan.com',
+    city: 'Sriperumbudur',
+    district: 'Kanchipuram',
+    state: 'Tamil Nadu',
+    pincode: '602105',
+    country: 'India',
+    businessHours: '06:00 AM - 09:00 PM',
+    googleMapLink: '',
+    socialMediaLinks: {},
+    qrCode: ''
   });
 
   const [loading, setLoading] = useState(true);
@@ -150,6 +163,7 @@ const Settings = () => {
         lat: data.location?.lat ?? prev.lat,
         lon: data.location?.lon ?? prev.lon,
         deliverySettings: data.deliverySettings || prev.deliverySettings,
+        socialMediaLinks: data.socialMediaLinks || prev.socialMediaLinks,
         orderStatusColors: data.orderStatusColors ? {
           ...prev.orderStatusColors,
           ...(data.orderStatusColors instanceof Map ? Object.fromEntries(data.orderStatusColors) : data.orderStatusColors)
@@ -351,6 +365,32 @@ const Settings = () => {
                         onChange={handleInputChange}
                         className="admin-form-input text-sm font-semibold"
                         placeholder="e.g. /uploads/logo.png"
+                        placeholder="e.g. /uploads/logo.png"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div>
+                      <label className="block text-xs font-bold text-[#94A3B8] uppercase tracking-wider mb-2">Tagline</label>
+                      <input
+                        type="text"
+                        name="tagline"
+                        value={formData.tagline}
+                        onChange={handleInputChange}
+                        className="admin-form-input text-sm font-semibold"
+                        placeholder="e.g. Fresh Fruits, Vegetables & Grocery Store"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-[#94A3B8] uppercase tracking-wider mb-2">GST Number</label>
+                      <input
+                        type="text"
+                        name="gstNumber"
+                        value={formData.gstNumber}
+                        onChange={handleInputChange}
+                        className="admin-form-input text-sm font-semibold"
+                        placeholder="e.g. 33AAAAA0000A1Z5"
                       />
                     </div>
                   </div>
@@ -364,7 +404,34 @@ const Settings = () => {
                       onChange={handleInputChange}
                       className="admin-form-input text-sm font-semibold"
                       placeholder="e.g. Sriperumbudur, Tamil Nadu - 602105"
+                      placeholder="e.g. Sriperumbudur, Tamil Nadu - 602105"
                     />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                    <div>
+                      <label className="block text-xs font-bold text-[#94A3B8] uppercase tracking-wider mb-2">City</label>
+                      <input type="text" name="city" value={formData.city} onChange={handleInputChange} className="admin-form-input text-sm font-semibold" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-[#94A3B8] uppercase tracking-wider mb-2">District</label>
+                      <input type="text" name="district" value={formData.district} onChange={handleInputChange} className="admin-form-input text-sm font-semibold" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-[#94A3B8] uppercase tracking-wider mb-2">State</label>
+                      <input type="text" name="state" value={formData.state} onChange={handleInputChange} className="admin-form-input text-sm font-semibold" />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div>
+                      <label className="block text-xs font-bold text-[#94A3B8] uppercase tracking-wider mb-2">Pincode</label>
+                      <input type="text" name="pincode" value={formData.pincode} onChange={handleInputChange} className="admin-form-input text-sm font-semibold" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-[#94A3B8] uppercase tracking-wider mb-2">Country</label>
+                      <input type="text" name="country" value={formData.country} onChange={handleInputChange} className="admin-form-input text-sm font-semibold" />
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
@@ -445,6 +512,56 @@ const Settings = () => {
                         value={formData.invoiceFooter}
                         onChange={handleInputChange}
                         className="admin-form-input text-sm font-semibold"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div>
+                      <label className="block text-xs font-bold text-[#94A3B8] uppercase tracking-wider mb-2">Business Hours</label>
+                      <input
+                        type="text"
+                        name="businessHours"
+                        value={formData.businessHours}
+                        onChange={handleInputChange}
+                        className="admin-form-input text-sm font-semibold"
+                        placeholder="e.g. 06:00 AM - 09:00 PM"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-[#94A3B8] uppercase tracking-wider mb-2">Google Map Link</label>
+                      <input
+                        type="text"
+                        name="googleMapLink"
+                        value={formData.googleMapLink}
+                        onChange={handleInputChange}
+                        className="admin-form-input text-sm font-semibold"
+                        placeholder="https://maps.google.com/..."
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div>
+                      <label className="block text-xs font-bold text-[#94A3B8] uppercase tracking-wider mb-2">QR Code URL</label>
+                      <input
+                        type="text"
+                        name="qrCode"
+                        value={formData.qrCode}
+                        onChange={handleInputChange}
+                        className="admin-form-input text-sm font-semibold"
+                        placeholder="URL for UPI/Store QR Code"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-[#94A3B8] uppercase tracking-wider mb-2">Website URL</label>
+                      <input
+                        type="text"
+                        name="websiteUrl"
+                        value={formData.websiteUrl}
+                        onChange={handleInputChange}
+                        className="admin-form-input text-sm font-semibold"
+                        placeholder="https://..."
                       />
                     </div>
                   </div>

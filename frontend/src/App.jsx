@@ -165,7 +165,7 @@ function App() {
           We're currently performing maintenance. Please check back shortly.
         </p>
         <p className="text-[10px] text-gray-400 mt-8">
-          © {new Date().getFullYear()} {settings.websiteName || 'Tiruchendur Murugan Pazhamudhir Solai'}
+          © {new Date().getFullYear()} {settings?.websiteName || 'Tiruchendur Murugan Pazhamudhir Solai'}
         </p>
       </div>
     );
@@ -239,19 +239,19 @@ function App() {
       {!hideCustomerLayout && (
         <footer className="bg-white border-t border-gray-100 py-8 px-4 mt-12 pb-24 text-center">
           <div className="max-w-4xl mx-auto space-y-2">
-            <h3 className="font-extrabold text-gray-800 text-base">Tiruchendur Murugan Pazhamudhir Solai</h3>
-            <p className="text-gray-500 text-xs">Fresh fruits, vegetables, groceries and daily essentials delivered within our service area.</p>
+            <h3 className="font-extrabold text-gray-800 text-base">{settings?.storeName || 'Tiruchendur Murugan Pazhamudhir Solai'}</h3>
+            <p className="text-gray-500 text-xs">{settings?.storeDescription || 'Fresh fruits, vegetables, groceries and daily essentials.'}</p>
             <div className="flex flex-wrap justify-center items-center gap-x-3 gap-y-2 py-2">
               <a href="/legal?tab=privacy" className="text-xs text-green-600 hover:underline">Privacy Policy</a>
               <span className="text-gray-300 text-xs hidden sm:inline">|</span>
               <a href="/legal?tab=terms" className="text-xs text-green-600 hover:underline">Terms &amp; Conditions</a>
               <span className="text-gray-300 text-xs hidden sm:inline">|</span>
-              <a href="mailto:support@tiruchendurmurugan.com" className="text-xs text-green-600 hover:underline">Contact Us</a>
+              <a href="/legal?tab=contact" className="text-xs text-green-600 hover:underline">Contact Us</a>
               <span className="text-gray-300 text-xs hidden sm:inline">|</span>
-              <a href="#about" className="text-xs text-green-600 hover:underline">About Us</a>
+              <a href="/legal?tab=about" className="text-xs text-green-600 hover:underline">About Us</a>
             </div>
             <p className="text-gray-400 text-xs pt-3 border-t border-gray-50 mt-3">
-              © {new Date().getFullYear()} Tiruchendur Murugan Pazhamudhir Solai. All rights reserved.
+              {settings?.footerContent || `© ${new Date().getFullYear()} ${settings?.websiteName || 'Tiruchendur Murugan Pazhamudhir Solai'}. All rights reserved.`}
             </p>
           </div>
         </footer>
