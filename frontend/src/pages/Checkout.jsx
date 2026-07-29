@@ -145,7 +145,7 @@ const Checkout = () => {
     checkCartValidity();
   }, [JSON.stringify(sanitizedItems)]);
 
-  const settings = useSettingsStore((s) => s.settings);
+  // Checkout calculations
 
   const minOrderValue = settings?.minOrderValue ?? 0;
   const maxOrderValue = settings?.maxOrderValue ?? 100000;
