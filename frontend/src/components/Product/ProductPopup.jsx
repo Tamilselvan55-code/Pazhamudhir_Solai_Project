@@ -103,7 +103,7 @@ const ProductPopup = ({ product, isOpen, onClose }) => {
         </div>
 
         {/* Product Image Section */}
-        <div className="relative w-full aspect-square sm:aspect-[4/3] bg-white flex items-center justify-center px-6 pb-2 shrink-0">
+        <div className="relative w-full h-56 sm:h-64 bg-white flex items-center justify-center px-8 pb-6 shrink-0">
           <ProductImage
             src={product.image}
             alt={product.name}
@@ -117,7 +117,7 @@ const ProductPopup = ({ product, isOpen, onClose }) => {
           <button
             onClick={handleToggleWishlist}
             aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
-            className={`absolute top-0 right-6 w-10 h-10 flex items-center justify-center rounded-full bg-white/80 backdrop-blur-md border border-gray-100 shadow-sm transition-all duration-250 z-10 ${
+            className={`absolute top-0 right-8 w-10 h-10 flex items-center justify-center rounded-full bg-white/80 backdrop-blur-md border border-gray-100 shadow-sm transition-all duration-250 z-10 ${
               isAnimatingHeart ? 'scale-125' : 'hover:bg-white active:scale-90'
             }`}
           >
