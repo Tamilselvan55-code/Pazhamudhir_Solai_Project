@@ -1,254 +1,214 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useOutletContext, useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { API_BASE } from '../../config/api';
-import { User, Truck, Phone, Image, ArrowLeft, Loader2, Save } from 'lucide-react';
+import { 
+  User, Shield, FileText, Settings, LogOut, ChevronRight, KeyRound, 
+  MapPin, Phone, Car, HelpCircle, FileCheck, Moon 
+} from 'lucide-react';
 
-const Profile = () => {
-  const [partner, setPartner] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+const DeliveryProfile = () => {
+  const { partner } = useOutletContext();
   const navigate = useNavigate();
 
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    mobile: '',
-    vehicleNumber: '',
-    vehicleType: '',
-    emergencyContact: '',
-    profileImage: ''
-  });
+  const [passwordData, setPasswordData] = useState({ currentPassword: '', newPassword: '' });
+  const [passwordStatus, setPasswordStatus] = useState('');
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
 
-  useEffect(() => {
-    const fetchProfile = async () => {
-      const stored = localStorage.getItem('deliveryPartnerInfo');
-      if (!stored) {
-        navigate('/delivery/login');
-        return;
-      }
-      const parsedInfo = JSON.parse(stored);
-      try {
-        const { data } = await axios.get(`${API_BASE}/delivery/profile`, {
-          headers: { Authorization: `Bearer ${parsedInfo.token}` }
-        });
-        setPartner(data);
-        setFormData({
-          name: data.name || '',
-          email: data.email || '',
-          mobile: data.mobile || '',
-          vehicleNumber: data.vehicleNumber || '',
-          vehicleType: data.vehicleType || 'Bike',
-          emergencyContact: data.emergencyContact || '',
-          profileImage: data.profileImage || ''
-        });
-      } catch (err) {
-        console.error(err);
-        navigate('/delivery/login');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchProfile();
-  }, [navigate]);
-
-  const handleInputChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  const handleLogout = () => {
+    localStorage.removeItem('deliveryPartnerInfo');
+    navigate('/delivery/login');
   };
 
-  const handleSubmit = async (e) => {
+  const handleChangePassword = async (e) => {
     e.preventDefault();
-    setSaving(true);
-    setError('');
-    setSuccess('');
-
+    setPasswordStatus('');
+    setPasswordLoading(true);
     const stored = localStorage.getItem('deliveryPartnerInfo');
     if (!stored) return;
     const parsedInfo = JSON.parse(stored);
 
     try {
-      const { data } = await axios.put(`${API_BASE}/delivery/profile`, formData, {
+      await axios.put(`${API_BASE}/delivery/profile/password`, passwordData, {
         headers: { Authorization: `Bearer ${parsedInfo.token}` }
       });
-      // update local storage token if returned
-      if (data.token) {
-        localStorage.setItem('deliveryPartnerInfo', JSON.stringify({
-          ...parsedInfo,
-          ...data
-        }));
-      }
-      setSuccess('Profile updated successfully!');
-      setTimeout(() => navigate('/delivery/dashboard'), 1500);
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to update profile');
+      setPasswordStatus('Password changed successfully');
+      setTimeout(() => {
+        setIsPasswordModalOpen(false);
+        setPasswordData({ currentPassword: '', newPassword: '' });
+        setPasswordStatus('');
+      }, 1500);
+    } catch (error) {
+      setPasswordStatus(error.response?.data?.message || 'Failed to change password');
     } finally {
-      setSaving(false);
+      setPasswordLoading(false);
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <Loader2 className="w-8 h-8 text-orange-500 animate-spin" />
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center gap-4">
-              <button 
-                onClick={() => navigate('/delivery/dashboard')}
-                className="p-2 -ml-2 text-gray-500 hover:text-gray-900 transition-colors rounded-full hover:bg-gray-100"
-              >
-                <ArrowLeft className="w-5 h-5" />
-              </button>
-              <span className="font-bold text-xl text-orange-600">Edit Profile</span>
+    <div className="min-h-[100dvh] bg-gray-50 flex flex-col">
+      {/* Header */}
+      <div className="bg-white px-6 pt-10 pb-6 shadow-sm border-b border-gray-100 z-10 sticky top-0">
+        <h1 className="text-2xl font-black text-gray-900">Profile</h1>
+      </div>
+
+      <div className="flex-1 p-4 sm:p-6 pb-24 overflow-y-auto">
+        {/* Profile Card */}
+        <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-gray-100 mb-6 flex flex-col items-center text-center">
+          <div className="relative mb-4">
+            {partner?.profileImage ? (
+              <img src={partner?.profileImage} alt={partner?.name} className="w-24 h-24 rounded-full object-cover shadow-lg ring-4 ring-green-50" />
+            ) : (
+              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center text-white font-black text-4xl shadow-lg ring-4 ring-green-50">
+                {partner?.name?.charAt(0).toUpperCase() || 'D'}
+              </div>
+            )}
+            {partner?.isVerified && (
+              <div className="absolute bottom-0 right-0 w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center border-4 border-white shadow-sm" title="Verified">
+                <Shield className="w-4 h-4" />
+              </div>
+            )}
+          </div>
+          <h2 className="text-xl font-black text-gray-900">{partner?.name}</h2>
+          <p className="text-sm font-semibold text-gray-500 mt-1">{partner?.mobile}</p>
+          <div className="flex items-center gap-2 mt-3">
+            <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-lg text-xs font-bold uppercase tracking-wide">ID: {partner?.employeeId || 'N/A'}</span>
+            <span className={`px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wide ${partner?.isVerified ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
+              {partner?.isVerified ? 'Verified' : 'Pending'}
+            </span>
+          </div>
+        </div>
+
+        {/* Info Grid */}
+        <div className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 mb-6 space-y-4">
+          <div className="flex items-center gap-4 border-b border-gray-50 pb-4">
+            <div className="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center shrink-0">
+              <Car className="w-5 h-5 text-gray-600" />
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Vehicle</p>
+              <p className="text-sm font-bold text-gray-900">{partner?.vehicleNumber || 'Not provided'}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center shrink-0">
+              <MapPin className="w-5 h-5 text-gray-600" />
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Service Area</p>
+              <p className="text-sm font-bold text-gray-900">Sriperumbudur Hub</p>
             </div>
           </div>
         </div>
-      </header>
 
-      <main className="max-w-3xl mx-auto py-10 px-4 sm:px-6 lg:px-8">
-        <div className="bg-white shadow-sm rounded-2xl border border-gray-100 overflow-hidden">
-          <div className="p-6 sm:p-8">
-            {error && (
-              <div className="mb-6 p-4 bg-red-50 text-red-700 rounded-xl text-sm font-medium border border-red-100">
-                {error}
+        {/* Menu Items */}
+        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 mb-6 overflow-hidden">
+          <Link to="/delivery/documents" className="flex items-center justify-between p-5 hover:bg-gray-50 transition-colors border-b border-gray-50">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center">
+                <FileCheck className="w-5 h-5 text-blue-600" />
               </div>
-            )}
-            {success && (
-              <div className="mb-6 p-4 bg-green-50 text-green-700 rounded-xl text-sm font-medium border border-green-100">
-                {success}
+              <span className="font-bold text-gray-900">Document Center</span>
+            </div>
+            <ChevronRight className="w-5 h-5 text-gray-400" />
+          </Link>
+          <button onClick={() => setIsPasswordModalOpen(true)} className="w-full flex items-center justify-between p-5 hover:bg-gray-50 transition-colors border-b border-gray-50 text-left">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 bg-orange-50 rounded-full flex items-center justify-center">
+                <KeyRound className="w-5 h-5 text-orange-600" />
               </div>
-            )}
+              <span className="font-bold text-gray-900">Change Password</span>
+            </div>
+            <ChevronRight className="w-5 h-5 text-gray-400" />
+          </button>
+          <button onClick={() => alert('Dark mode coming soon!')} className="w-full flex items-center justify-between p-5 hover:bg-gray-50 transition-colors border-b border-gray-50 text-left">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 bg-indigo-50 rounded-full flex items-center justify-center">
+                <Moon className="w-5 h-5 text-indigo-600" />
+              </div>
+              <span className="font-bold text-gray-900">Dark Mode</span>
+            </div>
+            <ChevronRight className="w-5 h-5 text-gray-400" />
+          </button>
+          <button onClick={() => alert('Support coming soon!')} className="w-full flex items-center justify-between p-5 hover:bg-gray-50 transition-colors text-left">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 bg-teal-50 rounded-full flex items-center justify-center">
+                <HelpCircle className="w-5 h-5 text-teal-600" />
+              </div>
+              <span className="font-bold text-gray-900">Help & Support</span>
+            </div>
+            <ChevronRight className="w-5 h-5 text-gray-400" />
+          </button>
+        </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+        <button 
+          onClick={handleLogout}
+          className="w-full bg-red-50 text-red-600 font-bold py-4 rounded-2xl flex items-center justify-center gap-2 active:bg-red-100 transition-colors"
+        >
+          <LogOut className="w-5 h-5" /> Logout
+        </button>
+      </div>
+
+      {/* Password Modal */}
+      {isPasswordModalOpen && (
+        <div className="fixed inset-0 z-[200] bg-gray-900/60 backdrop-blur-sm flex justify-center items-end sm:items-center p-4 animate-in fade-in">
+          <div className="bg-white w-full max-w-sm rounded-[2rem] p-6 shadow-2xl relative animate-in slide-in-from-bottom-10">
+            <div className="w-16 h-1 rounded-full bg-gray-200 mx-auto mb-6 sm:hidden"></div>
+            
+            <h2 className="text-xl font-black text-gray-900 mb-6">Change Password</h2>
+            
+            <form onSubmit={handleChangePassword} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Current Password</label>
+                <input
+                  type="password"
+                  required
+                  value={passwordData.currentPassword}
+                  onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none text-sm font-semibold transition-all"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">New Password</label>
+                <input
+                  type="password"
+                  required
+                  minLength="6"
+                  value={passwordData.newPassword}
+                  onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none text-sm font-semibold transition-all"
+                />
+              </div>
               
-              {/* Photo */}
-              <div>
-                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2 flex items-center gap-2">
-                  <Image className="w-4 h-4 text-orange-500" /> Profile Photo URL
-                </label>
-                <input
-                  type="text"
-                  name="profileImage"
-                  value={formData.profileImage}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none text-sm font-medium transition-all"
-                  placeholder="https://example.com/photo.jpg"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2 flex items-center gap-2">
-                    <User className="w-4 h-4 text-orange-500" /> Full Name
-                  </label>
-                  <input
-                    type="text"
-                    name="name"
-                    required
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none text-sm font-medium transition-all"
-                  />
+              {passwordStatus && (
+                <div className={`text-xs font-bold p-3 rounded-xl ${passwordStatus.includes('successfully') ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+                  {passwordStatus}
                 </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2 flex items-center gap-2">
-                    <Phone className="w-4 h-4 text-orange-500" /> Mobile Number
-                  </label>
-                  <input
-                    type="text"
-                    name="mobile"
-                    required
-                    value={formData.mobile}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none text-sm font-medium transition-all"
-                  />
-                </div>
-              </div>
+              )}
 
-              <div>
-                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2 flex items-center gap-2">
-                  <User className="w-4 h-4 text-orange-500" /> Email Address
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none text-sm font-medium transition-all"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2 flex items-center gap-2">
-                    <Truck className="w-4 h-4 text-orange-500" /> Vehicle Number
-                  </label>
-                  <input
-                    type="text"
-                    name="vehicleNumber"
-                    value={formData.vehicleNumber}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none text-sm font-medium transition-all uppercase"
-                    placeholder="TN-01-AB-1234"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2 flex items-center gap-2">
-                    <Truck className="w-4 h-4 text-orange-500" /> Vehicle Type
-                  </label>
-                  <select
-                    name="vehicleType"
-                    value={formData.vehicleType}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none text-sm font-medium transition-all"
-                  >
-                    <option value="Bike">Bike</option>
-                    <option value="Scooter">Scooter</option>
-                    <option value="Electric Bike">Electric Bike</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2 flex items-center gap-2">
-                  <Phone className="w-4 h-4 text-orange-500" /> Emergency Contact
-                </label>
-                <input
-                  type="text"
-                  name="emergencyContact"
-                  value={formData.emergencyContact}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none text-sm font-medium transition-all"
-                  placeholder="Name / Mobile"
-                />
-              </div>
-
-              <div className="pt-6 border-t border-gray-100 flex justify-end">
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setIsPasswordModalOpen(false)}
+                  className="flex-1 py-4 rounded-xl font-bold text-sm text-gray-600 bg-gray-100 active:bg-gray-200"
+                >
+                  Cancel
+                </button>
                 <button
                   type="submit"
-                  disabled={saving}
-                  className="px-8 py-3 bg-orange-600 text-white rounded-xl hover:bg-orange-700 text-sm font-bold flex items-center gap-2 transition-colors disabled:opacity-70"
+                  disabled={passwordLoading}
+                  className="flex-[2] py-4 rounded-xl font-bold text-sm text-white bg-green-600 active:bg-green-700 disabled:opacity-70 disabled:active:bg-green-600 shadow-md shadow-green-600/30"
                 >
-                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                  Save Profile Changes
+                  {passwordLoading ? 'Updating...' : 'Update Password'}
                 </button>
               </div>
-
             </form>
           </div>
         </div>
-      </main>
+      )}
     </div>
   );
 };
 
-export default Profile;
+export default DeliveryProfile;

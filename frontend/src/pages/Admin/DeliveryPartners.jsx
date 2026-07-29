@@ -21,6 +21,10 @@ const DeliveryPartners = () => {
   // Modal states
   const [modalOpen, setModalOpen] = useState(false);
   const [resetModalOpen, setResetModalOpen] = useState(false);
+  const [resetSuccessModalOpen, setResetSuccessModalOpen] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [passwordCopied, setPasswordCopied] = useState(false);
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
   const [selectedPartner, setSelectedPartner] = useState(null);
 
@@ -142,8 +146,11 @@ const DeliveryPartners = () => {
         headers: { Authorization: `Bearer ${adminInfo.token}` }
       });
       toast('Password reset successfully', 'success');
+      setNewPassword(data.tempPassword);
+      setShowPassword(false);
+      setPasswordCopied(false);
       setResetModalOpen(false);
-      window.alert(`Important: The new temporary password for ${selectedPartner.name} is: ${data.tempPassword}\nPlease share this with the partner.`);
+      setResetSuccessModalOpen(true);
     } catch (error) {
       toast(error.response?.data?.message || 'Failed to reset password', 'error');
     } finally {
@@ -492,41 +499,137 @@ const DeliveryPartners = () => {
         partnerData={createdPartnerData}
       />
 
-      {/* Reset Password Modal */}
+      {/* Reset Password Confirmation Modal */}
       {resetModalOpen && selectedPartner && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-in fade-in duration-200">
           <div className="bg-[#0F172A] border border-slate-700/60 rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="px-6 py-4 border-b border-slate-700/60 flex justify-between items-center bg-slate-900/60">
               <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                <Shield className="w-5 h-5 text-orange-400" /> Reset Password
+                <Shield className="w-5 h-5 text-orange-400" /> Reset Delivery Partner Password
               </h3>
-              <button onClick={() => setResetModalOpen(false)} className="text-slate-400 hover:text-white transition-colors p-1.5 rounded-lg hover:bg-white/10">
+              <button 
+                onClick={() => setResetModalOpen(false)} 
+                disabled={actionLoading}
+                className="text-slate-400 hover:text-white transition-colors p-1.5 rounded-lg hover:bg-white/10 disabled:opacity-50"
+              >
                 &times;
               </button>
             </div>
             
-            <form onSubmit={handleResetPassword} className="p-6 space-y-4">
-              <p className="text-sm text-slate-300 leading-relaxed">
-                Clicking reset will generate a new temporary password for <span className="font-semibold text-white">{selectedPartner.name}</span>. You will be able to copy the new password after generating it.
-              </p>
-              <div className="pt-4 flex justify-end space-x-3 border-t border-slate-700/40">
+            <div className="p-6">
+              {actionLoading ? (
+                <div className="flex flex-col items-center justify-center py-8">
+                  <Loader2 className="w-10 h-10 text-orange-500 animate-spin mb-4" />
+                  <p className="text-white font-semibold">Generating secure temporary password...</p>
+                </div>
+              ) : (
+                <>
+                  <p className="text-sm text-slate-300 leading-relaxed mb-6">
+                    You are about to generate a temporary password for this delivery partner. <br/><br/>
+                    The current password will become <strong className="text-red-400">invalid immediately</strong>. <br/><br/>
+                    Continue?
+                  </p>
+                  <div className="flex justify-end space-x-3 border-t border-slate-700/40 pt-4">
+                    <button
+                      type="button"
+                      onClick={() => setResetModalOpen(false)}
+                      className="px-5 py-2.5 border border-slate-700/80 rounded-xl text-slate-300 hover:bg-white/5 font-medium text-sm transition-all"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleResetPassword}
+                      className="px-6 py-2.5 bg-orange-600 text-white rounded-xl hover:bg-orange-700 font-bold text-sm flex items-center gap-2 transition-all shadow-lg shadow-orange-600/20"
+                    >
+                      Generate Password
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reset Password Success Modal */}
+      {resetSuccessModalOpen && selectedPartner && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="bg-[#0F172A] border border-slate-700/60 rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col items-center text-center p-8">
+            <div className="w-16 h-16 bg-green-500/20 text-green-500 rounded-full flex items-center justify-center mb-6 ring-8 ring-green-500/10">
+              <CheckCircle className="w-8 h-8" />
+            </div>
+            
+            <h3 className="text-xl font-bold text-white mb-2">
+              Password Reset Successfully
+            </h3>
+            <p className="text-sm text-slate-400 mb-8 leading-relaxed">
+              A temporary password has been generated successfully for <span className="text-white font-semibold">{selectedPartner.name}</span>.
+            </p>
+
+            <div className="w-full bg-slate-900 border border-slate-700/50 rounded-2xl p-4 mb-6 relative">
+              <p className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-1">Temporary Password</p>
+              <div className="flex items-center justify-between">
+                <span className="text-xl font-mono text-white tracking-widest font-bold">
+                  {showPassword ? newPassword : '••••••••'}
+                </span>
                 <button
-                  type="button"
-                  onClick={() => setResetModalOpen(false)}
-                  className="px-4 py-2 border border-slate-700/80 rounded-xl text-slate-300 hover:bg-white/5 font-medium text-sm transition-all"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="px-3 py-1.5 text-xs font-bold text-slate-300 hover:text-white bg-slate-800 rounded-lg transition-colors border border-slate-700"
                 >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={actionLoading}
-                  className="px-5 py-2 bg-orange-600 text-white rounded-xl hover:bg-orange-700 font-bold text-sm disabled:opacity-70 flex items-center gap-2 transition-all shadow-lg shadow-orange-600/20"
-                >
-                  {actionLoading && <Loader2 className="w-4 h-4 animate-spin" />}
-                  Reset
+                  {showPassword ? 'Hide 👁' : 'Show 👁'}
                 </button>
               </div>
-            </form>
+            </div>
+
+            <div className="w-full grid grid-cols-2 gap-3 mb-6">
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(newPassword);
+                  setPasswordCopied(true);
+                  setTimeout(() => setPasswordCopied(false), 2000);
+                }}
+                className={`flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold transition-colors border ${
+                  passwordCopied 
+                    ? 'bg-green-600 border-green-500 text-white' 
+                    : 'bg-slate-800 border-slate-700 hover:bg-slate-700 text-white'
+                }`}
+              >
+                {passwordCopied ? <CheckCircle className="w-4 h-4" /> : '📋'}
+                {passwordCopied ? 'Copied!' : 'Copy'}
+              </button>
+              
+              <div className="relative group">
+                <button className="w-full flex items-center justify-center gap-2 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold transition-colors shadow-lg shadow-blue-500/20">
+                  📤 Share
+                </button>
+                <div className="absolute bottom-[110%] left-0 right-0 hidden group-hover:flex flex-col bg-slate-800 border border-slate-700 rounded-xl overflow-hidden shadow-xl z-10 animate-in slide-in-from-bottom-2">
+                  <a 
+                    href={`https://wa.me/?text=Hello ${selectedPartner.name}, your new temporary password is: ${newPassword}`} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="px-4 py-3 text-sm font-semibold text-white hover:bg-slate-700 text-left flex items-center gap-2"
+                  >
+                    WhatsApp
+                  </a>
+                  <a 
+                    href={`mailto:?subject=Your New Temporary Password&body=Hello ${selectedPartner.name},%0D%0A%0D%0AYour new temporary password is: ${newPassword}`} 
+                    className="px-4 py-3 text-sm font-semibold text-white hover:bg-slate-700 text-left border-t border-slate-700 flex items-center gap-2"
+                  >
+                    Email
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={() => {
+                setResetSuccessModalOpen(false);
+                setNewPassword('');
+              }}
+              className="w-full py-3 bg-slate-800 border border-slate-700/50 text-white rounded-xl font-bold hover:bg-slate-700 transition-colors"
+            >
+              Done
+            </button>
           </div>
         </div>
       )}
