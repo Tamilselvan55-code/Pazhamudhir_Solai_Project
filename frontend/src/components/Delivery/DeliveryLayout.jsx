@@ -6,12 +6,14 @@ import axios from 'axios';
 import { io } from 'socket.io-client';
 import useDeliveryStore from '../../store/useDeliveryStore';
 import { Bell } from 'lucide-react';
+import useModal from '../../hooks/useModal';
 
 const DeliveryLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [partner, setPartner] = useState(null);
   const [loading, setLoading] = useState(true);
+  const { openModal } = useModal();
 
   // Authenticate and fetch profile on layout load
   useEffect(() => {
@@ -81,12 +83,12 @@ const DeliveryLayout = () => {
               <p className="text-xs text-gray-500 dark:text-gray-400">{partner?.status}</p>
             </div>
           </div>
-          <Link to="/delivery/notifications" className="relative p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+          <button onClick={() => openModal('Info', 'Notifications system for delivery partners will be available in the next release.', 'info')} className="relative p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer outline-none">
             <Bell className="w-5 h-5 text-gray-600 dark:text-gray-300" />
             {unreadCount > 0 && (
               <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white dark:border-gray-800"></span>
             )}
-          </Link>
+          </button>
         </div>
         <nav className="flex-1 p-4 space-y-2">
           {navItems.map((item) => {
@@ -121,8 +123,7 @@ const DeliveryLayout = () => {
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname.startsWith(item.path) || 
-                             (location.pathname === '/delivery/documents' && item.path === '/delivery/profile') ||
-                             (location.pathname === '/delivery/settings' && item.path === '/delivery/profile');
+                             (location.pathname === '/delivery/documents' && item.path === '/delivery/profile');
             return (
               <Link
                 key={item.path}
