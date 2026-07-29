@@ -47,50 +47,50 @@ const DeliveryEarnings = () => {
   const { earnings, summary } = earningsData;
 
   const getStatusColor = (status) => {
-    if (status === 'Paid') return 'text-green-600 bg-green-50 border-green-200';
-    return 'text-amber-600 bg-amber-50 border-amber-200';
+    if (status === 'Paid') return 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30 border-green-200 dark:border-green-900/50';
+    return 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 border-amber-200 dark:border-amber-900/50';
   };
 
   return (
-    <div className="min-h-[100dvh] bg-gray-50 flex flex-col">
+    <div className="min-h-[100dvh] bg-gray-50 dark:bg-gray-900 flex flex-col transition-colors duration-300">
       {/* Header */}
-      <div className="bg-white px-6 pt-10 pb-6 shadow-sm border-b border-gray-100 z-10 sticky top-0">
-        <h1 className="text-2xl font-black text-gray-900 flex items-center gap-2">
+      <div className="bg-white dark:bg-gray-800 px-6 pt-10 pb-6 shadow-sm border-b border-gray-100 dark:border-gray-700 z-10 sticky top-0 transition-colors">
+        <h1 className="text-2xl font-black text-gray-900 dark:text-white flex items-center gap-2">
           Earnings
         </h1>
-        <p className="text-sm text-gray-500 mt-1">Track your deliveries and settlements.</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Track your deliveries and settlements.</p>
       </div>
 
       <div className="p-4 sm:p-6 pb-24 overflow-y-auto">
         {/* Summary Cards */}
         <div className="grid grid-cols-2 gap-4 mb-6">
-          <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center">
-            <div className="w-10 h-10 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mb-2">
+          <div className="bg-white dark:bg-gray-800 p-5 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col items-center justify-center text-center transition-colors">
+            <div className="w-10 h-10 bg-blue-50 dark:bg-blue-900/30 text-blue-500 dark:text-blue-400 rounded-full flex items-center justify-center mb-2">
               <CheckCircle className="w-5 h-5" />
             </div>
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Total Deliveries</p>
-            <span className="text-2xl font-black text-gray-900">{summary.totalDeliveries || 0}</span>
+            <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-0.5">Total Deliveries</p>
+            <span className="text-2xl font-black text-gray-900 dark:text-white">{summary.totalDeliveries || 0}</span>
           </div>
           
-          <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center">
-            <div className="w-10 h-10 bg-green-50 text-green-500 rounded-full flex items-center justify-center mb-2">
+          <div className="bg-white dark:bg-gray-800 p-5 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col items-center justify-center text-center transition-colors">
+            <div className="w-10 h-10 bg-green-50 dark:bg-green-900/30 text-green-500 dark:text-green-400 rounded-full flex items-center justify-center mb-2">
               <TrendingUp className="w-5 h-5" />
             </div>
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Total Paid</p>
-            <span className="text-2xl font-black text-gray-900">₹{summary.paidAmount || 0}</span>
+            <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-0.5">Total Paid</p>
+            <span className="text-2xl font-black text-gray-900 dark:text-white">₹{summary.paidAmount || 0}</span>
           </div>
 
-          <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 col-span-2 relative overflow-hidden flex flex-col items-center justify-center text-center">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-amber-50 rounded-bl-full -mr-8 -mt-8 opacity-50 pointer-events-none"></div>
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 col-span-2 relative overflow-hidden flex flex-col items-center justify-center text-center transition-colors">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-amber-50 dark:bg-amber-900/10 rounded-bl-full -mr-8 -mt-8 opacity-50 pointer-events-none transition-colors"></div>
             <div className="relative z-10">
-              <div className="w-12 h-12 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center mb-2 mx-auto">
+              <div className="w-12 h-12 bg-amber-50 dark:bg-amber-900/30 text-amber-500 dark:text-amber-400 rounded-full flex items-center justify-center mb-2 mx-auto">
                 <Clock className="w-6 h-6" />
               </div>
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Pending Settlement</p>
+              <p className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Pending Settlement</p>
               <div className="flex items-center gap-2 justify-center">
-                <span className="text-4xl font-black text-amber-600">₹{summary.pendingAmount || 0}</span>
+                <span className="text-4xl font-black text-amber-600 dark:text-amber-400">₹{summary.pendingAmount || 0}</span>
                 {summary.pendingAmount > 0 && (
-                  <span className="bg-amber-100 text-amber-700 text-[10px] font-bold px-2 py-1 rounded-lg">Unpaid</span>
+                  <span className="bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-[10px] font-bold px-2 py-1 rounded-lg">Unpaid</span>
                 )}
               </div>
             </div>
@@ -99,8 +99,8 @@ const DeliveryEarnings = () => {
 
         {/* Chart Section */}
         {chartData.length > 0 && (
-          <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 mb-6">
-            <h3 className="font-bold text-gray-800 mb-4 text-sm">Earnings Trend</h3>
+          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 mb-6 transition-colors">
+            <h3 className="font-bold text-gray-800 dark:text-gray-200 mb-4 text-sm">Earnings Trend</h3>
             <div className="h-48 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={chartData} margin={{ top: 5, right: 0, left: -20, bottom: 0 }}>
@@ -110,11 +110,11 @@ const DeliveryEarnings = () => {
                       <stop offset="95%" stopColor="#16a34a" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" opacity={0.5} />
                   <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9ca3af' }} />
                   <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9ca3af' }} tickFormatter={(val) => `₹${val}`} />
                   <Tooltip 
-                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', backgroundColor: 'rgba(255, 255, 255, 0.95)' }}
                     itemStyle={{ color: '#16a34a', fontWeight: 'bold' }}
                     formatter={(value) => [`₹${value}`, 'Earnings']}
                   />
@@ -126,34 +126,34 @@ const DeliveryEarnings = () => {
         )}
 
         {/* History */}
-        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="p-5 border-b border-gray-50 flex items-center justify-between">
-            <h2 className="font-bold text-gray-900">Recent Payouts</h2>
+        <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden transition-colors">
+          <div className="p-5 border-b border-gray-50 dark:border-gray-700 flex items-center justify-between transition-colors">
+            <h2 className="font-bold text-gray-900 dark:text-white">Recent Payouts</h2>
           </div>
           
           {loading ? (
             <div className="p-12 text-center text-gray-400 flex flex-col items-center justify-center">
-              <div className="w-8 h-8 border-4 border-gray-200 border-t-green-500 rounded-full animate-spin mb-3"></div>
+              <div className="w-8 h-8 border-4 border-gray-200 dark:border-gray-700 border-t-green-500 rounded-full animate-spin mb-3"></div>
             </div>
           ) : earnings.length === 0 ? (
             <div className="p-12 text-center text-gray-400 flex flex-col items-center justify-center">
-              <AlertCircle className="w-12 h-12 mb-3 opacity-20 text-gray-400" />
-              <p className="font-bold text-gray-600 text-sm">No earnings recorded yet.</p>
+              <AlertCircle className="w-12 h-12 mb-3 opacity-20 text-gray-400 dark:text-gray-500" />
+              <p className="font-bold text-gray-600 dark:text-gray-400 text-sm">No earnings recorded yet.</p>
               <p className="text-xs mt-1 max-w-xs">Complete deliveries to start earning.</p>
             </div>
           ) : (
-            <div className="divide-y divide-gray-50">
+            <div className="divide-y divide-gray-50 dark:divide-gray-700 transition-colors">
               {earnings.map((e) => (
                 <div key={e.id} className="p-5 flex flex-col gap-3">
                   <div className="flex justify-between items-start">
                     <div>
-                      <span className="font-black text-gray-900">{e.order?.invoiceNumber || 'Order'}</span>
-                      <p className="text-[11px] font-semibold text-gray-400 mt-0.5">
+                      <span className="font-black text-gray-900 dark:text-white">{e.order?.invoiceNumber || 'Order'}</span>
+                      <p className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 mt-0.5">
                         {new Date(e.createdAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-xl font-black text-green-600">₹{e.totalEarned}</p>
+                      <p className="text-xl font-black text-green-600 dark:text-green-400">₹{e.totalEarned}</p>
                       <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border mt-1 inline-block ${getStatusColor(e.isSettled ? 'Paid' : 'Pending')}`}>
                         {e.isSettled ? 'Paid' : 'Pending'}
                       </span>
@@ -161,10 +161,10 @@ const DeliveryEarnings = () => {
                   </div>
                   
                   <div className="flex flex-wrap gap-2 text-[10px] font-bold">
-                    <span className="bg-gray-100 text-gray-600 px-2.5 py-1 rounded-lg">Base: ₹{e.baseEarnings}</span>
-                    {e.distanceBonus > 0 && <span className="bg-blue-50 text-blue-700 px-2.5 py-1 rounded-lg">Dist: ₹{e.distanceBonus}</span>}
-                    {e.peakHourBonus > 0 && <span className="bg-orange-50 text-orange-700 px-2.5 py-1 rounded-lg">Peak: ₹{e.peakHourBonus}</span>}
-                    <span className="bg-gray-50 text-gray-400 px-2.5 py-1 rounded-lg ml-auto border border-gray-100">{e.distanceKm.toFixed(1)} km</span>
+                    <span className="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2.5 py-1 rounded-lg">Base: ₹{e.baseEarnings}</span>
+                    {e.distanceBonus > 0 && <span className="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 px-2.5 py-1 rounded-lg">Dist: ₹{e.distanceBonus}</span>}
+                    {e.peakHourBonus > 0 && <span className="bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 px-2.5 py-1 rounded-lg">Peak: ₹{e.peakHourBonus}</span>}
+                    <span className="bg-gray-50 dark:bg-gray-800 text-gray-400 dark:text-gray-500 px-2.5 py-1 rounded-lg ml-auto border border-gray-100 dark:border-gray-700">{e.distanceKm.toFixed(1)} km</span>
                   </div>
                 </div>
               ))}
