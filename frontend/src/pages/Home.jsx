@@ -7,6 +7,7 @@ import { ChevronRight, Search, X, Loader2 } from 'lucide-react';
 import axios from 'axios';
 import useSettingsStore from '../store/useSettingsStore';
 import EmptyState from '../components/Layout/EmptyState';
+import { optimizeImage } from '../utils/imageOptimizer';
 
 const emojiMap = {
   'vegetables': '🥦',
@@ -288,6 +289,14 @@ const Home = () => {
     }
   }, [loading, categoriesLoading, products.length, showSections, location.search, navigate]);
 
+  const rawBanner = settings?.homepageBanner && settings.homepageBanner.trim() !== ''
+    ? (settings.homepageBanner.startsWith('http') || settings.homepageBanner.startsWith('data:')
+        ? settings.homepageBanner
+        : `${config_API_URL}${settings.homepageBanner.startsWith('/') ? '' : '/'}${settings.homepageBanner}`)
+    : "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=1400&q=80";
+
+  const optimizedBanner = optimizeImage(rawBanner, { width: 1400 });
+
   return (
     <>
       <SEO 
@@ -299,15 +308,10 @@ const Home = () => {
       {/* ── Hero ─────────────────────────────────────────────────────── */}
       <div className="relative rounded-2xl overflow-hidden my-3 sm:my-4 shadow-lg h-36 sm:h-40 md:h-56">
         <img 
-          src={
-            settings?.homepageBanner && settings.homepageBanner.trim() !== ''
-              ? (settings.homepageBanner.startsWith('http') || settings.homepageBanner.startsWith('data:')
-                  ? settings.homepageBanner
-                  : `${config_API_URL}${settings.homepageBanner.startsWith('/') ? '' : '/'}${settings.homepageBanner}`)
-              : "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=1400&q=80"
-          }
+          src={optimizedBanner}
           alt="Fresh Groceries" 
           className="w-full h-full object-cover" 
+          decoding="async"
         />
         <div 
           className="absolute inset-0 flex flex-col justify-center px-4 sm:px-5 md:px-10"

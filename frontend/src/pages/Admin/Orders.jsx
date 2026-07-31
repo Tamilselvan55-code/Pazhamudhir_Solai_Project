@@ -93,6 +93,28 @@ const OrderRow = ({ order, token, onUpdated }) => {
     }
   };
 
+  const deleteOrder = async (e) => {
+    e.stopPropagation();
+    const confirmed = await userConfirm('Delete Order?', 'Are you sure you want to permanently delete this order? This action cannot be undone.', { danger: true, confirmLabel: 'Delete Permanently' });
+    if (!confirmed) return;
+
+    setStatusUpdating(true);
+    setError('');
+    try {
+      await axios.delete(`${API_BASE}/orders/${order._id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast('Success', 'Order permanently deleted');
+      onUpdated();
+    } catch (e) {
+      const msg = e.response?.data?.message || 'Failed to delete order.';
+      setError(msg);
+      adminAlert('error', 'Delete Failed', msg);
+    } finally {
+      setStatusUpdating(false);
+    }
+  };
+
   // Thermal/Standard invoice printing utility
   const printInvoice = () => {
     const printWindow = window.open('', '_blank');
@@ -369,6 +391,17 @@ const OrderRow = ({ order, token, onUpdated }) => {
 
         {/* 8. Action Icons */}
         <div className="xl:col-span-1 flex items-center justify-end gap-2 w-full pt-3 xl:pt-0 border-t xl:border-0 border-white/8 mt-1 xl:mt-0 md:col-span-2 xl:col-span-1">
+          {(adminInfo?.role === 'SuperAdmin' || adminInfo?.role === 'Super Admin') && (
+            <button
+              onClick={deleteOrder}
+              disabled={statusUpdating}
+              title="Permanently Delete Order"
+              style={{ borderRadius: '10px' }}
+              className="p-2.5 text-[#EF4444] hover:bg-[#EF4444]/15 hover:text-red-400 transition-all duration-300 disabled:opacity-50"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          )}
           <button
             onClick={printInvoice}
             title="Print Invoice"

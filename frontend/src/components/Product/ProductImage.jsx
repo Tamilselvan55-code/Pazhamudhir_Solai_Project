@@ -1,4 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { optimizeImage } from '../../utils/imageOptimizer';
 
 /**
  * Category-aware product image placeholders.
@@ -87,7 +88,8 @@ const ProductImage = ({
   const imgRef = useRef(null);
 
   // Always display Product.image directly from backend; fallback to SVG placeholder if missing
-  const displaySrc = src || getPlaceholderForCategory(category);
+  // Optimize the image if it's from cloudinary
+  const displaySrc = optimizeImage(src || getPlaceholderForCategory(category), { width: 500 });
   const placeholder = getPlaceholderForCategory(category);
 
   // When props.src changes, reset state
@@ -104,9 +106,9 @@ const ProductImage = ({
     // Retry once with cache-busting parameter
     if (!retriedRef.current && src) {
       retriedRef.current = true;
-      const separator = src.includes('?') ? '&' : '?';
+      const separator = displaySrc.includes('?') ? '&' : '?';
       if (imgRef.current) {
-        imgRef.current.src = `${src}${separator}_retry=1`;
+        imgRef.current.src = `${displaySrc}${separator}_retry=1`;
       }
     } else {
       // After retry fails, show category SVG placeholder
@@ -115,7 +117,7 @@ const ProductImage = ({
         imgRef.current.src = placeholder;
       }
     }
-  }, [src, placeholder]);
+  }, [src, displaySrc, placeholder]);
 
   return (
     <div className="relative overflow-hidden flex items-center justify-center">
@@ -131,6 +133,7 @@ const ProductImage = ({
         src={displaySrc}
         alt={alt || 'Product'}
         loading="lazy"
+        decoding="async"
         className={`${className} transition-opacity duration-300 ${status === 'loaded' ? 'opacity-100' : 'opacity-0'}`}
         style={style}
         onLoad={handleLoad}

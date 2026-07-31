@@ -74,6 +74,42 @@ router.get('/orders/:id', async (req, res) => {
   }
 });
 
+router.delete('/orders/:id', requireSuperAdmin, async (req, res) => {
+  try {
+    const orderId = req.params.id;
+    const order = await prisma.order.findUnique({ where: { id: orderId } });
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+
+    // Prisma handles OrderItem deletion via cascading (onDelete: Cascade).
+    // Manually delete related Notifications (since they use onDelete: SetNull or similar constraints we want to fully clean them)
+    await prisma.notification.deleteMany({
+      where: { orderId: orderId }
+    });
+
+    // Manually delete DeliveryEarnings
+    await prisma.deliveryEarnings.deleteMany({
+      where: { orderId: orderId }
+    });
+
+    // Finally delete the Order
+    await prisma.order.delete({
+      where: { id: orderId }
+    });
+
+    const io = req.app?.get('io');
+    if (io) {
+      io.emit('order_deleted', { orderId: orderId });
+    }
+
+    res.json({ success: true, message: 'Order permanently deleted' });
+  } catch (error) {
+    console.error('Delete order error:', error);
+    res.status(500).json({ success: false, message: 'Server error while deleting order' });
+  }
+});
+
 router.patch('/orders/:id/status', async (req, res) => {
   try {
     const { status } = req.body;

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { Plus, Minus, Heart } from 'lucide-react';
 import useCartStore from '../../store/useCartStore';
 import useWishlistStore from '../../store/useWishlistStore';
@@ -8,19 +8,25 @@ import { formatCurrency } from '../../utils/currency';
 import ProductImage from './ProductImage';
 import ProductPopup from './ProductPopup';
 
-const ProductCard = ({ product }) => {
-  const { cartItems, addToCart, updateQuantity } = useCartStore();
-  const { isInWishlist, toggleWishlist } = useWishlistStore();
+const ProductCard = React.memo(({ product }) => {
+  const updateQuantity = useCartStore(state => state.updateQuantity);
+  const cartItem = useCartStore(
+    useCallback(state => state.cartItems.find(item => item.product === product._id), [product._id])
+  );
+  
+  const toggleWishlist = useWishlistStore(state => state.toggleWishlist);
+  const isWishlisted = useWishlistStore(
+    useCallback(state => state.wishlistItems.some(item => item._id === product._id || item.id === product._id), [product._id])
+  );
+
   const { userConfirm, toast } = useModal();
   const { requireAuth } = useGuestGuard();
   
   const [isAnimatingHeart, setIsAnimatingHeart] = React.useState(false);
   const [isPopupOpen, setIsPopupOpen] = React.useState(false);
 
-  const cartItem = cartItems.find(item => item.product === product._id);
   const quantity = cartItem ? cartItem.quantity : 0;
   const isInStock = product.inStock !== false;
-  const isWishlisted = isInWishlist(product._id);
 
   // Guard: open popup instead of adding directly
   const handleAddClick = (e) => {
