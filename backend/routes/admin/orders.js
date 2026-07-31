@@ -1,5 +1,5 @@
 import express from 'express';
-import { protectAdmin, requireSuperAdmin } from '../../middleware/adminAuth.js';
+import { protectAdmin, requireSuperAdmin, requirePermission } from '../../middleware/adminAuth.js';
 import prisma from '../../utils/prismaClient.js';
 import { formatMongoCompat, formatMongoCompatArray } from '../../utils/formatMongoCompat.js';
 import { createAndEmitNotification } from '../../utils/notificationHelper.js';
@@ -7,7 +7,7 @@ import { formatOrderWithDeliveryAddress } from '../../utils/formatOrderAddress.j
 
 const router = express.Router();
 
-router.get('/orders', async (req, res) => {
+router.get('/orders', requirePermission('orders', 'view'), async (req, res) => {
   try {
     const { page = 1, limit = 20, status, search, startDate, endDate } = req.query;
 
@@ -56,7 +56,7 @@ router.get('/orders', async (req, res) => {
   }
 });
 
-router.get('/orders/:id', async (req, res) => {
+router.get('/orders/:id', requirePermission('orders', 'view'), async (req, res) => {
   try {
     const orderRaw = await prisma.order.findUnique({
       where: { id: req.params.id },
@@ -110,7 +110,7 @@ router.delete('/orders/:id', requireSuperAdmin, async (req, res) => {
   }
 });
 
-router.patch('/orders/:id/status', async (req, res) => {
+router.patch('/orders/:id/status', requirePermission('orders', 'edit'), async (req, res) => {
   try {
     const { status } = req.body;
     const allowed = ['Pending', 'Waiting for Admin Approval', 'Accepted', 'Order Confirmed', 'Packing', 'Packed', 'Out for Delivery', 'Delivered', 'Cancelled', 'Cancelled by Customer', 'Rejected by Store'];
@@ -361,7 +361,7 @@ export default router;
 
 // ─── Delivery Partner Assignment Endpoints ─────────────────────────────────
 
-router.post('/orders/:id/assign-delivery', async (req, res) => {
+router.post('/orders/:id/assign-delivery', requirePermission('orders', 'edit'), async (req, res) => {
   try {
     const { deliveryPartnerId } = req.body;
     if (!deliveryPartnerId) {
@@ -427,7 +427,7 @@ router.post('/orders/:id/assign-delivery', async (req, res) => {
   }
 });
 
-router.post('/orders/:id/reassign-delivery', async (req, res) => {
+router.post('/orders/:id/reassign-delivery', requirePermission('orders', 'edit'), async (req, res) => {
   try {
     const { deliveryPartnerId } = req.body;
     if (!deliveryPartnerId) {
@@ -499,7 +499,7 @@ router.post('/orders/:id/reassign-delivery', async (req, res) => {
   }
 });
 
-router.post('/orders/:id/auto-assign', async (req, res) => {
+router.post('/orders/:id/auto-assign', requirePermission('orders', 'edit'), async (req, res) => {
   try {
     const io = req.app?.get('io');
     const result = await autoAssignDeliveryPartner(req.params.id, io);

@@ -29,6 +29,7 @@ const CATEGORIES = [
 
 const Products = () => {
   const adminInfo = useAuthStore(s => s.adminInfo);
+  const hasPermission = useAuthStore(s => s.hasPermission);
   const settings = useSettingsStore(s => s.settings);
   const location = useLocation();
   const { adminAlert, adminConfirm, adminPrompt } = useModal();
@@ -717,12 +718,14 @@ const Products = () => {
             <p className="text-sm text-[#94A3B8] mt-1">Manage, edit, filter, duplicate, and toggle items in your store catalog</p>
           </div>
           <div className="flex items-center gap-2.5">
-            <button
-              onClick={() => openModal('add')}
-              className="admin-btn-primary h-[40px] px-4 text-xs font-bold flex items-center gap-1.5"
-            >
-              <Plus className="w-4 h-4" /> Add Product
-            </button>
+            {hasPermission('products', 'create') && (
+              <button
+                onClick={() => openModal('add')}
+                className="admin-btn-primary h-[40px] px-4 text-xs font-bold flex items-center gap-1.5"
+              >
+                <Plus className="w-4 h-4" /> Add Product
+              </button>
+            )}
             <button
               onClick={handleExportCSV}
               className="h-[40px] px-4 bg-white/6 hover:bg-white/10 text-white font-bold text-xs rounded-xl border border-white/8 flex items-center gap-1.5 transition-all shadow-sm"
@@ -857,42 +860,48 @@ const Products = () => {
                 </span>
               </div>
               <div className="flex items-center gap-2 flex-wrap">
-                <button
-                  onClick={() => handleBulkAction('status', 'active')}
-                  className="px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/10 text-white text-xs font-bold rounded-xl shadow-sm transition-colors"
-                >
-                  Enable Selected
-                </button>
-                <button
-                  onClick={() => handleBulkAction('status', 'inactive')}
-                  className="px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/10 text-gray-300 text-xs font-bold rounded-xl shadow-sm transition-colors"
-                >
-                  Disable Selected
-                </button>
-                <button
-                  onClick={() => handleBulkAction('price')}
-                  className="px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/10 text-[#22C55E] text-xs font-bold rounded-xl shadow-sm transition-colors"
-                >
-                  Change Price
-                </button>
-                <button
-                  onClick={() => handleBulkAction('stock')}
-                  className="px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/10 text-orange-400 text-xs font-bold rounded-xl shadow-sm transition-colors"
-                >
-                  Change Stock
-                </button>
-                <button
-                  onClick={() => handleBulkAction('category')}
-                  className="px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/10 text-cyan-400 text-xs font-bold rounded-xl shadow-sm transition-colors"
-                >
-                  Move Category
-                </button>
-                <button
-                  onClick={() => handleBulkAction('delete')}
-                  className="px-3 py-1.5 bg-[#EF4444]/20 hover:bg-[#EF4444]/30 border border-[#EF4444]/40 text-[#EF4444] text-xs font-bold rounded-xl shadow-sm transition-colors"
-                >
-                  Delete Selected
-                </button>
+                {hasPermission('products', 'edit') && (
+                  <>
+                    <button
+                      onClick={() => handleBulkAction('status', 'active')}
+                      className="px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/10 text-white text-xs font-bold rounded-xl shadow-sm transition-colors"
+                    >
+                      Enable Selected
+                    </button>
+                    <button
+                      onClick={() => handleBulkAction('status', 'inactive')}
+                      className="px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/10 text-gray-300 text-xs font-bold rounded-xl shadow-sm transition-colors"
+                    >
+                      Disable Selected
+                    </button>
+                    <button
+                      onClick={() => handleBulkAction('price')}
+                      className="px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/10 text-[#22C55E] text-xs font-bold rounded-xl shadow-sm transition-colors"
+                    >
+                      Change Price
+                    </button>
+                    <button
+                      onClick={() => handleBulkAction('stock')}
+                      className="px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/10 text-orange-400 text-xs font-bold rounded-xl shadow-sm transition-colors"
+                    >
+                      Change Stock
+                    </button>
+                    <button
+                      onClick={() => handleBulkAction('category')}
+                      className="px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/10 text-cyan-400 text-xs font-bold rounded-xl shadow-sm transition-colors"
+                    >
+                      Move Category
+                    </button>
+                  </>
+                )}
+                {hasPermission('products', 'delete') && (
+                  <button
+                    onClick={() => handleBulkAction('delete')}
+                    className="px-3 py-1.5 bg-[#EF4444]/20 hover:bg-[#EF4444]/30 border border-[#EF4444]/40 text-[#EF4444] text-xs font-bold rounded-xl shadow-sm transition-colors"
+                  >
+                    Delete Selected
+                  </button>
+                )}
                 <button
                   onClick={() => setSelectedIds([])}
                   className="p-2 text-[#94A3B8] hover:text-white rounded-xl hover:bg-white/10 transition-colors"

@@ -112,6 +112,23 @@ const useAuthStore = create(
       setUserInfo: (user) => set({ userInfo: user }),
 
       clearError: () => set({ error: null }),
+
+      hasPermission: (module, action = 'view') => {
+        const state = useAuthStore.getState();
+        const { adminInfo } = state;
+        if (!adminInfo) return false;
+        if (adminInfo.role === 'Super Admin' || adminInfo.role === 'SuperAdmin') return true;
+        
+        const perms = adminInfo.permissions || {};
+        const modPerms = perms[module];
+        if (typeof modPerms === 'boolean') {
+          // Legacy check
+          return modPerms === true;
+        } else if (typeof modPerms === 'object') {
+          return modPerms[action] === true;
+        }
+        return false;
+      }
     }),
     { name: 'auth-storage', partialize: (state) => ({ userInfo: state.userInfo, adminInfo: state.adminInfo }) }
   )

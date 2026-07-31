@@ -1,11 +1,11 @@
 import express from 'express';
-import { protectAdmin } from '../../middleware/adminAuth.js';
+import { protectAdmin, requirePermission } from '../../middleware/adminAuth.js';
 import prisma from '../../utils/prismaClient.js';
 import { formatMongoCompat, formatMongoCompatArray } from '../../utils/formatMongoCompat.js';
 
 const router = express.Router();
 
-router.get('/staff', async (req, res) => {
+router.get('/staff', requirePermission('staffManagement', 'view'), async (req, res) => {
   try {
     const staffRaw = await prisma.admin.findMany({
       select: { id: true, name: true, email: true, role: true, permissions: true, createdAt: true },
@@ -17,7 +17,7 @@ router.get('/staff', async (req, res) => {
   }
 });
 
-router.post('/staff', async (req, res) => {
+router.post('/staff', requirePermission('staffManagement', 'create'), async (req, res) => {
   try {
     const { name, email, password, role, permissions } = req.body;
     const exists = await prisma.admin.findUnique({ where: { email: email.toLowerCase().trim() } });
@@ -63,7 +63,7 @@ router.post('/staff', async (req, res) => {
   }
 });
 
-router.put('/staff/:id', async (req, res) => {
+router.put('/staff/:id', requirePermission('staffManagement', 'edit'), async (req, res) => {
   try {
     const { name, email, role, permissions, password } = req.body;
     const oldStaffRaw = await prisma.admin.findUnique({ where: { id: req.params.id } });
@@ -111,7 +111,7 @@ router.put('/staff/:id', async (req, res) => {
   }
 });
 
-router.delete('/staff/:id', async (req, res) => {
+router.delete('/staff/:id', requirePermission('staffManagement', 'delete'), async (req, res) => {
   try {
     const id = req.params.id;
     if (id === String(req.admin.id || req.admin._id)) {

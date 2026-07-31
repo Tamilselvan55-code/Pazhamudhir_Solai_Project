@@ -1,5 +1,5 @@
 import express from 'express';
-import { protectAdmin } from '../../middleware/adminAuth.js';
+import { protectAdmin, requirePermission } from '../../middleware/adminAuth.js';
 import prisma from '../../utils/prismaClient.js';
 import { formatMongoCompat, formatMongoCompatArray } from '../../utils/formatMongoCompat.js';
 import { createAndEmitNotification } from '../../utils/notificationHelper.js';
@@ -7,7 +7,7 @@ import { logAuditAndEmit } from '../../utils/auditHelper.js';
 
 const router = express.Router();
 
-router.get('/payments', async (req, res) => {
+router.get('/payments', requirePermission('payments', 'view'), async (req, res) => {
   try {
     const { status, search } = req.query;
     let where = {};
@@ -50,7 +50,7 @@ router.get('/payments', async (req, res) => {
   }
 });
 
-router.patch('/payments/:id/status', async (req, res) => {
+router.patch('/payments/:id/status', requirePermission('payments', 'edit'), async (req, res) => {
   try {
     const { status } = req.body;
     const orderRaw = await prisma.order.findUnique({ where: { id: req.params.id } });

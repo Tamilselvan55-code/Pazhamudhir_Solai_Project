@@ -482,19 +482,19 @@ const AdminLayout = ({ children }) => {
   }, [location.pathname]);
 
   const navItems = [
-    { name: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard },
+    { name: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard, permission: 'dashboard' },
     { name: 'Reports', path: '/admin/reports', icon: BarChart3, permission: 'reports' },
     { name: 'Orders', path: '/admin/orders', icon: ShoppingCart, permission: 'orders' },
     { name: 'Products', path: '/admin/products', icon: ShoppingBag, permission: 'products' },
-    { name: 'Categories', path: '/admin/categories', icon: Tags, permission: 'products' },
-    { name: 'Offers', path: '/admin/offers', icon: TrendingUp, permission: 'products' },
-    { name: 'Payments', path: '/admin/payments', icon: CreditCard, permission: 'orders' },
+    { name: 'Categories', path: '/admin/categories', icon: Tags, permission: 'categories' },
+    { name: 'Offers', path: '/admin/offers', icon: TrendingUp, permission: 'offers' },
+    { name: 'Payments', path: '/admin/payments', icon: CreditCard, permission: 'payments' },
     { name: 'Users', path: '/admin/users', icon: Users, permission: 'users' },
-    { name: 'Delivery Dashboard', path: '/admin/delivery-dashboard', icon: Truck, permission: 'users' },
-    { name: 'Delivery Earnings', path: '/admin/delivery-earnings', icon: DollarSign, permission: 'users' },
-    { name: 'Delivery Partners', path: '/admin/delivery-partners', icon: Users, permission: 'users' },
+    { name: 'Delivery Dashboard', path: '/admin/delivery-dashboard', icon: Truck, permission: 'deliveryDashboard' },
+    { name: 'Delivery Earnings', path: '/admin/delivery-earnings', icon: DollarSign, permission: 'deliveryEarnings' },
+    { name: 'Delivery Partners', path: '/admin/delivery-partners', icon: Users, permission: 'deliveryPartners' },
     { name: 'Notifications', path: '/admin/notifications', icon: Bell, permission: 'notifications' },
-    { name: 'Staff', path: '/admin/staff', icon: UserPlus, permission: 'users' },
+    { name: 'Staff', path: '/admin/staff', icon: UserPlus, permission: 'staffManagement' },
     { name: 'Database', path: '/admin/database', icon: Database, permission: 'settings' },
     { name: 'System Logs', path: '/admin/system-logs', icon: Activity, permission: 'settings' },
     { name: 'Settings', path: '/admin/settings', icon: Settings, permission: 'settings' },
@@ -503,7 +503,12 @@ const AdminLayout = ({ children }) => {
   const filteredNavItems = navItems.filter(item => {
     if (!item.permission) return true;
     if (adminInfo?.role === 'Super Admin' || adminInfo?.role === 'SuperAdmin') return true;
-    if (adminInfo?.permissions && adminInfo.permissions[item.permission]) return true;
+    
+    if (adminInfo?.permissions && adminInfo.permissions[item.permission]) {
+      const p = adminInfo.permissions[item.permission];
+      if (typeof p === 'boolean' && p === true) return true;
+      if (typeof p === 'object' && p.view === true) return true;
+    }
     return false;
   });
 

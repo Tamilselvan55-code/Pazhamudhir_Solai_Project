@@ -1,3 +1,4 @@
+import { requirePermission } from '../../middleware/adminAuth.js';
 import express from 'express';
 import prisma from '../../utils/prismaClient.js';
 import { formatMongoCompatArray } from '../../utils/formatMongoCompat.js';
@@ -7,7 +8,7 @@ const router = express.Router();
 const isUuid = (str) =>
   /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(str);
 
-router.get('/search', async (req, res) => {
+router.get('/search', requirePermission('dashboard', 'view'), async (req, res) => {
   try {
     const query = req.query.q || '';
     const trimmed = query.trim();

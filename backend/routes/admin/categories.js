@@ -1,5 +1,5 @@
 import express from 'express';
-import { protectAdmin } from '../../middleware/adminAuth.js';
+import { protectAdmin, requirePermission } from '../../middleware/adminAuth.js';
 import prisma from '../../utils/prismaClient.js';
 import { formatMongoCompat, formatMongoCompatArray } from '../../utils/formatMongoCompat.js';
 import { ensureDefaultCategories } from '../../utils/seedDefaultCategories.js';
@@ -7,7 +7,7 @@ import { logAuditAndEmit } from '../../utils/auditHelper.js';
 
 const router = express.Router();
 
-router.get('/categories', async (req, res) => {
+router.get('/categories', requirePermission('categories', 'view'), async (req, res) => {
   try {
     await ensureDefaultCategories();
     const { search } = req.query;
@@ -60,7 +60,7 @@ router.get('/categories', async (req, res) => {
   }
 });
 
-router.post('/categories', async (req, res) => {
+router.post('/categories', requirePermission('categories', 'create'), async (req, res) => {
   try {
     const { name, tamilName, description, image, displayOrder, status } = req.body;
     const exists = await prisma.category.findUnique({ where: { name } });
@@ -90,7 +90,7 @@ router.post('/categories', async (req, res) => {
   }
 });
 
-router.put('/categories/:id', async (req, res) => {
+router.put('/categories/:id', requirePermission('categories', 'edit'), async (req, res) => {
   try {
     const oldCatRaw = await prisma.category.findUnique({ where: { id: req.params.id } });
     if (!oldCatRaw) return res.status(404).json({ message: 'Category not found' });
@@ -124,7 +124,7 @@ router.put('/categories/:id', async (req, res) => {
   }
 });
 
-router.delete('/categories/:id', async (req, res) => {
+router.delete('/categories/:id', requirePermission('categories', 'delete'), async (req, res) => {
   try {
     const oldCatRaw = await prisma.category.findUnique({ where: { id: req.params.id } });
     await prisma.category.delete({ where: { id: req.params.id } });
@@ -139,7 +139,7 @@ router.delete('/categories/:id', async (req, res) => {
   }
 });
 
-router.patch('/categories/:id/status', async (req, res) => {
+router.patch('/categories/:id/status', requirePermission('categories', 'edit'), async (req, res) => {
   try {
     const { status } = req.body;
     const oldCatRaw = await prisma.category.findUnique({ where: { id: req.params.id } });

@@ -56,8 +56,9 @@ const ORDER_STATUSES = ['Waiting for Admin Approval', 'Order Confirmed', 'Out fo
 
 /* ── Order Row ────────────────────────────────────────────────────────────── */
 const OrderRow = ({ order, token, onUpdated }) => {
-  const { adminAlert, toast } = useModal();
+  const { adminAlert, adminConfirm, toast } = useModal();
   const adminInfo = useAuthStore(s => s.adminInfo);
+  const hasPermission = useAuthStore(s => s.hasPermission);
   const settings = useSettingsStore(s => s.settings);
   const [expanded,       setExpanded]       = useState(false);
   const [statusUpdating, setStatusUpdating] = useState(false);
@@ -95,7 +96,7 @@ const OrderRow = ({ order, token, onUpdated }) => {
 
   const deleteOrder = async (e) => {
     e.stopPropagation();
-    const confirmed = await userConfirm('Delete Order?', 'Are you sure you want to permanently delete this order? This action cannot be undone.', { danger: true, confirmLabel: 'Delete Permanently' });
+    const confirmed = await adminConfirm('Delete Order?', 'Are you sure you want to permanently delete this order? This action cannot be undone.', { danger: true, confirmLabel: 'Delete Permanently' });
     if (!confirmed) return;
 
     setStatusUpdating(true);
@@ -244,7 +245,7 @@ const OrderRow = ({ order, token, onUpdated }) => {
         </div>
 
         {/* 5. Payment */}
-        <div className="xl:col-span-2 text-left xl:text-center w-full flex xl:justify-center items-center">
+        <div className="xl:col-span-1 text-left xl:text-center w-full flex xl:justify-center items-center">
           <span className="xl:hidden text-[11px] font-bold text-[#94A3B8] uppercase mr-2">Payment:</span>
           {(() => {
             const badge = getPaymentBadgeStyle(order.paymentStatus);
@@ -256,7 +257,8 @@ const OrderRow = ({ order, token, onUpdated }) => {
         <div className="xl:col-span-2 text-left xl:text-center w-full flex xl:justify-center items-center gap-2">
           <span className="xl:hidden text-[11px] font-bold text-[#94A3B8] uppercase mr-2">Status:</span>
           {(() => {
-            if (order.status === 'Pending' || order.status === 'Waiting for Admin Approval') {
+            if (hasPermission('orders', 'edit')) {
+              if (order.status === 'Pending' || order.status === 'Waiting for Admin Approval') {
               return (
                 <div className="flex items-center gap-2">
                   <button
@@ -375,6 +377,7 @@ const OrderRow = ({ order, token, onUpdated }) => {
                 </button>
               );
             }
+            }
             // Delivered or Cancelled
             const badge = getOrderStatusBadgeStyle(order.status);
             return <span className={badge.className} style={badge.style}>{order.status}</span>;
@@ -390,31 +393,35 @@ const OrderRow = ({ order, token, onUpdated }) => {
         </div>
 
         {/* 8. Action Icons */}
-        <div className="xl:col-span-1 flex items-center justify-end gap-2 w-full pt-3 xl:pt-0 border-t xl:border-0 border-white/8 mt-1 xl:mt-0 md:col-span-2 xl:col-span-1">
+        <div className="xl:col-span-2 flex items-center justify-end gap-3 w-full pt-4 xl:pt-0 border-t xl:border-0 border-white/8 mt-3 xl:mt-0 md:col-span-2">
+          <button
+            onClick={printInvoice}
+            title="Print Invoice"
+            className="flex items-center justify-center w-10 h-10 rounded-xl bg-white/5 text-[#94A3B8] hover:bg-white/10 hover:text-white hover:shadow-md transition-all duration-300"
+          >
+            <Printer className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => generateInvoicePDF(order, settings)}
+            title="Download PDF"
+            className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#3B82F6]/10 text-[#3B82F6] hover:bg-[#3B82F6]/20 hover:text-blue-400 hover:shadow-md transition-all duration-300"
+          >
+            <FileText className="w-4 h-4" />
+          </button>
           {(adminInfo?.role === 'SuperAdmin' || adminInfo?.role === 'Super Admin') && (
             <button
               onClick={deleteOrder}
               disabled={statusUpdating}
               title="Permanently Delete Order"
-              style={{ borderRadius: '10px' }}
-              className="p-2.5 text-[#EF4444] hover:bg-[#EF4444]/15 hover:text-red-400 transition-all duration-300 disabled:opacity-50"
+              className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#EF4444]/10 text-[#EF4444] hover:bg-[#EF4444]/20 hover:text-red-400 hover:shadow-md transition-all duration-300 disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-none"
             >
               <Trash2 className="w-4 h-4" />
             </button>
           )}
           <button
-            onClick={printInvoice}
-            title="Print Invoice"
-            style={{ borderRadius: '10px' }}
-            className="p-2.5 text-[#94A3B8] hover:text-white hover:bg-[rgba(255,255,255,0.08)] transition-all duration-300"
-          >
-            <Printer className="w-4 h-4" />
-          </button>
-          <button
             onClick={() => setExpanded(!expanded)}
             title="Expand Details"
-            style={{ borderRadius: '10px' }}
-            className="p-2.5 text-[#22C55E] hover:bg-[rgba(255,255,255,0.08)] transition-all duration-300"
+            className={`flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-300 hover:shadow-md ${expanded ? 'bg-[#22C55E]/20 text-[#22C55E]' : 'bg-[#22C55E]/10 text-[#22C55E] hover:bg-[#22C55E]/20 hover:text-green-400'}`}
           >
             {expanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
           </button>

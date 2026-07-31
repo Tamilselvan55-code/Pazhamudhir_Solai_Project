@@ -1,10 +1,11 @@
 import express from 'express';
+import { protectAdmin, requirePermission } from '../../middleware/adminAuth.js';
 import prisma from '../../utils/prismaClient.js';
 import { formatMongoCompat } from '../../utils/formatMongoCompat.js';
 
 const router = express.Router();
 
-router.get('/dashboard-stats', async (req, res) => {
+router.get('/dashboard-stats', requirePermission('dashboard', 'view'), async (req, res) => {
   try {
     const startOfToday = new Date();
     startOfToday.setHours(0, 0, 0, 0);

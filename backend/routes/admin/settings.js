@@ -1,12 +1,12 @@
 import express from 'express';
-import { protectAdmin } from '../../middleware/adminAuth.js';
+import { protectAdmin, requirePermission } from '../../middleware/adminAuth.js';
 import prisma from '../../utils/prismaClient.js';
 import { formatMongoCompat } from '../../utils/formatMongoCompat.js';
 import { createAndEmitNotification } from '../../utils/notificationHelper.js';
 
 const router = express.Router();
 
-router.get('/settings', async (req, res) => {
+router.get('/settings', requirePermission('settings', 'view'), async (req, res) => {
   try {
     let settingsRaw = await prisma.storeSettings.findFirst();
     if (!settingsRaw) {
@@ -25,7 +25,7 @@ router.get('/settings', async (req, res) => {
   }
 });
 
-router.put('/settings', async (req, res) => {
+router.put('/settings', requirePermission('settings', 'edit'), async (req, res) => {
   try {
     let settingsRaw = await prisma.storeSettings.findFirst();
 

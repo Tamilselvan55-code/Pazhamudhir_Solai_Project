@@ -10,6 +10,31 @@ import useAuthStore from '../../store/useAuthStore';
 import axios from 'axios';
 import useModal from '../../hooks/useModal';
 
+const AVAILABLE_MODULES = [
+  { key: 'dashboard', label: 'Dashboard' },
+  { key: 'reports', label: 'Reports' },
+  { key: 'orders', label: 'Orders' },
+  { key: 'products', label: 'Products' },
+  { key: 'categories', label: 'Categories' },
+  { key: 'offers', label: 'Offers' },
+  { key: 'payments', label: 'Payments' },
+  { key: 'users', label: 'Users' },
+  { key: 'deliveryDashboard', label: 'Delivery Dashboard' },
+  { key: 'deliveryEarnings', label: 'Delivery Earnings' },
+  { key: 'deliveryPartners', label: 'Delivery Partners' },
+  { key: 'notifications', label: 'Notifications' },
+  { key: 'staffManagement', label: 'Staff' },
+  { key: 'settings', label: 'Settings' }
+];
+
+const getDefaultPermissions = () => {
+  const p = {};
+  AVAILABLE_MODULES.forEach(m => {
+    p[m.key] = { view: false, create: false, edit: false, delete: false };
+  });
+  return p;
+};
+
 const StaffManagement = () => {
   const { adminInfo } = useAuthStore();
   const { adminAlert, adminConfirm } = useModal();
@@ -25,14 +50,7 @@ const StaffManagement = () => {
     email: '',
     password: '',
     role: 'Staff',
-    permissions: {
-      products: true,
-      orders: true,
-      reports: false,
-      settings: false,
-      users: false,
-      notifications: true
-    }
+    permissions: getDefaultPermissions()
   });
 
   const fetchStaff = async () => {
@@ -63,14 +81,7 @@ const StaffManagement = () => {
       email: '',
       password: '',
       role: 'Staff',
-      permissions: {
-        products: true,
-        orders: true,
-        reports: false,
-        settings: false,
-        users: false,
-        notifications: true
-      }
+      permissions: getDefaultPermissions()
     });
     setShowModal(true);
   };
@@ -82,21 +93,21 @@ const StaffManagement = () => {
       email: staff.email || '',
       password: '', // blank by default, only updated if filled
       role: staff.role || 'Staff',
-      permissions: staff.permissions ? {
-        products: !!staff.permissions.products,
-        orders: !!staff.permissions.orders,
-        reports: !!staff.permissions.reports,
-        settings: !!staff.permissions.settings,
-        users: !!staff.permissions.users,
-        notifications: !!staff.permissions.notifications,
-      } : {
-        products: true,
-        orders: true,
-        reports: false,
-        settings: false,
-        users: false,
-        notifications: true
-      }
+      permissions: (() => {
+        const p = getDefaultPermissions();
+        if (staff.permissions) {
+          Object.keys(staff.permissions).forEach(k => {
+            if (p[k]) {
+              if (typeof staff.permissions[k] === 'boolean') {
+                p[k] = { view: staff.permissions[k], create: staff.permissions[k], edit: staff.permissions[k], delete: staff.permissions[k] };
+              } else {
+                p[k] = { ...p[k], ...staff.permissions[k] };
+              }
+            }
+          });
+        }
+        return p;
+      })()
     });
     setShowModal(true);
   };
@@ -106,12 +117,15 @@ const StaffManagement = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handlePermissionChange = (perm) => {
+  const handlePermissionChange = (module, action) => {
     setFormData(prev => ({
       ...prev,
       permissions: {
         ...prev.permissions,
-        [perm]: !prev.permissions[perm]
+        [module]: {
+          ...prev.permissions[module],
+          [action]: !prev.permissions[module][action]
+        }
       }
     }));
   };
@@ -274,7 +288,7 @@ const StaffManagement = () => {
                           <span className="px-2 py-0.5 rounded bg-white/4 text-white text-[10px] font-bold uppercase border border-white/8">ALL ACCESS</span>
                         ) : st.permissions ? (
                           Object.entries(st.permissions)
-                            .filter(([_, allowed]) => allowed)
+                            .filter(([_, perms]) => typeof perms === 'object' ? Object.values(perms).some(Boolean) : perms === true)
                             .map(([name]) => (
                               <span key={name} className="px-2 py-0.5 rounded bg-white/4 text-[#22C55E] text-[10px] font-bold uppercase border border-white/8">
                                 {name}
@@ -398,27 +412,27 @@ const StaffManagement = () => {
                   </div>
                 </div>
 
-                {formData.role !== 'Super Admin' && (
-                  <div className="p-4 bg-white/4 rounded-xl border border-white/8">
-                    <label className="block text-xs font-black text-white uppercase tracking-wider mb-3">Feature Page Access</label>
+                {formData.role !== 'Super Admin' && formData.role !== 'SuperAdmin' && (
+                  <div className="p-4 bg-white/4 rounded-xl border border-white/8 col-span-2">
+                    <label className="block text-xs font-black text-white uppercase tracking-wider mb-3">Feature Permissions</label>
                     
-                    <div className="grid grid-cols-2 gap-3.5">
-                      {[
-                        { key: 'products', label: 'Products Management' },
-                        { key: 'orders', label: 'Orders & Dispatch' },
-                        { key: 'reports', label: 'Sales Reports & Analytics' },
-                        { key: 'settings', label: 'System Settings' },
-                        { key: 'users', label: 'Customer Management' },
-                        { key: 'notifications', label: 'Notifications Alerts' }
-                      ].map((item) => (
-                        <div key={item.key} className="flex items-center gap-2 cursor-pointer" onClick={() => handlePermissionChange(item.key)}>
-                          <input
-                            type="checkbox"
-                            checked={formData.permissions[item.key]}
-                            onChange={() => {}} // handled by click of outer container
-                            className="w-4 h-4 accent-[#22C55E]"
-                          />
-                          <span className="text-xs text-white select-none">{item.label}</span>
+                    <div className="space-y-3 max-h-[300px] overflow-y-auto admin-scroll pr-2">
+                      {AVAILABLE_MODULES.map((item) => (
+                        <div key={item.key} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-lg bg-white/5 border border-white/5">
+                          <span className="text-sm font-bold text-white mb-2 sm:mb-0 w-40">{item.label}</span>
+                          <div className="flex items-center gap-4">
+                            {['view', 'create', 'edit', 'delete'].map(action => (
+                              <label key={action} className="flex items-center gap-1.5 cursor-pointer select-none">
+                                <input
+                                  type="checkbox"
+                                  checked={!!formData.permissions[item.key][action]}
+                                  onChange={() => handlePermissionChange(item.key, action)}
+                                  className="w-3.5 h-3.5 accent-[#22C55E]"
+                                />
+                                <span className="text-[10px] font-bold text-[#94A3B8] uppercase">{action}</span>
+                              </label>
+                            ))}
+                          </div>
                         </div>
                       ))}
                     </div>

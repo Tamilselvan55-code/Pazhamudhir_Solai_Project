@@ -1,11 +1,11 @@
 import express from 'express';
-import { protectAdmin } from '../../middleware/adminAuth.js';
+import { protectAdmin, requirePermission } from '../../middleware/adminAuth.js';
 import prisma from '../../utils/prismaClient.js';
 import { formatMongoCompat, formatMongoCompatArray } from '../../utils/formatMongoCompat.js';
 
 const router = express.Router();
 
-router.get('/notifications', async (req, res) => {
+router.get('/notifications', requirePermission('notifications', 'view'), async (req, res) => {
   try {
     const { page = 1, limit = 20, type, isRead, search } = req.query;
     const where = { role: 'admin' };
@@ -41,7 +41,7 @@ router.get('/notifications', async (req, res) => {
   }
 });
 
-router.patch('/notifications/mark-read', async (req, res) => {
+router.patch('/notifications/mark-read', requirePermission('notifications', 'edit'), async (req, res) => {
   try {
     await prisma.notification.updateMany({
       where: { role: 'admin', isRead: false },
@@ -61,7 +61,7 @@ router.patch('/notifications/mark-read', async (req, res) => {
   }
 });
 
-router.patch('/notifications/:id/read', async (req, res) => {
+router.patch('/notifications/:id/read', requirePermission('notifications', 'edit'), async (req, res) => {
   try {
     const notifRaw = await prisma.notification.update({
       where: { id: req.params.id },
@@ -82,7 +82,7 @@ router.patch('/notifications/:id/read', async (req, res) => {
   }
 });
 
-router.delete('/notifications/clear-all', async (req, res) => {
+router.delete('/notifications/clear-all', requirePermission('notifications', 'delete'), async (req, res) => {
   try {
     await prisma.notification.deleteMany({ where: { role: 'admin' } });
 
@@ -99,7 +99,7 @@ router.delete('/notifications/clear-all', async (req, res) => {
   }
 });
 
-router.delete('/notifications/delete-read', async (req, res) => {
+router.delete('/notifications/delete-read', requirePermission('notifications', 'delete'), async (req, res) => {
   try {
     await prisma.notification.deleteMany({ where: { role: 'admin', isRead: true } });
 
@@ -117,7 +117,7 @@ router.delete('/notifications/delete-read', async (req, res) => {
   }
 });
 
-router.delete('/notifications/:id', async (req, res) => {
+router.delete('/notifications/:id', requirePermission('notifications', 'delete'), async (req, res) => {
   try {
     await prisma.notification.delete({ where: { id: req.params.id } });
 

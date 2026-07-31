@@ -1,5 +1,5 @@
 import express from 'express';
-import { protectAdmin } from '../../middleware/adminAuth.js';
+import { protectAdmin, requirePermission } from '../../middleware/adminAuth.js';
 import prisma from '../../utils/prismaClient.js';
 import { formatMongoCompat, formatMongoCompatArray } from '../../utils/formatMongoCompat.js';
 import { createAndEmitNotification } from '../../utils/notificationHelper.js';
@@ -7,7 +7,7 @@ import { logAuditAndEmit } from '../../utils/auditHelper.js';
 
 const router = express.Router();
 
-router.get('/offers', async (req, res) => {
+router.get('/offers', requirePermission('offers', 'view'), async (req, res) => {
   try {
     const offersRaw = await prisma.offer.findMany({ orderBy: { createdAt: 'desc' } });
     res.json(formatMongoCompatArray(offersRaw));
@@ -44,7 +44,7 @@ const validateOfferPayload = (body) => {
   return null;
 };
 
-router.post('/offers', async (req, res) => {
+router.post('/offers', requirePermission('offers', 'create'), async (req, res) => {
   try {
     const validationError = validateOfferPayload(req.body);
     if (validationError) return res.status(400).json({ message: validationError });
@@ -88,7 +88,7 @@ router.post('/offers', async (req, res) => {
   }
 });
 
-router.put('/offers/:id', async (req, res) => {
+router.put('/offers/:id', requirePermission('offers', 'edit'), async (req, res) => {
   try {
     const validationError = validateOfferPayload(req.body);
     if (validationError) return res.status(400).json({ message: validationError });
@@ -120,7 +120,7 @@ router.put('/offers/:id', async (req, res) => {
   }
 });
 
-router.delete('/offers/:id', async (req, res) => {
+router.delete('/offers/:id', requirePermission('offers', 'delete'), async (req, res) => {
   try {
     const oldOfferRaw = await prisma.offer.findUnique({ where: { id: req.params.id } });
     await prisma.offer.delete({ where: { id: req.params.id } });
@@ -135,7 +135,7 @@ router.delete('/offers/:id', async (req, res) => {
   }
 });
 
-router.patch('/offers/:id/status', async (req, res) => {
+router.patch('/offers/:id/status', requirePermission('offers', 'edit'), async (req, res) => {
   try {
     const { status } = req.body;
     const oldOfferRaw = await prisma.offer.findUnique({ where: { id: req.params.id } });

@@ -1,6 +1,6 @@
 import express from 'express';
 import multer from 'multer';
-import { protectAdmin } from '../../middleware/adminAuth.js';
+import { protectAdmin, requirePermission } from '../../middleware/adminAuth.js';
 import prisma from '../../utils/prismaClient.js';
 import { formatMongoCompat, formatMongoCompatArray } from '../../utils/formatMongoCompat.js';
 import { productUpdateUpload } from './upload.js';
@@ -10,7 +10,7 @@ import { logAuditAndEmit } from '../../utils/auditHelper.js';
 
 const router = express.Router();
 
-router.get('/products', async (req, res) => {
+router.get('/products', requirePermission('products', 'view'), async (req, res) => {
   try {
     const { search, category, stockStatus, activeStatus, sort, page = 1, limit = 10 } = req.query;
 
@@ -62,7 +62,7 @@ router.get('/products', async (req, res) => {
   }
 });
 
-router.post('/products', async (req, res) => {
+router.post('/products', requirePermission('products', 'create'), async (req, res) => {
   try {
     const { name, nameTamil, tamilName, englishName, sku, price, category, unit, stock, description, offerTag, isTrending, isBestSeller, isFeatured, isActive, discount, image, images } = req.body;
 
@@ -135,7 +135,7 @@ router.post('/products', async (req, res) => {
   }
 });
 
-router.put('/products/:id', productUpdateUpload, async (req, res) => {
+router.put('/products/:id', requirePermission('products', 'edit'), productUpdateUpload, async (req, res) => {
   try {
     const originalRaw = await prisma.product.findUnique({ where: { id: req.params.id } });
     if (!originalRaw) {
@@ -281,7 +281,7 @@ router.put('/products/:id', productUpdateUpload, async (req, res) => {
   }
 });
 
-router.post('/products/:id/duplicate', async (req, res) => {
+router.post('/products/:id/duplicate', requirePermission('products', 'create'), async (req, res) => {
   try {
     const originalRaw = await prisma.product.findUnique({ where: { id: req.params.id } });
     if (!originalRaw) return res.status(404).json({ message: 'Product not found' });
@@ -334,7 +334,7 @@ router.post('/products/:id/duplicate', async (req, res) => {
   }
 });
 
-router.delete('/products/:id', async (req, res) => {
+router.delete('/products/:id', requirePermission('products', 'delete'), async (req, res) => {
   try {
     const deleted = await prisma.product.delete({ where: { id: req.params.id } }).catch(() => null);
     if (!deleted) return res.status(404).json({ message: 'Product not found' });
@@ -349,7 +349,7 @@ router.delete('/products/:id', async (req, res) => {
   }
 });
 
-router.patch('/products/:id/status', async (req, res) => {
+router.patch('/products/:id/status', requirePermission('products', 'edit'), async (req, res) => {
   try {
     const isActive = req.body.isActive === true || req.body.isActive === 'true';
     const oldProdRaw = await prisma.product.findUnique({ where: { id: req.params.id } });
@@ -368,7 +368,7 @@ router.patch('/products/:id/status', async (req, res) => {
   }
 });
 
-router.post('/products/bulk', async (req, res) => {
+router.post('/products/bulk', requirePermission('products', 'edit'), async (req, res) => {
   try {
     const { ids, action, value } = req.body;
     if (!ids || ids.length === 0) {
@@ -444,7 +444,7 @@ router.post('/products/bulk', async (req, res) => {
 });
 
 // POST /api/admin/products/:id/upload-image - Upload product image to Cloudinary
-router.post('/products/:id/upload-image', protectAdmin, async (req, res, next) => {
+router.post('/products/:id/upload-image', protectAdmin, requirePermission('products', 'edit'), async (req, res, next) => {
   try {
     const product = await prisma.product.findUnique({ where: { id: req.params.id } });
     if (!product) {

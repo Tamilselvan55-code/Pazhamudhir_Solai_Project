@@ -48,6 +48,7 @@ const SystemLogs = lazy(() => import('./pages/Admin/SystemLogs'));
 const DeliveryPartners = lazy(() => import('./pages/Admin/DeliveryPartners'));
 const AdminDeliveryDashboard = lazy(() => import('./pages/Admin/DeliveryDashboard'));
 const AdminDeliveryEarnings = lazy(() => import('./pages/Admin/DeliveryEarnings'));
+const AdminAccessDenied = lazy(() => import('./pages/Admin/AccessDenied'));
 
 // Lazy Loaded Delivery Pages
 const DeliveryLogin = lazy(() => import('./pages/Delivery/Login'));
@@ -206,22 +207,23 @@ function App() {
             </Route>
             
             <Route path="/admin/login" element={<AdminLogin />} />
-            <Route path="/admin/dashboard" element={<ProtectedRoute role="admin"><AdminDashboard /></ProtectedRoute>} />
-            <Route path="/admin/users" element={<ProtectedRoute role="admin"><Users /></ProtectedRoute>} />
-            <Route path="/admin/products" element={<ProtectedRoute role="admin"><Products /></ProtectedRoute>} />
-            <Route path="/admin/orders" element={<ProtectedRoute role="admin"><Orders /></ProtectedRoute>} />
-            <Route path="/admin/reports" element={<ProtectedRoute role="admin"><Reports /></ProtectedRoute>} />
-            <Route path="/admin/settings" element={<ProtectedRoute role="admin"><Settings /></ProtectedRoute>} />
-            <Route path="/admin/categories" element={<ProtectedRoute role="admin"><Categories /></ProtectedRoute>} />
-            <Route path="/admin/offers" element={<ProtectedRoute role="admin"><Offers /></ProtectedRoute>} />
-            <Route path="/admin/payments" element={<ProtectedRoute role="admin"><Payments /></ProtectedRoute>} />
-            <Route path="/admin/notifications" element={<ProtectedRoute role="admin"><Notifications /></ProtectedRoute>} />
-            <Route path="/admin/staff" element={<ProtectedRoute role="admin"><Staff /></ProtectedRoute>} />
-            <Route path="/admin/database" element={<ProtectedRoute role="admin"><DatabaseController /></ProtectedRoute>} />
-            <Route path="/admin/system-logs" element={<ProtectedRoute role="admin"><SystemLogs /></ProtectedRoute>} />
-            <Route path="/admin/delivery-partners" element={<ProtectedRoute role="admin"><DeliveryPartners /></ProtectedRoute>} />
-            <Route path="/admin/delivery-dashboard" element={<ProtectedRoute role="admin"><AdminDeliveryDashboard /></ProtectedRoute>} />
-            <Route path="/admin/delivery-earnings" element={<ProtectedRoute role="admin"><AdminDeliveryEarnings /></ProtectedRoute>} />
+            <Route path="/admin/access-denied" element={<AdminAccessDenied />} />
+            <Route path="/admin/dashboard" element={<ProtectedRoute role="admin" adminModule="dashboard"><AdminDashboard /></ProtectedRoute>} />
+            <Route path="/admin/users" element={<ProtectedRoute role="admin" adminModule="users"><Users /></ProtectedRoute>} />
+            <Route path="/admin/products" element={<ProtectedRoute role="admin" adminModule="products"><Products /></ProtectedRoute>} />
+            <Route path="/admin/orders" element={<ProtectedRoute role="admin" adminModule="orders"><Orders /></ProtectedRoute>} />
+            <Route path="/admin/reports" element={<ProtectedRoute role="admin" adminModule="reports"><Reports /></ProtectedRoute>} />
+            <Route path="/admin/settings" element={<ProtectedRoute role="admin" adminModule="settings"><Settings /></ProtectedRoute>} />
+            <Route path="/admin/categories" element={<ProtectedRoute role="admin" adminModule="categories"><Categories /></ProtectedRoute>} />
+            <Route path="/admin/offers" element={<ProtectedRoute role="admin" adminModule="offers"><Offers /></ProtectedRoute>} />
+            <Route path="/admin/payments" element={<ProtectedRoute role="admin" adminModule="payments"><Payments /></ProtectedRoute>} />
+            <Route path="/admin/notifications" element={<ProtectedRoute role="admin" adminModule="notifications"><Notifications /></ProtectedRoute>} />
+            <Route path="/admin/staff" element={<ProtectedRoute role="admin" adminModule="staffManagement"><Staff /></ProtectedRoute>} />
+            <Route path="/admin/database" element={<ProtectedRoute role="admin" adminModule="settings"><DatabaseController /></ProtectedRoute>} />
+            <Route path="/admin/system-logs" element={<ProtectedRoute role="admin" adminModule="settings"><SystemLogs /></ProtectedRoute>} />
+            <Route path="/admin/delivery-partners" element={<ProtectedRoute role="admin" adminModule="deliveryPartners"><DeliveryPartners /></ProtectedRoute>} />
+            <Route path="/admin/delivery-dashboard" element={<ProtectedRoute role="admin" adminModule="deliveryDashboard"><AdminDeliveryDashboard /></ProtectedRoute>} />
+            <Route path="/admin/delivery-earnings" element={<ProtectedRoute role="admin" adminModule="deliveryEarnings"><AdminDeliveryEarnings /></ProtectedRoute>} />
 
             <Route path="*" element={<Home />} />
           </Routes>

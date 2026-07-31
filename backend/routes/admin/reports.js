@@ -1,11 +1,11 @@
 import express from 'express';
-import { protectAdmin } from '../../middleware/adminAuth.js';
+import { protectAdmin, requirePermission } from '../../middleware/adminAuth.js';
 import prisma from '../../utils/prismaClient.js';
 import { formatMongoCompatArray } from '../../utils/formatMongoCompat.js';
 
 const router = express.Router();
 
-router.get('/reports', async (req, res) => {
+router.get('/reports', requirePermission('reports', 'view'), async (req, res) => {
   try {
     const [ordersRaw, productsRaw, usersRaw] = await Promise.all([
       prisma.order.findMany({ include: { user: { select: { fullName: true } }, orderItems: true }, orderBy: { createdAt: 'desc' } }),
@@ -51,7 +51,7 @@ router.get('/reports', async (req, res) => {
 // Since the dashboard analytics endpoint covers almost all complex aggregation, 
 // the /reports/analytics uses similar simplified manual aggregations because SQLite/PostgreSQL differences in Prisma limit complex raw queries.
 
-router.get('/reports/analytics', async (req, res) => {
+router.get('/reports/analytics', requirePermission('reports', 'view'), async (req, res) => {
   try {
     const { filter = 'Today', startDate, endDate, reportType = 'Sales Report' } = req.query;
 
@@ -251,7 +251,7 @@ router.get('/reports/analytics', async (req, res) => {
 });
 
 // ─── Phase 16: GET /admin/delivery-analytics ─────────────────────────────────
-router.get('/delivery-analytics', protectAdmin, async (req, res) => {
+router.get('/delivery-analytics', requirePermission('reports', 'view'), protectAdmin, async (req, res) => {
   try {
     const { period = 'week', from, to } = req.query;
 

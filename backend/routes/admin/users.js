@@ -1,5 +1,5 @@
 import express from 'express';
-import { protectAdmin } from '../../middleware/adminAuth.js';
+import { protectAdmin, requirePermission } from '../../middleware/adminAuth.js';
 import prisma from '../../utils/prismaClient.js';
 import { formatMongoCompat, formatMongoCompatArray } from '../../utils/formatMongoCompat.js';
 import { createAndEmitNotification } from '../../utils/notificationHelper.js';
@@ -7,7 +7,7 @@ import { logAuditAndEmit } from '../../utils/auditHelper.js';
 
 const router = express.Router();
 
-router.get('/users', async (req, res) => {
+router.get('/users', requirePermission('users', 'view'), async (req, res) => {
   try {
     const { search } = req.query;
     let where = {};
@@ -37,7 +37,7 @@ router.get('/users', async (req, res) => {
   }
 });
 
-router.patch('/users/:id/block', async (req, res) => {
+router.patch('/users/:id/block', requirePermission('users', 'edit'), async (req, res) => {
   try {
     const { isBlocked, reason } = req.body;
     const userRaw = await prisma.user.update({
@@ -58,7 +58,7 @@ router.patch('/users/:id/block', async (req, res) => {
   }
 });
 
-router.get('/users/:id/orders', async (req, res) => {
+router.get('/users/:id/orders', requirePermission('users', 'view'), async (req, res) => {
   try {
     const ordersRaw = await prisma.order.findMany({
       where: { userId: req.params.id },
@@ -72,7 +72,7 @@ router.get('/users/:id/orders', async (req, res) => {
   }
 });
 
-router.delete('/users/:id', async (req, res) => {
+router.delete('/users/:id', requirePermission('users', 'delete'), async (req, res) => {
   try {
     const userId = req.params.id;
 

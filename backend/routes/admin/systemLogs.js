@@ -1,11 +1,11 @@
 import express from 'express';
-import { protectAdmin } from '../../middleware/adminAuth.js';
+import { protectAdmin, requirePermission } from '../../middleware/adminAuth.js';
 import prisma from '../../utils/prismaClient.js';
 import { formatMongoCompatArray } from '../../utils/formatMongoCompat.js';
 
 const router = express.Router();
 
-router.get('/system-logs', async (req, res) => {
+router.get('/system-logs', requirePermission('settings', 'view'), async (req, res) => {
   try {
     const { type, search, page = 1, limit = 50 } = req.query;
     const skip = (Number(page) - 1) * Number(limit);

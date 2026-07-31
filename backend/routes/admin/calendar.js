@@ -1,3 +1,4 @@
+import { requirePermission } from '../../middleware/adminAuth.js';
 import express from 'express';
 import prisma from '../../utils/prismaClient.js';
 import { formatMongoCompat, formatMongoCompatArray } from '../../utils/formatMongoCompat.js';
@@ -5,7 +6,7 @@ import { logAuditAndEmit } from '../../utils/auditHelper.js';
 
 const router = express.Router();
 
-router.get('/calendar-events', async (req, res) => {
+router.get('/calendar-events', requirePermission('dashboard', 'view'), async (req, res) => {
   try {
     const eventsRaw = await prisma.calendarEvent.findMany({
       orderBy: { date: 'asc' }
@@ -17,7 +18,7 @@ router.get('/calendar-events', async (req, res) => {
   }
 });
 
-router.post('/calendar-events', async (req, res) => {
+router.post('/calendar-events', requirePermission('dashboard', 'create'), async (req, res) => {
   try {
     const { title, eventType, date, description } = req.body;
     if (!title || !date) {
@@ -52,7 +53,7 @@ router.post('/calendar-events', async (req, res) => {
   }
 });
 
-router.delete('/calendar-events/:id', async (req, res) => {
+router.delete('/calendar-events/:id', requirePermission('dashboard', 'delete'), async (req, res) => {
   try {
     const event = await prisma.calendarEvent.findUnique({ where: { id: req.params.id } });
     if (!event) {

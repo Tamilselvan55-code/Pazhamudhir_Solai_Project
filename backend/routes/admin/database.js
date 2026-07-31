@@ -1,12 +1,12 @@
 import express from 'express';
 import fs from 'fs';
 import path from 'path';
-import { protectAdmin } from '../../middleware/adminAuth.js';
+import { protectAdmin, requirePermission } from '../../middleware/adminAuth.js';
 import prisma from '../../utils/prismaClient.js';
 
 const router = express.Router();
 
-router.get('/database/status', async (req, res) => {
+router.get('/database/status', requirePermission('settings', 'view'), async (req, res) => {
   try {
     const counts = {
       users: await prisma.user.count(),
@@ -40,7 +40,7 @@ router.get('/database/status', async (req, res) => {
   }
 });
 
-router.post('/database/backup', async (req, res) => {
+router.post('/database/backup', requirePermission('settings', 'create'), async (req, res) => {
   try {
     const backupDir = 'uploads/backups';
     if (!fs.existsSync(backupDir)) {
@@ -88,7 +88,7 @@ router.post('/database/backup', async (req, res) => {
   }
 });
 
-router.get('/database/backups', async (req, res) => {
+router.get('/database/backups', requirePermission('settings', 'view'), async (req, res) => {
   try {
     const backupDir = 'uploads/backups';
     if (!fs.existsSync(backupDir)) {
@@ -112,7 +112,7 @@ router.get('/database/backups', async (req, res) => {
   }
 });
 
-router.get('/database/backups/download/:filename', async (req, res) => {
+router.get('/database/backups/download/:filename', requirePermission('settings', 'view'), async (req, res) => {
   try {
     const filename = req.params.filename;
     const filepath = path.resolve('uploads/backups', filename);
@@ -170,7 +170,7 @@ const executeRestore = async (backupPayload) => {
   }
 };
 
-router.post('/database/backups/restore/:filename', async (req, res) => {
+router.post('/database/backups/restore/:filename', requirePermission('settings', 'create'), async (req, res) => {
   try {
     const filename = req.params.filename;
     const filepath = path.resolve('uploads/backups', filename);
@@ -203,7 +203,7 @@ router.post('/database/backups/restore/:filename', async (req, res) => {
 // Since upload route uses multer which we extracted in upload.js, we import it here:
 import { productUpdateUpload } from './upload.js'; // Note: Re-using the multer instance
 
-router.post('/database/backups/upload-restore', productUpdateUpload, async (req, res) => {
+router.post('/database/backups/upload-restore', requirePermission('settings', 'create'), productUpdateUpload, async (req, res) => {
   try {
     // The previous code had upload.single('file'), here we use our fields which allows 'file'
     let file = null;
@@ -239,7 +239,7 @@ router.post('/database/backups/upload-restore', productUpdateUpload, async (req,
   }
 });
 
-router.post('/database/database-import', productUpdateUpload, async (req, res) => {
+router.post('/database/database-import', requirePermission('settings', 'create'), productUpdateUpload, async (req, res) => {
   try {
     let file = null;
     if (req.file) file = req.file;
@@ -307,7 +307,7 @@ router.post('/database/database-import', productUpdateUpload, async (req, res) =
   }
 });
 
-router.post('/database/optimize', async (req, res) => {
+router.post('/database/optimize', requirePermission('settings', 'create'), async (req, res) => {
   try {
     const details = [];
 
