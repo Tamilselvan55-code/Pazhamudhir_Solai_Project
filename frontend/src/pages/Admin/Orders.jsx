@@ -4,7 +4,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 import {
   ShoppingCart, Search, Loader2, RefreshCw, Banknote,
   CheckCircle, Clock, Package, MapPin, Phone, User,
-  ChevronDown, ChevronUp, AlertTriangle, Filter, IndianRupee, Printer, Calendar, XCircle, Truck, FileText
+  ChevronDown, ChevronUp, AlertTriangle, Filter, IndianRupee, Printer, Calendar, XCircle, Truck, FileText, Trash2
 } from 'lucide-react';
 import AdminLayout from '../../components/Admin/AdminLayout';
 import useAuthStore from '../../store/useAuthStore';
@@ -62,6 +62,25 @@ const OrderRow = ({ order, token, onUpdated }) => {
   const [expanded,       setExpanded]       = useState(false);
   const [statusUpdating, setStatusUpdating] = useState(false);
   const [error,          setError]          = useState('');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // DEVELOPMENT FEATURE: Delete Order
+  const deleteOrder = async () => {
+    setIsDeleting(true);
+    try {
+      await axios.delete(`${API_BASE}/orders/${order._id || order.id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast('Success', '✅ Order deleted successfully.');
+      onUpdated();
+    } catch (e) {
+      adminAlert('error', 'Delete Failed', '❌ Failed to delete order.');
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteConfirm(false);
+    }
+  };
 
   const recipient = order.recipient?.isForAnotherPerson
     ? order.recipient
@@ -563,7 +582,44 @@ const OrderRow = ({ order, token, onUpdated }) => {
             >
               <FileText className="w-3.5 h-3.5 text-[#22C55E]" /> Download PDF
             </button>
+            
+            {/* DEVELOPMENT FEATURE: Remove before production deployment */}
+            {(adminInfo?.role === 'Super Admin' || adminInfo?.role === 'SuperAdmin') && (
+              <button
+                onClick={() => setShowDeleteConfirm(true)}
+                className="flex items-center gap-1.5 h-[40px] px-4 bg-[#EF4444]/10 hover:bg-[#EF4444]/20 border border-[#EF4444]/30 rounded-xl text-xs font-bold text-[#EF4444] transition-colors shadow-sm ml-auto"
+                title="Delete Order"
+              >
+                <Trash2 className="w-3.5 h-3.5" /> Delete Order
+              </button>
+            )}
           </div>
+
+          {/* DEVELOPMENT FEATURE: Confirmation Modal */}
+          {showDeleteConfirm && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+              <div className="bg-[#081A38] border border-white/10 rounded-2xl p-6 max-w-sm w-full shadow-2xl">
+                <h3 className="text-lg font-bold text-white mb-2">Delete Order</h3>
+                <p className="text-sm text-[#94A3B8] mb-6">This action will permanently delete this order. This cannot be undone.</p>
+                <div className="flex justify-end gap-3">
+                  <button
+                    onClick={() => setShowDeleteConfirm(false)}
+                    className="px-4 py-2 rounded-xl text-sm font-bold text-white bg-white/10 hover:bg-white/20 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={deleteOrder}
+                    disabled={isDeleting}
+                    className="px-4 py-2 rounded-xl text-sm font-bold text-white bg-[#EF4444] hover:bg-[#DC2626] transition-colors flex items-center gap-2"
+                  >
+                    {isDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                    Delete
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
