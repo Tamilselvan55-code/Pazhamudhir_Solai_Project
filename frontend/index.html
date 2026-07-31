@@ -1,6 +1,23 @@
 <!doctype html>
 <html lang="ta-IN">
   <head>
+    <!-- Dark mode pre-hydration: apply 'dark' class before React loads to prevent flash -->
+    <script>
+      (function() {
+        try {
+          var stored = localStorage.getItem('delivery-partner-settings');
+          if (stored) {
+            var parsed = JSON.parse(stored);
+            var theme = parsed.state && parsed.state.theme;
+            if (theme === 'dark') {
+              document.documentElement.classList.add('dark');
+            } else if (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+              document.documentElement.classList.add('dark');
+            }
+          }
+        } catch(e) {}
+      })();
+    </script>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="manifest" href="/manifest.json" />

@@ -223,8 +223,11 @@ const DeliveryDocuments = () => {
 
   if (loading) {
     return (
-      <div className="min-h-[100dvh] bg-gray-50 flex items-center justify-center">
-        <div className="w-10 h-10 border-4 border-green-600 border-t-transparent rounded-full animate-spin"></div>
+      <div className="min-h-[100dvh] bg-gray-50 dark:bg-gray-950 flex items-center justify-center transition-colors">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 border-4 border-green-500 border-t-transparent rounded-full animate-spin" />
+          <p className="text-xs font-semibold text-gray-400 dark:text-gray-500">Loading documents...</p>
+        </div>
       </div>
     );
   }
@@ -286,15 +289,15 @@ const DeliveryDocuments = () => {
   };
 
   return (
-    <div className="min-h-[100dvh] bg-gray-50 dark:bg-gray-900 flex flex-col transition-colors duration-300">
+    <div className="min-h-[100dvh] bg-gray-50 dark:bg-gray-950 flex flex-col transition-colors duration-300">
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800 px-6 pt-10 pb-6 shadow-sm border-b border-gray-100 dark:border-gray-700 z-10 sticky top-0 flex items-center gap-4 transition-colors">
-        <Link to="/delivery/profile" className="w-10 h-10 flex items-center justify-center bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-full transition-colors">
-          <ArrowLeft className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+      <div className="bg-white dark:bg-gray-900 px-5 pt-8 pb-5 shadow-sm border-b border-gray-100 dark:border-gray-800 z-10 sticky top-0 flex items-center gap-4 transition-colors">
+        <Link to="/delivery/profile" className="w-9 h-9 flex items-center justify-center bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors">
+          <ArrowLeft className="w-4 h-4 text-gray-700 dark:text-gray-300" />
         </Link>
         <div>
-          <h1 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">Document Center</h1>
-          <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mt-1">Manage your verification documents</p>
+          <h1 className="text-xl font-black text-gray-900 dark:text-white tracking-tight">Document Center</h1>
+          <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 mt-0.5">Manage your verification documents</p>
         </div>
       </div>
 

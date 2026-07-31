@@ -234,22 +234,41 @@ const DeliveryOrders = () => {
   });
 
   return (
-    <div className="min-h-[100dvh] bg-gray-50 dark:bg-gray-900 flex flex-col transition-colors duration-300">
+    <div className="min-h-[100dvh] bg-gray-50 dark:bg-gray-950 flex flex-col transition-colors duration-300">
       {/* Header Tabs */}
-      <div className="bg-white dark:bg-gray-800 sticky top-0 z-30 shadow-sm transition-colors">
-        <div className="flex border-b border-gray-100 dark:border-gray-700 px-2 overflow-x-auto hide-scrollbar transition-colors">
+      <div className="bg-white dark:bg-gray-900 sticky top-0 z-30 border-b border-gray-100 dark:border-gray-800 transition-colors shadow-sm">
+        {/* Page title */}
+        <div className="px-5 pt-5 pb-3 flex items-center gap-3">
+          <div className="w-8 h-8 bg-green-50 dark:bg-green-900/20 rounded-xl flex items-center justify-center">
+            <Package className="w-4 h-4 text-green-600 dark:text-green-400" strokeWidth={2} />
+          </div>
+          <h1 className="text-lg font-black text-gray-900 dark:text-white">My Orders</h1>
+        </div>
+        {/* Tabs */}
+        <div className="flex border-t border-gray-50 dark:border-gray-800/50 px-1 overflow-x-auto hide-scrollbar">
           {['Assigned', 'Active', 'Completed', 'History'].map(tab => {
             const counts = { Assigned: categorized.assigned.length, Active: categorized.active.length, Completed: categorized.completed.length };
             return (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`flex-1 min-w-[100px] py-4 px-3 text-sm font-bold text-center whitespace-nowrap transition-colors relative ${
-                  activeTab === tab ? 'text-green-600 dark:text-green-400' : 'text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white'
+                className={`flex-1 min-w-[90px] py-3 px-2 text-xs font-bold text-center whitespace-nowrap transition-all relative ${
+                  activeTab === tab
+                    ? 'text-green-600 dark:text-green-400'
+                    : 'text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
                 }`}
               >
-                {tab} {tab !== 'History' && `(${counts[tab]})`}
-                {activeTab === tab && <div className="absolute bottom-0 left-0 right-0 h-1 bg-green-600 dark:bg-green-500 rounded-t-full" />}
+                {tab !== 'History' ? (
+                  <span className="inline-flex items-center gap-1.5">
+                    {tab}
+                    <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-full ${
+                      activeTab === tab
+                        ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                        : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-500'
+                    }`}>{counts[tab]}</span>
+                  </span>
+                ) : tab}
+                {activeTab === tab && <div className="absolute bottom-0 left-3 right-3 h-0.5 bg-green-600 dark:bg-green-500 rounded-t-full" />}
               </button>
             );
           })}
@@ -258,8 +277,9 @@ const DeliveryOrders = () => {
 
       <div className="flex-1 p-4 pb-24 overflow-y-auto">
         {loading || (activeTab === 'History' && historyLoading) ? (
-          <div className="flex items-center justify-center h-48">
-            <div className="w-8 h-8 border-3 border-green-600 border-t-transparent rounded-full animate-spin"></div>
+          <div className="flex flex-col items-center justify-center h-64 gap-3">
+            <div className="w-10 h-10 border-3 border-green-500 border-t-transparent rounded-full animate-spin" />
+            <p className="text-xs font-semibold text-gray-400 dark:text-gray-500">Loading orders...</p>
           </div>
         ) : activeTab === 'History' ? (
           <div className="space-y-4 animate-in fade-in">
@@ -276,25 +296,28 @@ const DeliveryOrders = () => {
                 </button>
               ))}
             </div>
-            {filteredHistory.length === 0 ? (
-              <div className="text-center py-20 text-gray-500 dark:text-gray-400">
-                <Package className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
-                <p className="font-semibold">No delivery history</p>
-              </div>
+              {filteredHistory.length === 0 ? (
+                <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-10 text-center">
+                  <div className="w-14 h-14 bg-gray-50 dark:bg-gray-800 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                    <Package className="w-7 h-7 text-gray-300 dark:text-gray-600" />
+                  </div>
+                  <p className="font-bold text-gray-600 dark:text-gray-400 text-sm">No delivery history</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Completed deliveries will appear here.</p>
+                </div>
             ) : (
               <div className="space-y-3">
                 {filteredHistory.map(order => (
-                  <div key={order.id} className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl p-4 shadow-xs transition-colors">
+                  <div key={order.id} className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-4 hover:shadow-sm transition-all">
                     <div className="flex justify-between items-start mb-2">
                       <div>
-                        <h4 className="font-bold text-gray-900 dark:text-white">{order.invoiceNumber || `#${order.id.slice(-6).toUpperCase()}`}</h4>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{order.user?.fullName}</p>
+                        <h4 className="font-bold text-gray-900 dark:text-white text-sm">{order.invoiceNumber || `#${order.id.slice(-6).toUpperCase()}`}</h4>
+                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{order.user?.fullName}</p>
                       </div>
-                      <span className="text-green-600 dark:text-green-400 font-extrabold text-sm">₹40</span>
+                      <span className="text-green-600 dark:text-green-400 font-black text-base">₹40</span>
                     </div>
-                    <div className="flex items-center justify-between text-[11px] text-gray-400 dark:text-gray-500 border-t border-gray-50 dark:border-gray-700 pt-2 mt-2 transition-colors">
+                    <div className="flex items-center justify-between text-[11px] text-gray-400 dark:text-gray-500 border-t border-gray-50 dark:border-gray-800 pt-2 mt-2">
                       <span>{new Date(order.deliveredAt || order.updatedAt).toLocaleDateString('en-IN', { hour: '2-digit', minute: '2-digit' })}</span>
-                      <span className="px-2 py-0.5 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded text-[10px] font-bold">Delivered</span>
+                      <span className="px-2 py-0.5 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 rounded-lg text-[10px] font-bold">Delivered</span>
                     </div>
                   </div>
                 ))}
@@ -303,11 +326,11 @@ const DeliveryOrders = () => {
           </div>
         ) : currentOrders.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-64 text-center">
-            <div className="w-24 h-24 bg-green-50 dark:bg-green-900/20 rounded-full flex items-center justify-center mb-4 transition-colors">
-              <Package className="w-10 h-10 text-green-300 dark:text-green-800 transition-colors" />
+            <div className="w-16 h-16 bg-gray-50 dark:bg-gray-800 rounded-2xl flex items-center justify-center mb-4">
+              <Package className="w-8 h-8 text-gray-300 dark:text-gray-600" />
             </div>
-            <h3 className="text-lg font-bold text-gray-800 dark:text-gray-200">No Orders Here</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 max-w-xs">You don't have any {activeTab.toLowerCase()} orders right now. Stay online to receive pings.</p>
+            <h3 className="text-base font-bold text-gray-800 dark:text-gray-200">No {activeTab} Orders</h3>
+            <p className="text-sm text-gray-400 dark:text-gray-500 mt-1 max-w-xs">Stay online to receive new delivery pings.</p>
           </div>
         ) : (
           <div className="space-y-4 animate-in slide-in-from-bottom-4 duration-300">
@@ -329,7 +352,7 @@ const DeliveryOrders = () => {
               else if (order.deliveryPartnerId && order.status !== 'Pending') currentStepIdx = 1;
               
               return (
-                <div key={order.id} className="bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden transition-colors relative mb-6">
+                <div key={order.id} className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden transition-colors relative mb-4">
                   {/* Status Banner */}
                   <div className={`px-5 py-2.5 flex justify-between items-center border-b border-gray-50 dark:border-gray-700 ${activeTab === 'Completed' ? 'bg-green-50 dark:bg-green-900/20' : 'bg-gray-50 dark:bg-gray-800/50'}`}>
                     <span className="text-xs font-bold text-gray-500 dark:text-gray-400">Order #{order.invoiceNumber || order.id?.slice(-6).toUpperCase()}</span>

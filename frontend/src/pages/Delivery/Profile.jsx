@@ -129,25 +129,28 @@ const DeliveryProfile = () => {
   const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
   return (
-    <div className="min-h-[100dvh] bg-gray-50 dark:bg-gray-900 flex flex-col transition-colors duration-300 font-sans">
+    <div className="min-h-[100dvh] bg-gray-50 dark:bg-gray-950 flex flex-col transition-colors duration-300 font-sans">
       {/* Header Area */}
-      <div className="bg-white dark:bg-gray-800 pt-8 pb-32 px-6 shadow-sm border-b border-gray-100 dark:border-gray-700 relative z-10 transition-colors">
-        <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-transparent dark:from-orange-500/5"></div>
+      <div className="bg-white dark:bg-gray-900 pt-8 pb-32 px-6 shadow-sm border-b border-gray-100 dark:border-gray-800 relative z-10 transition-colors">
+        <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-transparent dark:from-green-900/10"></div>
         <div className="relative flex justify-between items-center max-w-5xl mx-auto">
-          <h1 className="text-3xl font-black text-gray-900 dark:text-white tracking-tight">Partner Profile</h1>
+          <div>
+            <h1 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">My Profile</h1>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Manage your account and settings</p>
+          </div>
           <button 
             onClick={toggleStatus}
-            className={`relative inline-flex h-8 w-16 items-center rounded-full transition-colors ${partner?.status === 'Offline' ? 'bg-gray-300 dark:bg-gray-600' : 'bg-green-500 shadow-lg shadow-green-500/30'}`}
+            className={`relative inline-flex h-7 w-14 items-center rounded-full transition-all ${partner?.status === 'Offline' ? 'bg-gray-200 dark:bg-gray-700' : 'bg-green-500 shadow-md shadow-green-500/30'}`}
           >
-            <span className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${partner?.status === 'Offline' ? 'translate-x-1' : 'translate-x-9'}`} />
+            <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${partner?.status === 'Offline' ? 'translate-x-1' : 'translate-x-8'}`} />
           </button>
         </div>
       </div>
 
-      <div className="flex-1 px-4 sm:px-6 pb-24 -mt-24 relative z-20 max-w-5xl mx-auto w-full space-y-6">
+      <div className="flex-1 px-4 sm:px-6 pb-24 -mt-24 relative z-20 max-w-5xl mx-auto w-full space-y-5">
         
         {/* Profile Master Card */}
-        <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-3xl p-6 sm:p-8 shadow-xl border border-white/40 dark:border-gray-700/50 flex flex-col md:flex-row items-center md:items-start gap-6 transition-colors">
+        <div className="bg-white dark:bg-gray-900 backdrop-blur-xl rounded-2xl p-6 sm:p-8 shadow-lg border border-gray-100 dark:border-gray-800 flex flex-col md:flex-row items-center md:items-start gap-6 transition-colors">
           
           {/* Feature 1: Profile Photo */}
           <div className="relative group cursor-pointer shrink-0" onClick={() => !isUploading && fileInputRef.current?.click()}>
