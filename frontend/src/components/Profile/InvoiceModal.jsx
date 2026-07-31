@@ -7,6 +7,9 @@ import useSettingsStore from '../../store/useSettingsStore';
 const InvoiceModal = ({ order, userInfo, isOpen = true, onClose }) => {
   const settings = useSettingsStore(s => s.settings);
 
+  // TODO: Re-enable when PDF download/print logic is fully stabilized for User Panel
+  const ENABLE_INVOICE_DOWNLOAD = false;
+
   if (!isOpen || !order) return null;
 
   const orderDate = new Date(order.createdAt).toLocaleDateString('en-GB', {
@@ -29,19 +32,23 @@ const InvoiceModal = ({ order, userInfo, isOpen = true, onClose }) => {
         <div className="p-4 border-b border-gray-100 flex items-center justify-between print:hidden">
           <h3 className="text-base font-bold text-gray-800">Tax Invoice / Bill</h3>
           <div className="flex items-center gap-2">
-            <button
-              onClick={handlePrint}
-              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 shadow-md transition-colors"
-            >
-              <Printer className="w-4 h-4" /> Print
-            </button>
-            <button
-              onClick={() => generateInvoicePDF(order, userInfo)}
-              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 shadow-md transition-colors"
-              title="Download Supermarket Bill PDF"
-            >
-              <Download className="w-4 h-4" /> Download PDF Bill
-            </button>
+            {ENABLE_INVOICE_DOWNLOAD && (
+              <>
+                <button
+                  onClick={handlePrint}
+                  className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 shadow-md transition-colors"
+                >
+                  <Printer className="w-4 h-4" /> Print
+                </button>
+                <button
+                  onClick={() => generateInvoicePDF(order, userInfo)}
+                  className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 shadow-md transition-colors"
+                  title="Download Supermarket Bill PDF"
+                >
+                  <Download className="w-4 h-4" /> Download PDF Bill
+                </button>
+              </>
+            )}
             <button
               onClick={onClose}
               className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"

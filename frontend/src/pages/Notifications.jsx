@@ -9,6 +9,7 @@ import {
 import useSettingsStore from '../store/useSettingsStore';
 import useNotificationStore from '../store/useNotificationStore';
 import useAuthStore from '../store/useAuthStore';
+import EmptyState from '../components/Layout/EmptyState';
 
 const iconMap = {
   package: Package,
@@ -314,14 +315,14 @@ const Notifications = () => {
               </div>
             ) : notifications.length === 0 ? (
               // Empty State
-              <div className="flex flex-col items-center justify-center py-16 text-center">
-                <div className="w-16 h-16 rounded-[22px] bg-green-500/10 flex items-center justify-center mb-4">
-                  <Bell className="w-8 h-8 text-green-600 animate-pulse" />
-                </div>
-                <h3 className="text-base font-extrabold text-gray-800">No notifications yet</h3>
-                <p className="text-xs text-gray-400 mt-1 max-w-sm">
-                  We'll notify you here when something important happens, like updates on your orders or promotional offers.
-                </p>
+              <div className="bg-white rounded-3xl p-4 sm:p-12 border border-gray-100">
+                <EmptyState
+                  type="notifications"
+                  message="No Notifications"
+                  description="We'll notify you about orders, offers and updates."
+                  buttonText="Go Shopping"
+                  buttonLink="/"
+                />
               </div>
             ) : (
               // List Content

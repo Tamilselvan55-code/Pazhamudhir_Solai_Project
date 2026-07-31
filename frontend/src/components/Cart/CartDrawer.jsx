@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import useModal from '../../hooks/useModal';
 import { formatCurrency } from '../../utils/currency';
 import ProductImage from '../Product/ProductImage';
+import EmptyState from '../Layout/EmptyState';
 
 const CartDrawer = ({ isOpen, onClose }) => {
   const { cartItems, updateQuantity, getTotalPrice, getTotalItems } = useCartStore();
@@ -35,9 +36,17 @@ const CartDrawer = ({ isOpen, onClose }) => {
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-4">
           {cartItems.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-gray-500">
-              <ShoppingBag className="w-16 h-16 text-gray-200 mb-4" />
-              <p>Your cart is empty</p>
+            <div className="h-full flex flex-col items-center justify-center">
+              <EmptyState
+                type="cart"
+                message="Your Cart is Empty"
+                description="Fresh fruits and groceries are waiting for you."
+                buttonText="Browse Products"
+                onButtonClick={() => {
+                  onClose();
+                  navigate('/');
+                }}
+              />
             </div>
           ) : (
             <div className="space-y-4">

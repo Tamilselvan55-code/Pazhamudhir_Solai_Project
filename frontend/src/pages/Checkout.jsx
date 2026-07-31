@@ -15,6 +15,7 @@ import LiveLocationPanel from '../components/Location/LiveLocationPanel';
 import useModal from '../hooks/useModal';
 import { formatCurrency } from '../utils/currency';
 import useSettingsStore from '../store/useSettingsStore';
+import EmptyState from '../components/Layout/EmptyState';
 
 const API_BASE = config_API_BASE;
 
@@ -224,19 +225,14 @@ const Checkout = () => {
   /* ── Empty cart ─────────────────────────────────────────────────────────── */
   if (cartItems.length === 0 && !placed) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center">
-        <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-          <ShoppingBag className="w-10 h-10 text-gray-300" />
-        </div>
-        <h2 className="text-xl font-bold text-gray-800 mb-2">Your cart is empty</h2>
-        <p className="text-gray-400 text-sm mb-6">Add some products before checking out.</p>
-        <button
-          onClick={() => navigate('/')}
-          className="flex items-center gap-2 px-6 py-3 rounded-xl text-white text-sm font-bold"
-          style={{ background: 'linear-gradient(135deg,#16a34a,#15803d)', boxShadow: '0 4px 14px rgba(22,163,74,.35)' }}
-        >
-          <ArrowLeft className="w-4 h-4" /> Go Shopping
-        </button>
+      <div className="min-h-screen flex flex-col items-center justify-center p-8 bg-gray-50">
+        <EmptyState
+          type="cart"
+          message="Your Cart is Empty"
+          description="Fresh fruits and groceries are waiting for you."
+          buttonText="Browse Products"
+          buttonLink="/"
+        />
       </div>
     );
   }

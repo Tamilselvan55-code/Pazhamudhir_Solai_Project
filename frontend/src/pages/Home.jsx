@@ -6,6 +6,7 @@ import ProductCard from '../components/Product/ProductCard';
 import { ChevronRight, Search, X, Loader2 } from 'lucide-react';
 import axios from 'axios';
 import useSettingsStore from '../store/useSettingsStore';
+import EmptyState from '../components/Layout/EmptyState';
 
 const emojiMap = {
   'vegetables': '🥦',
@@ -381,9 +382,14 @@ const Home = () => {
           <p className="text-xs text-red-400">{error}</p>
         </div>
       ) : products.length === 0 ? (
-        <div className="text-center py-16 text-gray-500 bg-white rounded-2xl border border-gray-100">
-          <p className="text-4xl mb-3">📦</p>
-          <p className="font-semibold text-base">No products available</p>
+        <div className="bg-white rounded-3xl p-4 sm:p-12 border border-gray-100">
+          <EmptyState
+            type="search"
+            message="No Products Found"
+            description="We're currently updating our catalog. Check back soon!"
+            buttonText="Clear Search"
+            onButtonClick={() => setSearchQuery('')}
+          />
         </div>
       ) : (
         <>
@@ -394,10 +400,14 @@ const Home = () => {
                 {filtered.length} result{filtered.length !== 1 ? 's' : ''} for "<strong>{searchQuery}</strong>"
               </p>
               {filtered.length === 0 ? (
-                <div className="text-center py-16 text-gray-400">
-                  <p className="text-4xl mb-3">🔍</p>
-                  <p className="font-semibold">No items found</p>
-                  <p className="text-sm">Try searching in English or Thanglish</p>
+                <div className="bg-white rounded-3xl p-4 sm:p-12 border border-gray-100 mt-4">
+                  <EmptyState
+                    type="search"
+                    message="No Products Found"
+                    description="Try another keyword or category."
+                    buttonText="Clear Search"
+                    onButtonClick={() => setSearchQuery('')}
+                  />
                 </div>
               ) : (
                 <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-2 md:gap-3">

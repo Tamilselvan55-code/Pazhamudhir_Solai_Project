@@ -7,6 +7,7 @@ import useWishlistStore from '../../store/useWishlistStore';
 import useModal from '../../hooks/useModal';
 import { formatCurrency } from '../../utils/currency';
 import ProductImage from '../Product/ProductImage';
+import EmptyState from '../Layout/EmptyState';
 
 const WishlistTab = () => {
   const { userInfo } = useAuthStore();
@@ -77,22 +78,14 @@ const WishlistTab = () => {
       </div>
 
       {wishlistItems.length === 0 ? (
-        <div className="bg-white rounded-3xl p-12 text-center border border-gray-100 space-y-4">
-          <div className="w-20 h-20 rounded-full bg-red-50 mx-auto flex items-center justify-center">
-            <Heart className="w-10 h-10 text-red-300" />
-          </div>
-          <div>
-            <h3 className="text-base font-bold text-gray-800">Your Wishlist is Empty</h3>
-            <p className="text-xs text-gray-500 max-w-sm mx-auto mt-1">
-              Tap the heart icon ♥ on any product to save it for later. Your saved items will appear here.
-            </p>
-          </div>
-          <Link
-            to="/"
-            className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-bold text-xs rounded-xl inline-flex items-center gap-2 mt-2 transition-all shadow-md"
-          >
-            <ShoppingBag className="w-4 h-4" /> Explore Store
-          </Link>
+        <div className="bg-white rounded-3xl p-4 sm:p-12 border border-gray-100">
+          <EmptyState
+            type="wishlist"
+            message="Your Wishlist is Empty"
+            description="Save your favourite products for later."
+            buttonText="Explore Products"
+            buttonLink="/"
+          />
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Package, MapPin, Truck, FileText, Phone, User, Star, Navigation, Activity, ShieldCheck, KeyRound } from 'lucide-react';
+import { X, Package, MapPin, Truck, FileText, Phone, User, Star, Navigation, Activity, ShieldCheck, KeyRound, ShoppingCart, CheckCircle, Home, XCircle, Clock, CreditCard, Banknote } from 'lucide-react';
 import { formatCurrency } from '../../utils/currency';
 import ProductImage from '../Product/ProductImage';
 import { formatDisplayAddressLines } from '../../utils/addressFormatter';
@@ -125,32 +125,30 @@ const OrderDetailsModal = ({ order, onClose, onDownloadInvoice, onRatingUpdate }
     day: 'numeric', month: 'long', year: 'numeric',
   });
 
-  // 7-Step Professional Timeline
+  // Professional Timeline logic matching User Request
   const timelineSteps = (() => {
     const fmt = (ts) => (ts ? new Date(ts).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true }) : null);
 
     if (status === 'Cancelled' || status === 'Cancelled by Customer' || status === 'Rejected by Store') {
       return [
-        { label: 'Order Placed', status: 'completed', time: fmt(currentOrder.createdAt) },
-        { label: 'Cancelled', status: 'cancelled', time: null }
+        { label: 'Order Placed', status: 'completed', time: fmt(currentOrder.createdAt), icon: ShoppingCart },
+        { label: 'Cancelled', status: 'cancelled', time: null, icon: XCircle }
       ];
     }
 
     const isAccepted = ['Accepted', 'Order Confirmed', 'Packing', 'Packed', 'Out for Delivery', 'Out For Delivery', 'Delivered'].includes(status);
     const isPacked = ['Packed', 'Out for Delivery', 'Out For Delivery', 'Delivered'].includes(status);
     const isAssigned = Boolean(currentOrder.deliveryPartnerId || currentOrder.deliveryAssignedAt);
-    const isPickedUp = ['Out for Delivery', 'Out For Delivery', 'Delivered'].includes(status) || Boolean(currentOrder.pickedUpAt);
-    const isOutForDel = ['Out for Delivery', 'Out For Delivery', 'Delivered'].includes(status);
+    const isOutForDel = ['Out for Delivery', 'Out For Delivery', 'Delivered'].includes(status) || Boolean(currentOrder.pickedUpAt);
     const isDelivered = status === 'Delivered';
 
     return [
-      { label: 'Order Placed', status: 'completed', time: fmt(currentOrder.createdAt) },
-      { label: 'Accepted', status: isAccepted ? 'completed' : 'upcoming', time: isAccepted ? fmt(currentOrder.deliveryAcceptedAt || currentOrder.createdAt) : null },
-      { label: 'Packed', status: isPacked ? 'completed' : (isAccepted ? 'active' : 'upcoming'), time: isPacked ? fmt(currentOrder.pickedUpAt) : null },
-      { label: 'Partner Assigned', status: isAssigned ? 'completed' : 'upcoming', time: isAssigned ? fmt(currentOrder.deliveryAssignedAt) : null },
-      { label: 'Picked Up', status: isPickedUp ? 'completed' : 'upcoming', time: isPickedUp ? fmt(currentOrder.pickedUpAt) : null },
-      { label: 'Out For Delivery', status: isOutForDel ? 'completed' : 'upcoming', time: isOutForDel ? fmt(currentOrder.outForDeliveryAt) : null },
-      { label: 'Delivered', status: isDelivered ? 'completed' : 'upcoming', time: isDelivered ? fmt(currentOrder.deliveredAt) : null }
+      { label: 'Order Placed', status: 'completed', time: fmt(currentOrder.createdAt), icon: ShoppingCart },
+      { label: 'Accepted', status: isAccepted ? 'completed' : 'upcoming', time: isAccepted ? fmt(currentOrder.deliveryAcceptedAt || currentOrder.createdAt) : null, icon: CheckCircle },
+      { label: 'Packed', status: isPacked ? 'completed' : (isAccepted ? 'active' : 'upcoming'), time: isPacked ? fmt(currentOrder.pickedUpAt) : null, icon: Package },
+      { label: 'Assigned to Delivery Partner', status: isAssigned ? 'completed' : 'upcoming', time: isAssigned ? fmt(currentOrder.deliveryAssignedAt) : null, icon: User },
+      { label: 'Out for Delivery', status: isOutForDel ? 'completed' : 'upcoming', time: isOutForDel ? fmt(currentOrder.outForDeliveryAt) : null, icon: Truck },
+      { label: 'Delivered', status: isDelivered ? 'completed' : 'upcoming', time: isDelivered ? fmt(currentOrder.deliveredAt) : null, icon: Home }
     ];
   })();
 
@@ -219,19 +217,45 @@ const OrderDetailsModal = ({ order, onClose, onDownloadInvoice, onRatingUpdate }
             </div>
           )}
 
-          {/* Status Summary */}
-          <div className="flex flex-wrap items-center justify-between gap-4 bg-gray-50 p-4 rounded-2xl border border-gray-100">
-            <div>
-              <p className="text-xs text-gray-400 uppercase font-bold tracking-wider">Current Status</p>
-              <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold border mt-1 ${getStatusBadge(status)}`}>{status}</span>
+          {/* Feature 2: Order Status Card */}
+          <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-md">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-y-6 gap-x-4">
+              <div>
+                <p className="text-xs text-gray-400 font-bold tracking-wider mb-1">ORDER NUMBER</p>
+                <p className="text-sm font-extrabold text-gray-800">{currentOrder.invoiceNumber || `#${orderId.slice(-6).toUpperCase()}`}</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-400 font-bold tracking-wider mb-1">ORDER DATE</p>
+                <div className="flex items-center gap-1.5 text-sm font-bold text-gray-800">
+                  <Clock className="w-4 h-4 text-gray-400" /> {orderDate}
+                </div>
+              </div>
+              <div>
+                <p className="text-xs text-gray-400 font-bold tracking-wider mb-1">ESTIMATED DELIVERY</p>
+                <p className="text-sm font-bold text-gray-800">{estimatedMins} Mins</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-400 font-bold tracking-wider mb-1">PAYMENT METHOD</p>
+                <div className="flex items-center gap-1.5 text-sm font-bold text-gray-800">
+                  {currentOrder.paymentMethod === 'COD' ? <Banknote className="w-4 h-4 text-green-600" /> : <CreditCard className="w-4 h-4 text-blue-600" />}
+                  {currentOrder.paymentMethod === 'COD' ? 'Cash on Delivery' : 'Online Payment'}
+                </div>
+              </div>
+              <div>
+                <p className="text-xs text-gray-400 font-bold tracking-wider mb-1">PAYMENT STATUS</p>
+                <p className={`text-sm font-bold ${currentOrder.isPaid ? 'text-green-600' : 'text-orange-500'}`}>
+                  {currentOrder.isPaid ? 'Paid' : 'Pending'}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-400 font-bold tracking-wider mb-1">TOTAL AMOUNT</p>
+                <p className="text-lg font-black text-green-600">{formatCurrency(currentOrder.totalPrice)}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-xs text-gray-400 uppercase font-bold tracking-wider">Payment</p>
-              <p className="text-sm font-bold text-gray-800 mt-1">{currentOrder.paymentMethod === 'COD' ? '💵 Cash on Delivery' : '💳 Online Payment'}</p>
-            </div>
-            <div>
-              <p className="text-xs text-gray-400 uppercase font-bold tracking-wider">Total Amount</p>
-              <p className="text-base font-extrabold text-green-600 mt-0.5">{formatCurrency(currentOrder.totalPrice)}</p>
+            
+            <div className="mt-5 pt-4 border-t border-gray-100 flex items-center justify-between">
+              <span className="text-xs font-bold text-gray-500">CURRENT STATUS</span>
+              <span className={`px-4 py-1.5 rounded-full text-xs font-extrabold border shadow-sm ${getStatusBadge(status)}`}>{status}</span>
             </div>
           </div>
 
@@ -269,50 +293,69 @@ const OrderDetailsModal = ({ order, onClose, onDownloadInvoice, onRatingUpdate }
             </div>
           )}
 
-          {/* 7-Step Timeline */}
-          <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
-            <h4 className="text-sm font-bold text-gray-800 mb-4 flex items-center gap-2">
-              <Truck className="w-4 h-4 text-green-600" /> Order Tracking Timeline
+          {/* Feature 1: Professional Timeline */}
+          <div className="bg-white p-5 sm:p-7 rounded-3xl border border-gray-100 shadow-lg relative overflow-hidden">
+            <h4 className="text-sm font-extrabold text-gray-800 mb-6 flex items-center gap-2">
+              <Activity className="w-5 h-5 text-green-600" /> Order Tracking
             </h4>
-            <div className="relative flex flex-wrap sm:flex-nowrap items-center justify-between w-full mx-auto px-2 mt-4 mb-2 gap-y-4">
-              {timelineSteps.map((step, idx) => {
-                let circleClass = '';
-                let textClass = '';
-                let iconSymbol = '';
+            
+            <div className="relative">
+              {/* Desktop Horizontal Line */}
+              <div className="hidden md:block absolute top-6 left-6 right-6 h-1 bg-gray-100 rounded-full" />
+              {/* Mobile Vertical Line */}
+              <div className="block md:hidden absolute top-6 bottom-6 left-6 w-1 bg-gray-100 rounded-full" />
 
-                if (step.status === 'completed') {
-                  circleClass = 'bg-green-500 border-green-500 text-white shadow-md shadow-green-500/20';
-                  textClass = 'text-green-600 font-bold';
-                  iconSymbol = '✔';
-                } else if (step.status === 'cancelled') {
-                  circleClass = 'bg-red-500 border-red-500 text-white shadow-md shadow-red-500/20';
-                  textClass = 'text-red-600 font-bold';
-                  iconSymbol = '✖';
-                } else if (step.status === 'active') {
-                  circleClass = 'bg-green-600 border-green-600 text-white shadow-md shadow-green-600/30 animate-pulse';
-                  textClass = 'text-green-700 font-bold';
-                  iconSymbol = '●';
-                } else {
-                  circleClass = 'bg-white border-gray-300 text-gray-300';
-                  textClass = 'text-gray-400 font-medium';
-                  iconSymbol = '○';
-                }
+              <div className="flex flex-col md:flex-row justify-between relative z-10 gap-y-8">
+                {timelineSteps.map((step, idx) => {
+                  const Icon = step.icon;
+                  let bgClass = 'bg-gray-100 text-gray-400 border-gray-200';
+                  let textClass = 'text-gray-400';
+                  let ringClass = '';
+                  let lineHighlight = '';
 
-                return (
-                  <React.Fragment key={step.label}>
-                    <div className="flex flex-col items-center relative z-10 flex-1 min-w-[55px]">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all duration-300 font-bold text-xs ${circleClass}`}>
-                        {iconSymbol}
+                  if (step.status === 'completed') {
+                    bgClass = 'bg-green-500 text-white border-green-500';
+                    textClass = 'text-green-700 font-bold';
+                    lineHighlight = 'bg-green-500';
+                  } else if (step.status === 'cancelled') {
+                    bgClass = 'bg-red-500 text-white border-red-500';
+                    textClass = 'text-red-600 font-bold';
+                  } else if (step.status === 'active') {
+                    bgClass = 'bg-blue-500 text-white border-blue-500';
+                    textClass = 'text-blue-700 font-bold';
+                    ringClass = 'ring-4 ring-blue-100 animate-pulse';
+                    lineHighlight = 'bg-blue-300';
+                  }
+
+                  return (
+                    <div key={step.label} className="flex md:flex-col items-center md:items-center relative group w-full md:w-auto">
+                      
+                      {/* Highlighted line connector */}
+                      {idx > 0 && lineHighlight && (
+                        <>
+                          <div className={`hidden md:block absolute right-[50%] w-[100%] top-6 h-1 -z-10 ${lineHighlight} transition-all duration-700 ease-in-out`} />
+                          <div className={`block md:hidden absolute bottom-[50%] h-[100%] left-6 w-1 -z-10 ${lineHighlight} transition-all duration-700 ease-in-out`} />
+                        </>
+                      )}
+
+                      <div className={`w-12 h-12 rounded-full flex items-center justify-center border-2 transition-all duration-500 shadow-sm shrink-0 z-10 ${bgClass} ${ringClass} group-hover:scale-110`}>
+                        <Icon className="w-5 h-5" />
                       </div>
-                      <span className={`text-[9px] sm:text-[10px] mt-1.5 text-center font-semibold leading-tight ${textClass}`}>{step.label}</span>
-                      {step.time && <span className="text-[9px] text-gray-400 mt-0.5 text-center">{step.time}</span>}
+                      
+                      <div className="ml-4 md:ml-0 md:mt-4 flex flex-col md:items-center w-full">
+                        <span className={`text-sm md:text-xs text-left md:text-center transition-colors duration-300 ${textClass}`}>
+                          {step.label}
+                        </span>
+                        {step.time && (
+                          <span className="text-xs md:text-[10px] text-gray-500 font-medium mt-0.5">
+                            {step.time}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    {idx < timelineSteps.length - 1 && (
-                      <div className={`hidden sm:block flex-1 h-0.5 mx-1 rounded transition-colors duration-300 -mt-6 ${step.status === 'completed' ? 'bg-green-500' : 'bg-gray-200'}`} />
-                    )}
-                  </React.Fragment>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
           </div>
 

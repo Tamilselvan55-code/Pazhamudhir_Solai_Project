@@ -2,9 +2,11 @@ import { API_BASE as config_API_BASE, API_URL as config_API_URL } from '../../co
 import React, { useState } from 'react';
 import axios from 'axios';
 import { Package, Search, Filter, RefreshCw, Eye, FileText, AlertCircle, ShoppingBag, Truck, ChevronLeft, ChevronRight, CheckCircle } from 'lucide-react';
+import { formatCurrency } from '../../utils/currency';
 import useCartStore from '../../store/useCartStore';
 import useModal from '../../hooks/useModal';
-import { formatCurrency } from '../../utils/currency';
+import EmptyState from '../Layout/EmptyState';
+import { useNavigate } from 'react-router-dom';
 import ProductImage from '../Product/ProductImage';
 
 import { formatDisplayAddress } from '../../utils/addressFormatter';
@@ -153,12 +155,14 @@ const MyOrdersTab = ({ orders, loading, onRefresh, onViewDetails, onDownloadInvo
           Loading your order history...
         </div>
       ) : paginatedOrders.length === 0 ? (
-        <div className="bg-white rounded-3xl p-12 text-center border border-gray-100 space-y-3">
-          <div className="w-16 h-16 rounded-full bg-gray-50 text-gray-400 mx-auto flex items-center justify-center">
-            <Package className="w-8 h-8" />
-          </div>
-          <h3 className="text-base font-bold text-gray-800">No Orders Found</h3>
-          <p className="text-xs text-gray-500">No orders match your current filter or search query.</p>
+        <div className="bg-white rounded-3xl p-4 sm:p-12 border border-gray-100">
+          <EmptyState
+            type="orders"
+            message={searchQuery ? "No Orders Found" : "No Orders Yet"}
+            description={searchQuery ? "No orders match your current filter or search query." : "Looks like you haven't placed your first order."}
+            buttonText="Start Shopping"
+            buttonLink="/"
+          />
         </div>
       ) : (
         <div className="space-y-4">
