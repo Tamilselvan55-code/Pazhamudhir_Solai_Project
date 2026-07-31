@@ -71,17 +71,29 @@ export const updateOrderStatus = async (req, res) => {
 
     // Validate sequential steps and set data
     if (action === 'Accept Order') {
-      if (order.deliveryAcceptedAt) return res.status(400).json({ message: 'Order already accepted' });
+      if (order.deliveryAcceptedAt) return res.status(400).json({ message: 'Order has already been accepted.' });
       updateData.deliveryAcceptedAt = now;
+      updateData.status = 'Accepted';
+      
+      const newHistoryEntry = { status: 'Accepted', note: 'Delivery partner accepted the order', date: now.toISOString() };
+      updateData.statusHistory = order.statusHistory && Array.isArray(order.statusHistory)
+        ? [...order.statusHistory, newHistoryEntry]
+        : [newHistoryEntry];
     } 
-    else if (action === 'Picked Up') {
-      if (!order.deliveryAcceptedAt) return res.status(400).json({ message: 'You must Accept Order first' });
-      if (order.pickedUpAt) return res.status(400).json({ message: 'Order already picked up' });
+    else if (action === 'Picked Up' || action === 'Pick Up Order') {
+      if (!order.deliveryAcceptedAt) return res.status(400).json({ message: 'You must Accept Order first.' });
+      if (order.pickedUpAt) return res.status(400).json({ message: 'Order has already been picked up.' });
       updateData.pickedUpAt = now;
+      updateData.status = 'Picked Up';
+      
+      const newHistoryEntry = { status: 'Picked Up', note: 'Order picked up by delivery partner', date: now.toISOString() };
+      updateData.statusHistory = order.statusHistory && Array.isArray(order.statusHistory)
+        ? [...order.statusHistory, newHistoryEntry]
+        : [newHistoryEntry];
     } 
     else if (action === 'Out For Delivery') {
-      if (!order.pickedUpAt) return res.status(400).json({ message: 'You must mark Picked Up first' });
-      if (order.outForDeliveryAt) return res.status(400).json({ message: 'Order already Out For Delivery' });
+      if (!order.pickedUpAt) return res.status(400).json({ message: 'You must mark Picked Up first.' });
+      if (order.outForDeliveryAt) return res.status(400).json({ message: 'Order is already Out For Delivery.' });
       
       // Phase 14: Generate 4-digit OTP when partner marks Out For Delivery
       const otp = String(Math.floor(1000 + Math.random() * 9000));
