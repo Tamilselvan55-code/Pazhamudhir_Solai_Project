@@ -267,23 +267,27 @@ const OrderRow = ({ order, token, onUpdated }) => {
                   >
                     <Package className="w-5 h-5" />
                   </button>
-                  <button
-                    disabled={statusUpdating || !!order.deliveryPartnerId}
-                    onClick={(e) => { e.stopPropagation(); window.dispatchEvent(new CustomEvent('openAssignModal', { detail: order })); }}
-                    title={order.deliveryPartnerId ? "Delivery Partner Assigned" : "Assign Delivery Partner"}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all border ${order.deliveryPartnerId ? 'bg-gray-700 text-gray-400 border-gray-600' : 'bg-[#3B82F6]/15 text-[#3B82F6] border-[#3B82F6]/30 hover:bg-[#3B82F6]/30'}`}
-                  >
-                    {order.deliveryPartnerId ? 'Assigned ✓' : 'Assign Partner'}
-                  </button>
-                  {order.deliveryPartnerId && !order.pickedUpAt && (
-                    <button
-                      disabled={statusUpdating}
-                      onClick={(e) => { e.stopPropagation(); window.dispatchEvent(new CustomEvent('openAssignModal', { detail: order })); }}
-                      title="Reassign Delivery Partner"
-                      className="p-1.5 text-[#F59E0B] hover:bg-[#F59E0B]/15 rounded-full transition-all duration-200 border border-[#F59E0B]/30 hover:scale-105"
-                    >
-                      <RefreshCw className="w-4 h-4" />
-                    </button>
+                  {!settings?.deliverySettings?.deliveryMaintenanceMode && (
+                    <>
+                      <button
+                        disabled={statusUpdating || !!order.deliveryPartnerId}
+                        onClick={(e) => { e.stopPropagation(); window.dispatchEvent(new CustomEvent('openAssignModal', { detail: order })); }}
+                        title={order.deliveryPartnerId ? "Delivery Partner Assigned" : "Assign Delivery Partner"}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all border ${order.deliveryPartnerId ? 'bg-gray-700 text-gray-400 border-gray-600' : 'bg-[#3B82F6]/15 text-[#3B82F6] border-[#3B82F6]/30 hover:bg-[#3B82F6]/30'}`}
+                      >
+                        {order.deliveryPartnerId ? 'Assigned ✓' : 'Assign Partner'}
+                      </button>
+                      {order.deliveryPartnerId && !order.pickedUpAt && (
+                        <button
+                          disabled={statusUpdating}
+                          onClick={(e) => { e.stopPropagation(); window.dispatchEvent(new CustomEvent('openAssignModal', { detail: order })); }}
+                          title="Reassign Delivery Partner"
+                          className="p-1.5 text-[#F59E0B] hover:bg-[#F59E0B]/15 rounded-full transition-all duration-200 border border-[#F59E0B]/30 hover:scale-105"
+                        >
+                          <RefreshCw className="w-4 h-4" />
+                        </button>
+                      )}
+                    </>
                   )}
                 </div>
               );
@@ -301,6 +305,19 @@ const OrderRow = ({ order, token, onUpdated }) => {
               );
             }
             if (order.status === 'Packed') {
+              if (settings?.deliverySettings?.deliveryMaintenanceMode) {
+                return (
+                  <button
+                    disabled={statusUpdating}
+                    onClick={(e) => { e.stopPropagation(); changeStatus('Out for Delivery'); }}
+                    title="Mark as Out for Delivery"
+                    className="p-1.5 text-[#3B82F6] hover:bg-[#3B82F6]/15 rounded-full transition-all duration-200 border border-[#3B82F6]/30 hover:scale-105"
+                  >
+                    <Truck className="w-5 h-5" />
+                  </button>
+                );
+              }
+              
               return (
                 <div className="flex items-center gap-2">
                   <button

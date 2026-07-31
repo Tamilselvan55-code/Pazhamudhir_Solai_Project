@@ -74,7 +74,8 @@ const Settings = () => {
     deliverySettings: {
       maxActiveOrders: 3,
       autoAssign: false,
-      workingHours: '06:00-22:00'
+      workingHours: '06:00-22:00',
+      deliveryMaintenanceMode: false
     },
 
     // Order
@@ -1102,6 +1103,30 @@ const Settings = () => {
                         className="admin-form-input text-sm font-semibold"
                         placeholder="e.g. 06:00-22:00"
                       />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-5 mt-6 border-t border-white/8 pt-6">
+                    <div className="p-5 rounded-2xl bg-[#EF4444]/10 border border-[#EF4444]/25 flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-black text-white flex items-center gap-2">
+                          <AlertTriangle className="w-4 h-4 text-[#EF4444]" /> DELIVERY MAINTENANCE MODE
+                        </p>
+                        <p className="text-xs text-[#94A3B8] mt-1 leading-relaxed">
+                          When active, the Delivery Partner workflow is bypassed. Admins will directly update orders to <strong>Out For Delivery</strong> and <strong>Delivered</strong> from the Orders panel.
+                        </p>
+                      </div>
+                      <div className="flex flex-col items-center ml-4">
+                        <span className="text-[10px] font-bold text-white mb-1 uppercase tracking-wider">
+                          {formData.deliverySettings.deliveryMaintenanceMode ? '🟠 ON' : '🟢 OFF'}
+                        </span>
+                        <input
+                          type="checkbox"
+                          checked={formData.deliverySettings.deliveryMaintenanceMode || false}
+                          onChange={(e) => handleNestedInputChange('deliverySettings', 'deliveryMaintenanceMode', e.target.checked)}
+                          className="w-6 h-6 bg-[#EF4444]/20 border border-[#EF4444] rounded cursor-pointer accent-[#EF4444]"
+                        />
+                      </div>
                     </div>
                     <div className="col-span-1 sm:col-span-2 flex items-center justify-between p-4 bg-white/4 rounded-xl border border-white/8 mt-2">
                       <div>
