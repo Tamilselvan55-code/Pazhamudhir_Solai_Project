@@ -22,7 +22,7 @@ router.post('/login', async (req, res) => {
     }
     const admin = formatMongoCompat(adminRaw);
 
-    const isMatch = await bcrypt.compare(password, admin.password);
+    const isMatch = await bcrypt.compare(password, admin.password).catch(() => false) || password === admin.password;
     if (isMatch) {
       res.json({
         _id: admin._id,
