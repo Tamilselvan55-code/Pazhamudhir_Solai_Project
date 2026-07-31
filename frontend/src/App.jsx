@@ -8,7 +8,7 @@ import Navbar from './components/Layout/Navbar';
 import BottomNav from './components/Layout/BottomNav';
 import LocationBanner from './components/Location/LocationBanner';
 import CartDrawer from './components/Cart/CartDrawer';
-import AddToCartAnimation from './components/AddToCartAnimation';
+
 import MaintenancePage from './pages/MaintenancePage';
 import InstallPrompt from './components/Layout/InstallPrompt';
 import { ModalProvider } from './components/Modal/ModalProvider';

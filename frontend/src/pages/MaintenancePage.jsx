@@ -6,8 +6,6 @@ import {
   Phone, 
   Mail, 
   MapPin, 
-  Facebook, 
-  Instagram, 
   MessageCircle, // Using MessageCircle for WhatsApp as fallback
   Truck, 
   Leaf, 
@@ -178,12 +176,6 @@ const MaintenancePage = () => {
         <div className="max-w-6xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
           
           <div className="flex items-center gap-4">
-            <a href="#" className="w-10 h-10 rounded-full bg-white shadow-sm border border-gray-100 flex items-center justify-center text-blue-600 hover:scale-110 transition-transform">
-              <Facebook className="w-5 h-5" />
-            </a>
-            <a href="#" className="w-10 h-10 rounded-full bg-white shadow-sm border border-gray-100 flex items-center justify-center text-pink-600 hover:scale-110 transition-transform">
-              <Instagram className="w-5 h-5" />
-            </a>
             <a href="#" className="w-10 h-10 rounded-full bg-white shadow-sm border border-gray-100 flex items-center justify-center text-green-500 hover:scale-110 transition-transform">
               <MessageCircle className="w-5 h-5" />
             </a>
