@@ -200,8 +200,13 @@ router.patch('/orders/:id/status', async (req, res) => {
       });
     }
 
+    // Fetch store settings to check delivery configuration
+    const storeSettings = await prisma.storeSettings.findFirst();
+    const isMaintenanceMode = storeSettings?.deliverySettings?.deliveryMaintenanceMode === true;
+    const isAutoAssign = storeSettings?.deliverySettings?.autoAssign === true;
+
     // Phase 13: Automatic Delivery Partner Assignment when Packed or Accepted
-    if ((status === 'Packed' || status === 'Accepted') && !updatedOrderRaw.deliveryPartnerId) {
+    if ((status === 'Packed' || status === 'Accepted') && !updatedOrderRaw.deliveryPartnerId && isAutoAssign && !isMaintenanceMode) {
       autoAssignDeliveryPartner(updatedOrderRaw.id, io).catch(err => {
         console.error('Auto assign background error:', err);
       });
@@ -214,43 +219,6 @@ router.patch('/orders/:id/status', async (req, res) => {
   }
 });
 
-// DEVELOPMENT FEATURE
-// Remove before production deployment.
-router.delete('/orders/:id', protectAdmin, requireSuperAdmin, async (req, res) => {
-  try {
-    const orderId = req.params.id;
-
-    // Verify order exists
-    const order = await prisma.order.findUnique({
-      where: { id: orderId }
-    });
-
-    if (!order) {
-      return res.status(404).json({ success: false, message: 'Order not found' });
-    }
-
-    // Execute deletion in a safe transaction
-    await prisma.$transaction([
-      // 1. Delete associated earnings if any
-      prisma.deliveryEarnings.deleteMany({
-        where: { orderId: orderId }
-      }),
-      // 2. Delete associated notifications
-      prisma.notification.deleteMany({
-        where: { orderId: orderId }
-      }),
-      // 3. Delete the order (OrderItems will cascade automatically per schema)
-      prisma.order.delete({
-        where: { id: orderId }
-      })
-    ]);
-
-    res.json({ success: true, message: 'Order permanently deleted' });
-  } catch (error) {
-    console.error('[DEV_DELETE_ORDER_ERROR]:', error);
-    res.status(500).json({ success: false, message: 'Failed to delete order' });
-  }
-});
 
 // Phase 13 Helper: Auto Assign Algorithm
 export const autoAssignDeliveryPartner = async (orderId, io) => {

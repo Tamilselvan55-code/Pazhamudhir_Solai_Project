@@ -39,7 +39,7 @@ const useDeliveryStore = create(
       })),
       setUnreadCount: (count) => set({ unreadCount: count }),
       incrementUnread: () => set((state) => ({ unreadCount: state.unreadCount + 1 })),
-      clearUnread: () => set({ unreadCount: 0, notifications: state.notifications.map(n => ({ ...n, isRead: true })) }),
+      clearUnread: () => set((state) => ({ unreadCount: 0, notifications: state.notifications.map(n => ({ ...n, isRead: true })) })),
     }),
     {
       name: 'delivery-partner-settings',

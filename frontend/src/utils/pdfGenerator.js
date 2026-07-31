@@ -1,6 +1,6 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { formatDisplayAddress, formatDisplayAddressLines } from './addressFormatter';
+import { formatDisplayAddressLines } from './addressFormatter';
 import useSettingsStore from '../store/useSettingsStore';
 
 // Format Indian Rupee currency safely
@@ -168,8 +168,8 @@ const loadAndRegisterTamilFont = async (doc) => {
       doc.addFileToVFS('NotoSansTamil-Regular.ttf', base64);
       doc.addFont('NotoSansTamil-Regular.ttf', 'NotoSansTamil', 'normal');
       return 'NotoSansTamil';
-    } catch (e) {
-      console.warn('Error adding NotoSansTamil to doc:', e);
+    } catch {
+      console.warn('Error adding NotoSansTamil to doc');
     }
   }
   return 'helvetica';
