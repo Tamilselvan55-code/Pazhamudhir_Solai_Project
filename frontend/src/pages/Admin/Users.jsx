@@ -13,7 +13,7 @@ import useModal from '../../hooks/useModal';
 import { formatCurrency } from '../../utils/currency';
 
 const Users = () => {
-  const { adminInfo } = useAuthStore();
+  const adminInfo = useAuthStore(s => s.adminInfo);
   const location = useLocation();
   const { adminAlert, adminConfirm, adminPrompt, toast } = useModal();
   const [users, setUsers] = useState([]);
@@ -272,7 +272,7 @@ const Users = () => {
         )}
 
         {/* ─── Loading State ────────────────────────────────────────────── */}
-        {loading ? (
+        {loading && users.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 bg-[#081A38] border border-white/8 rounded-2xl shadow-xl">
             <Loader2 className="w-10 h-10 text-[#22C55E] animate-spin mb-4" />
             <p className="text-sm font-semibold text-[#94A3B8]">Loading user database...</p>
@@ -693,7 +693,7 @@ const Users = () => {
                   disabled={deleteLoading}
                   className="px-6 py-2.5 bg-[#EF4444] hover:bg-[#DC2626] text-white font-black text-xs rounded-xl transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-[#EF4444]/20 disabled:opacity-60 disabled:cursor-not-allowed h-[42px]"
                 >
-                  {deleteLoading ? (
+                  {loading && users.length === 0 ? (
                     <><Loader2 className="w-4 h-4 animate-spin" /> Deleting…</>
                   ) : (
                     <><Trash2 className="w-4 h-4" /> Delete Permanently</>

@@ -57,7 +57,7 @@ const ORDER_STATUSES = ['Waiting for Admin Approval', 'Order Confirmed', 'Out fo
 /* ── Order Row ────────────────────────────────────────────────────────────── */
 const OrderRow = ({ order, token, onUpdated }) => {
   const { adminAlert, toast } = useModal();
-  const { adminInfo } = useAuthStore();
+  const adminInfo = useAuthStore(s => s.adminInfo);
   const settings = useSettingsStore(s => s.settings);
   const [expanded,       setExpanded]       = useState(false);
   const [statusUpdating, setStatusUpdating] = useState(false);
@@ -572,7 +572,7 @@ const OrderRow = ({ order, token, onUpdated }) => {
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
 const Orders = () => {
-  const { adminInfo } = useAuthStore();
+  const adminInfo = useAuthStore(s => s.adminInfo);
   const settings = useSettingsStore(s => s.settings);
   const { adminAlert, adminConfirm } = useModal();
   const location = useLocation();
@@ -815,7 +815,7 @@ const Orders = () => {
         )}
 
         {/* ─── Orders Table (Spec 6 & 7) ────────────────────────────────────── */}
-        {loading ? (
+        {loading && orders.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 admin-card">
             <Loader2 className="w-10 h-10 text-[#22C55E] animate-spin mb-4" />
             <p className="text-sm font-semibold text-[#94A3B8]">Loading orders list…</p>

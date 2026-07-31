@@ -8,7 +8,7 @@ import axios from 'axios';
 import useModal from '../../hooks/useModal';
 
 const Categories = () => {
-  const { adminInfo } = useAuthStore();
+  const adminInfo = useAuthStore(s => s.adminInfo);
   const location = useLocation();
   const { adminAlert, adminConfirm } = useModal();
   const [categories, setCategories] = useState([]);
@@ -227,7 +227,7 @@ const Categories = () => {
           </div>
         )}
 
-        {loading ? (
+        {loading && categories.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 admin-card">
             <Loader2 className="w-10 h-10 text-[#22C55E] animate-spin mb-4" />
             <p className="text-sm font-semibold text-[#94A3B8]">Loading store categories...</p>

@@ -370,7 +370,7 @@ const FILTERS = [
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
 const Notifications = () => {
-  const { adminInfo } = useAuthStore();
+  const adminInfo = useAuthStore(s => s.adminInfo);
   const navigate = useNavigate();
   const { adminConfirm, toast } = useModal();
 

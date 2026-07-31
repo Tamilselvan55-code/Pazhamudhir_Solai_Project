@@ -58,7 +58,7 @@ const GrowthBadge = ({ pct }) => {
 
 // ─── Main Component ────────────────────────────────────────────────────────
 const Reports = () => {
-  const { adminInfo } = useAuthStore();
+  const adminInfo = useAuthStore(s => s.adminInfo);
   const settings = useSettingsStore(s => s.settings);
 
   const [loading, setLoading]     = useState(true);
@@ -303,7 +303,7 @@ const Reports = () => {
           </div>
         )}
 
-        {loading ? (
+        {loading && !summary.totalOrders ? (
           <div className="flex flex-col items-center justify-center py-24 admin-card">
             <Loader2 className="w-10 h-10 text-[#22C55E] animate-spin mb-4" />
             <p className="text-sm font-semibold text-[#94A3B8]">Computing analytics from MongoDB...</p>

@@ -28,7 +28,7 @@ const CATEGORIES = [
 ];
 
 const Products = () => {
-  const { adminInfo } = useAuthStore();
+  const adminInfo = useAuthStore(s => s.adminInfo);
   const settings = useSettingsStore(s => s.settings);
   const location = useLocation();
   const { adminAlert, adminConfirm, adminPrompt } = useModal();
@@ -929,7 +929,7 @@ const Products = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/6">
-                {loading ? (
+                {loading && products.length === 0 ? (
                   <tr>
                     <td colSpan={9} className="py-16 text-center text-xs font-semibold text-[#94A3B8]">
                       <Loader2 className="w-8 h-8 animate-spin text-[#22C55E] mx-auto mb-3" />

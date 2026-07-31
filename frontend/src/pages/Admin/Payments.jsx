@@ -9,7 +9,7 @@ import useModal from '../../hooks/useModal';
 import { formatCurrencyDecimal } from '../../utils/currency';
 
 const Payments = () => {
-  const { adminInfo } = useAuthStore();
+  const adminInfo = useAuthStore(s => s.adminInfo);
   const { adminAlert } = useModal();
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -176,7 +176,7 @@ const Payments = () => {
           </div>
         )}
 
-        {loading ? (
+        {loading && payments.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 admin-card">
             <Loader2 className="w-8 h-8 text-[#22C55E] animate-spin mb-3" />
             <p className="text-xs font-semibold text-[#94A3B8]">Loading payment records...</p>

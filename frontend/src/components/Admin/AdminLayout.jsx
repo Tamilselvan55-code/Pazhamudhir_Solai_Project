@@ -305,7 +305,9 @@ const QuickSearch = ({ adminInfo }) => {
 const AdminLayout = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { adminInfo, adminLogout, userInfo } = useAuthStore();
+  const adminInfo = useAuthStore(s => s.adminInfo);
+  const adminLogout = useAuthStore(s => s.adminLogout);
+  const userInfo = useAuthStore(s => s.userInfo);
   const settings = useSettingsStore(s => s.settings);
 
   // Responsive states

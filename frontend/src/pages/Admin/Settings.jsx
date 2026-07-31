@@ -4,7 +4,7 @@ import { Navigate } from 'react-router-dom';
 import { 
   Settings as SettingsIcon, Save, Loader2, Check, AlertTriangle, 
   MapPin, Shield, Mail, Bell, Globe, CheckSquare, Eye, Truck, 
-  FileText, Activity, AlertCircle, Laptop, Sliders
+  FileText, Activity, AlertCircle, Laptop, Sliders, Clock
 } from 'lucide-react';
 import AdminLayout from '../../components/Admin/AdminLayout';
 import useAuthStore from '../../store/useAuthStore';
@@ -12,7 +12,7 @@ import axios from 'axios';
 import useModal from '../../hooks/useModal';
 
 const Settings = () => {
-  const { adminInfo } = useAuthStore();
+  const adminInfo = useAuthStore(s => s.adminInfo);
   const { adminAlert } = useModal();
   const [activeTab, setActiveTab] = useState('general');
 
@@ -260,6 +260,7 @@ const Settings = () => {
     { id: 'general', label: 'General Settings', icon: SettingsIcon },
     { id: 'platform', label: 'Platform & Styling', icon: Globe },
     { id: 'preferences', label: 'User Preferences', icon: Sliders },
+    { id: 'store-timing', label: 'STORE TIMING', icon: Clock },
     { id: 'maintenance', label: 'Maintenance Mode', icon: TooltipIcon },
     { id: 'delivery', label: 'Delivery Config', icon: Truck },
     { id: 'order', label: 'Order & Invoice', icon: FileText },
@@ -470,17 +471,6 @@ const Settings = () => {
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                     <div>
-                      <label className="block text-xs font-bold text-[#94A3B8] uppercase tracking-wider mb-2">Working Hours</label>
-                      <input
-                        type="text"
-                        name="workingHours"
-                        value={formData.workingHours}
-                        onChange={handleInputChange}
-                        className="admin-form-input text-sm font-semibold"
-                        placeholder="e.g. 06:00 AM - 09:00 PM"
-                      />
-                    </div>
-                    <div>
                       <label className="block text-xs font-bold text-[#94A3B8] uppercase tracking-wider mb-2">GST Percentage</label>
                       <input
                         type="number"
@@ -491,9 +481,6 @@ const Settings = () => {
                         placeholder="e.g. 5"
                       />
                     </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                     <div>
                       <label className="block text-xs font-bold text-[#94A3B8] uppercase tracking-wider mb-2">Invoice Prefix</label>
                       <input
@@ -505,6 +492,9 @@ const Settings = () => {
                         placeholder="e.g. INV-"
                       />
                     </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                     <div>
                       <label className="block text-xs font-bold text-[#94A3B8] uppercase tracking-wider mb-2">Invoice Footer Notes</label>
                       <input
@@ -513,20 +503,6 @@ const Settings = () => {
                         value={formData.invoiceFooter}
                         onChange={handleInputChange}
                         className="admin-form-input text-sm font-semibold"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                    <div>
-                      <label className="block text-xs font-bold text-[#94A3B8] uppercase tracking-wider mb-2">Business Hours</label>
-                      <input
-                        type="text"
-                        name="businessHours"
-                        value={formData.businessHours}
-                        onChange={handleInputChange}
-                        className="admin-form-input text-sm font-semibold"
-                        placeholder="e.g. 06:00 AM - 09:00 PM"
                       />
                     </div>
                     <div>
@@ -606,43 +582,92 @@ const Settings = () => {
                       </div>
                     </div>
                   </div>
+                </div>
+              )}
 
-                  <div className="border-t border-white/8 pt-4">
-                    <h3 className="text-sm font-bold text-white flex items-center gap-2 mb-4">
-                      <SettingsIcon className="w-4 h-4 text-[#22C55E]" /> Store Order Timing Management
-                    </h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+              {/* ── STORE TIMING ────────────────────────────────────────── */}
+              {activeTab === 'store-timing' && (
+                <div className="admin-card space-y-6 animate-fade-in">
+                  <div className="border-b border-white/8 pb-4">
+                    <h2 className="text-lg font-black text-white flex items-center gap-2">
+                      <Clock className="w-5 h-5 text-[#22C55E]" /> Store Timing Management
+                    </h2>
+                    <p className="text-xs text-[#94A3B8] mt-1">Configure your store's operational hours and status.</p>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div>
+                      <label className="block text-xs font-bold text-[#94A3B8] uppercase tracking-wider mb-2">Store Status</label>
+                      <select
+                        name="storeStatus"
+                        value={formData.storeStatus}
+                        onChange={handleInputChange}
+                        className="admin-form-input text-sm font-semibold h-11"
+                      >
+                        <option value="OPEN">Open</option>
+                        <option value="CLOSED">Closed</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div>
+                      <label className="block text-xs font-bold text-[#94A3B8] uppercase tracking-wider mb-2">Opening Time</label>
+                      <input
+                        type="time"
+                        name="openingTime"
+                        value={formData.openingTime}
+                        onChange={handleInputChange}
+                        className="admin-form-input text-sm font-semibold"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-[#94A3B8] uppercase tracking-wider mb-2">Closing Time</label>
+                      <input
+                        type="time"
+                        name="closingTime"
+                        value={formData.closingTime}
+                        onChange={handleInputChange}
+                        className="admin-form-input text-sm font-semibold"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div>
+                      <label className="block text-xs font-bold text-[#94A3B8] uppercase tracking-wider mb-2">Working Hours</label>
+                      <input
+                        type="text"
+                        name="workingHours"
+                        value={formData.workingHours}
+                        onChange={handleInputChange}
+                        className="admin-form-input text-sm font-semibold"
+                        placeholder="e.g. 06:00 AM - 09:00 PM"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-[#94A3B8] uppercase tracking-wider mb-2">Business Hours</label>
+                      <input
+                        type="text"
+                        name="businessHours"
+                        value={formData.businessHours}
+                        onChange={handleInputChange}
+                        className="admin-form-input text-sm font-semibold"
+                        placeholder="e.g. 06:00 AM - 09:00 PM"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Preview Card */}
+                  <div className="mt-4 p-6 rounded-2xl bg-gradient-to-br from-white/5 to-white/2 border border-white/10 shadow-lg">
+                    <h3 className="text-sm font-bold text-white mb-4">Current Status Preview</h3>
+                    <div className="flex items-center gap-4">
+                      <div className={`w-3 h-3 rounded-full shadow-[0_0_12px_rgba(34,197,94,0.6)] animate-pulse ${formData.storeStatus === 'OPEN' ? 'bg-[#22C55E]' : 'bg-[#EF4444]'}`} />
                       <div>
-                        <label className="block text-xs font-bold text-[#94A3B8] uppercase tracking-wider mb-2">Store Status</label>
-                        <select
-                          name="storeStatus"
-                          value={formData.storeStatus}
-                          onChange={handleInputChange}
-                          className="admin-form-input text-sm font-semibold h-11"
-                        >
-                          <option value="OPEN">Open</option>
-                          <option value="CLOSED">Closed</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-xs font-bold text-[#94A3B8] uppercase tracking-wider mb-2">Opening Time</label>
-                        <input
-                          type="time"
-                          name="openingTime"
-                          value={formData.openingTime}
-                          onChange={handleInputChange}
-                          className="admin-form-input text-sm font-semibold"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-bold text-[#94A3B8] uppercase tracking-wider mb-2">Closing Time</label>
-                        <input
-                          type="time"
-                          name="closingTime"
-                          value={formData.closingTime}
-                          onChange={handleInputChange}
-                          className="admin-form-input text-sm font-semibold"
-                        />
+                        <p className="text-lg font-black text-white">{formData.storeStatus === 'OPEN' ? 'Store is Currently Open' : 'Store is Currently Closed'}</p>
+                        <p className="text-sm text-[#94A3B8] mt-1">
+                          Hours: <strong className="text-white">{formData.openingTime}</strong> to <strong className="text-white">{formData.closingTime}</strong>
+                        </p>
                       </div>
                     </div>
                   </div>

@@ -71,7 +71,7 @@ const ProductRow = ({ rank, name, sold, revenue, image }) => (
 
 /* ── Main Dashboard ───────────────────────────────────────────────────── */
 const AdminDashboard = () => {
-  const { adminInfo } = useAuthStore();
+  const adminInfo = useAuthStore(s => s.adminInfo);
   const settings = useSettingsStore(s => s.settings);
   const { adminAlert } = useModal();
   const [stats, setStats] = useState(null);
