@@ -1,5 +1,5 @@
 import { API_BASE as config_API_BASE, API_URL as config_API_URL } from '../../config/api';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Key, ShieldAlert, LogOut, Loader2, CheckCircle, AlertTriangle } from 'lucide-react';
 import useAuthStore from '../../store/useAuthStore';
@@ -17,6 +17,21 @@ const AccountSettingsTab = ({ onLogout }) => {
 
   const [otpSent, setOtpSent] = useState(false);
   const [otpLoading, setOtpLoading] = useState(false);
+  
+  // OTP Flow States
+  const [otp, setOtp] = useState('');
+  const [otpVerified, setOtpVerified] = useState(false);
+  const [resetToken, setResetToken] = useState('');
+  const [forgotPassForm, setForgotPassForm] = useState({ newPassword: '', confirmPassword: '' });
+  const [timer, setTimer] = useState(0);
+
+  useEffect(() => {
+    let interval;
+    if (timer > 0) {
+      interval = setInterval(() => setTimer((t) => t - 1), 1000);
+    }
+    return () => clearInterval(interval);
+  }, [timer]);
 
   const headers = userInfo?.token ? { Authorization: `Bearer ${userInfo.token}` } : {};
 
@@ -42,11 +57,61 @@ const AccountSettingsTab = ({ onLogout }) => {
       setOtpLoading(true);
       await axios.post(`${API_BASE}/auth/send-otp`, { email: userInfo?.email });
       setOtpSent(true);
-      userAlert('OTP Sent', `OTP sent to ${userInfo?.email}! Check your inbox or terminal log.`);
+      setTimer(60);
+      userAlert('OTP Sent', `OTP sent to ${userInfo?.email}! Check your inbox.`);
     } catch (err) {
       userAlert('Error', err.response?.data?.message || 'Failed to send OTP.');
     } finally {
       setOtpLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async (e) => {
+    e.preventDefault();
+    if (otp.length !== 4) return userAlert('Error', 'OTP must be exactly 4 digits.');
+    
+    try {
+      setOtpLoading(true);
+      const { data } = await axios.post(`${API_BASE}/auth/verify-otp`, { email: userInfo?.email, otp });
+      setResetToken(data.resetToken);
+      setOtpVerified(true);
+      userAlert('Success', 'OTP verified successfully. You can now set your new password.');
+    } catch (err) {
+      userAlert('Error', err.response?.data?.message || 'Invalid or expired OTP.');
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    if (forgotPassForm.newPassword !== forgotPassForm.confirmPassword) {
+      return userAlert('Error', 'Passwords do not match.');
+    }
+    if (forgotPassForm.newPassword.length < 8) {
+      return userAlert('Error', 'Password must be at least 8 characters.');
+    }
+
+    try {
+      setPassLoading(true);
+      await axios.post(`${API_BASE}/auth/reset-password-otp`, { 
+        resetToken, 
+        password: forgotPassForm.newPassword 
+      });
+      setPassSuccess('Password reset successfully!');
+      
+      // Reset flow states
+      setOtpSent(false);
+      setOtpVerified(false);
+      setOtp('');
+      setResetToken('');
+      setForgotPassForm({ newPassword: '', confirmPassword: '' });
+      
+      userAlert('Success', 'Password has been reset successfully!');
+    } catch (err) {
+      userAlert('Error', err.response?.data?.message || 'Failed to reset password.');
+    } finally {
+      setPassLoading(false);
     }
   };
 
@@ -89,53 +154,154 @@ const AccountSettingsTab = ({ onLogout }) => {
           </div>
         )}
 
-        <form onSubmit={handlePasswordSubmit} className="space-y-4">
-          <div>
-            <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1">Current Password</label>
-            <input
-              type="password"
-              required
-              placeholder="Enter current password"
-              value={passForm.currentPassword}
-              onChange={(e) => setPassForm({ ...passForm, currentPassword: e.target.value })}
-              className="w-full px-4 py-3 rounded-2xl border border-gray-200 focus:outline-none focus:border-green-500 text-sm"
-            />
-          </div>
+        {!otpSent && !otpVerified && (
+          <form onSubmit={handlePasswordSubmit} className="space-y-4">
+            <div>
+              <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1">Current Password</label>
+              <input
+                type="password"
+                required
+                placeholder="Enter current password"
+                value={passForm.currentPassword}
+                onChange={(e) => setPassForm({ ...passForm, currentPassword: e.target.value })}
+                className="w-full px-4 py-3 rounded-2xl border border-gray-200 focus:outline-none focus:border-green-500 text-sm"
+              />
+            </div>
 
-          <div>
-            <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1">New Password</label>
-            <input
-              type="password"
-              required
-              minLength={8}
-              placeholder="At least 8 characters"
-              value={passForm.newPassword}
-              onChange={(e) => setPassForm({ ...passForm, newPassword: e.target.value })}
-              className="w-full px-4 py-3 rounded-2xl border border-gray-200 focus:outline-none focus:border-green-500 text-sm"
-            />
-          </div>
+            <div>
+              <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1">New Password</label>
+              <input
+                type="password"
+                required
+                minLength={8}
+                placeholder="At least 8 characters"
+                value={passForm.newPassword}
+                onChange={(e) => setPassForm({ ...passForm, newPassword: e.target.value })}
+                className="w-full px-4 py-3 rounded-2xl border border-gray-200 focus:outline-none focus:border-green-500 text-sm"
+              />
+            </div>
 
-          <div className="flex items-center justify-between pt-2">
-            <button
-              type="button"
-              onClick={handleForgotPassword}
-              disabled={otpLoading}
-              className="text-xs font-bold text-green-600 hover:text-green-700 underline flex items-center gap-1"
-            >
-              {otpLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
-              Forgot Password? Send OTP
-            </button>
+            <div className="flex items-center justify-between pt-2">
+              <button
+                type="button"
+                onClick={handleForgotPassword}
+                disabled={otpLoading}
+                className="text-xs font-bold text-green-600 hover:text-green-700 underline flex items-center gap-1"
+              >
+                {otpLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
+                Forgot Password? Send OTP
+              </button>
 
-            <button
-              type="submit"
-              disabled={passLoading}
-              className="px-6 py-2.5 bg-green-600 hover:bg-green-700 text-white font-bold text-xs rounded-xl shadow-md transition-colors flex items-center gap-1.5"
-            >
-              {passLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-              Update Password
-            </button>
-          </div>
-        </form>
+              <button
+                type="submit"
+                disabled={passLoading}
+                className="px-6 py-2.5 bg-green-600 hover:bg-green-700 text-white font-bold text-xs rounded-xl shadow-md transition-colors flex items-center gap-1.5"
+              >
+                {passLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                Update Password
+              </button>
+            </div>
+          </form>
+        )}
+
+        {otpSent && !otpVerified && (
+          <form onSubmit={handleVerifyOtp} className="space-y-4">
+            <div>
+              <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1">Enter 4-Digit OTP</label>
+              <input
+                type="text"
+                required
+                maxLength={4}
+                placeholder="e.g. 1234"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
+                className="w-full px-4 py-3 rounded-2xl border border-gray-200 focus:outline-none focus:border-green-500 text-sm tracking-widest font-bold"
+              />
+            </div>
+            <div className="flex items-center justify-between pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setOtpSent(false);
+                  setOtp('');
+                }}
+                className="text-xs font-bold text-gray-500 hover:text-gray-700 underline"
+              >
+                Cancel
+              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={handleForgotPassword}
+                  disabled={timer > 0 || otpLoading}
+                  className="text-xs font-bold text-green-600 hover:text-green-700 disabled:text-gray-400 disabled:cursor-not-allowed underline"
+                >
+                  {timer > 0 ? `Resend OTP in ${timer}s` : 'Resend OTP'}
+                </button>
+                <button
+                  type="submit"
+                  disabled={otpLoading || otp.length !== 4}
+                  className="px-6 py-2.5 bg-green-600 hover:bg-green-700 text-white font-bold text-xs rounded-xl shadow-md transition-colors flex items-center gap-1.5 disabled:opacity-50"
+                >
+                  {otpLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                  Verify OTP
+                </button>
+              </div>
+            </div>
+          </form>
+        )}
+
+        {otpVerified && (
+          <form onSubmit={handleResetPassword} className="space-y-4">
+            <div>
+              <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1">New Password</label>
+              <input
+                type="password"
+                required
+                minLength={8}
+                placeholder="At least 8 characters"
+                value={forgotPassForm.newPassword}
+                onChange={(e) => setForgotPassForm({ ...forgotPassForm, newPassword: e.target.value })}
+                className="w-full px-4 py-3 rounded-2xl border border-gray-200 focus:outline-none focus:border-green-500 text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1">Confirm Password</label>
+              <input
+                type="password"
+                required
+                minLength={8}
+                placeholder="Re-enter new password"
+                value={forgotPassForm.confirmPassword}
+                onChange={(e) => setForgotPassForm({ ...forgotPassForm, confirmPassword: e.target.value })}
+                className="w-full px-4 py-3 rounded-2xl border border-gray-200 focus:outline-none focus:border-green-500 text-sm"
+              />
+            </div>
+            <div className="flex items-center justify-between pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setOtpSent(false);
+                  setOtpVerified(false);
+                  setOtp('');
+                  setResetToken('');
+                  setForgotPassForm({ newPassword: '', confirmPassword: '' });
+                }}
+                className="text-xs font-bold text-gray-500 hover:text-gray-700 underline"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={passLoading}
+                className="px-6 py-2.5 bg-green-600 hover:bg-green-700 text-white font-bold text-xs rounded-xl shadow-md transition-colors flex items-center gap-1.5"
+              >
+                {passLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                Update Password
+              </button>
+            </div>
+          </form>
+        )}
       </div>
 
       {/* Logout Card */}
