@@ -383,7 +383,7 @@ const AdminLayout = ({ children }) => {
 
     // Socket.io
     const socket = socketIO(SOCKET_URL, { transports: ['websocket', 'polling'] });
-    socket.on('connect', () => { socket.emit('join', { role: 'admin' }); });
+    socket.on('connect', () => { socket.emit('join', { role: 'admin', token: adminInfo.token }); });
     socket.on('admin_notification', (notif) => {
       setLatestNotifs(prev => [notif, ...prev].slice(0, 5));
       setUnreadCount(prev => prev + 1);

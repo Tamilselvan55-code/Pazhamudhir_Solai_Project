@@ -10,6 +10,8 @@ import { createAndEmitNotification } from '../utils/notificationHelper.js';
 import { sendEmail, getOtpEmailContent, sendRegistrationOTP } from '../utils/emailService.js';
 import { checkMaintenanceAndFeature } from '../middleware/maintenanceAndFeature.js';
 import { validatePasswordPolicy, handleFailedLogin, resetFailedLogin } from '../utils/securityHelper.js';
+import { validate } from '../middleware/validate.js';
+import { registerSchema, loginSchema } from '../validators/schemas.js';
 
 const router = express.Router();
 
@@ -304,7 +306,7 @@ const getVerificationHtmlTemplate = (name, otpVal) => `<!DOCTYPE html>
 
 
 // ─── POST /api/auth/register ──────────────────────────────────────────────────
-router.post('/register', checkMaintenanceAndFeature('disableRegistration'), async (req, res) => {
+router.post('/register', checkMaintenanceAndFeature('disableRegistration'), validate(registerSchema), async (req, res) => {
   console.log("========== REGISTER REQUEST ==========");
   console.log("STEP 1: Register request received");
   try {
@@ -463,12 +465,8 @@ router.post('/register', checkMaintenanceAndFeature('disableRegistration'), asyn
 
 
 // ─── POST /api/auth/login ─────────────────────────────────────────────────────
-router.post('/login', checkMaintenanceAndFeature('disableCustomerLogin'), async (req, res) => {
+router.post('/login', checkMaintenanceAndFeature('disableCustomerLogin'), validate(loginSchema), async (req, res) => {
   const { phoneNumber, password } = req.body;
-
-  if (!phoneNumber || !password) {
-    return res.status(400).json({ message: 'Phone number and password are required' });
-  }
 
   try {
     const userRaw = await prisma.user.findUnique({ where: { phoneNumber: phoneNumber.trim() } });

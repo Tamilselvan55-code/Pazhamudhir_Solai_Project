@@ -60,7 +60,8 @@ const OrderDetailsModal = ({ order, onClose, onDownloadInvoice, onRatingUpdate }
     const orderId = currentOrder.id || currentOrder._id;
     const userId = userInfo?.id || userInfo?._id;
 
-    if (userId) socket.emit('join', { userId });
+    const token = useAuthStore.getState().userInfo?.token;
+    if (userId) socket.emit('join', { userId, token });
 
     socket.on('otp_generated', (data) => {
       if (data.orderId === orderId) {

@@ -6,13 +6,15 @@ import { createAndEmitNotification } from '../utils/notificationHelper.js';
 import { protect } from '../middleware/auth.js';
 import { checkMaintenanceAndFeature } from '../middleware/maintenanceAndFeature.js';
 import { sanitizeAndFormatAddress, formatOrderWithDeliveryAddress } from '../utils/formatOrderAddress.js';
+import { validate } from '../middleware/validate.js';
+import { createOrderSchema } from '../validators/schemas.js';
 
 const router = express.Router();
 
 const isValidUuid = (id) => /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(id);
 
 // ─── POST /api/orders — Create a new order ────────────────────────────────────
-router.post('/', protect, checkMaintenanceAndFeature('disableOrderPlacement'), checkMaintenanceAndFeature('disableCheckout'), async (req, res) => {
+router.post('/', protect, checkMaintenanceAndFeature('disableOrderPlacement'), checkMaintenanceAndFeature('disableCheckout'), validate(createOrderSchema), async (req, res) => {
   try {
     if (!req.user || !req.user._id) {
       return res.status(401).json({

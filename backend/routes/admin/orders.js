@@ -280,7 +280,7 @@ export const autoAssignDeliveryPartner = async (orderId, io) => {
     ]);
 
     if (io) {
-      io.emit('delivery_assigned', {
+      io.to(`delivery:${chosenPartner.id}`).emit('delivery_assigned', {
         partnerId: chosenPartner.id,
         orderId: orderId,
         invoiceNumber: order.invoiceNumber,
@@ -292,6 +292,17 @@ export const autoAssignDeliveryPartner = async (orderId, io) => {
         deliveryPartnerId: chosenPartner.id
       });
     }
+
+    await prisma.notification.create({
+      data: {
+        deliveryPartnerId: chosenPartner.id,
+        role: 'delivery',
+        title: 'New Delivery Assigned',
+        message: `⚡ Automatically assigned order ${order.invoiceNumber || orderId.slice(-6).toUpperCase()}`,
+        type: 'order_assigned',
+        link: '/delivery/orders'
+      }
+    }).catch(console.error);
 
     return {
       success: true,
@@ -349,13 +360,24 @@ router.post('/orders/:id/assign-delivery', async (req, res) => {
 
     const io = req.app?.get('io');
     if (io) {
-      io.emit('delivery_assigned', {
+      io.to(`delivery:${deliveryPartnerId}`).emit('delivery_assigned', {
         partnerId: deliveryPartnerId,
         orderId: req.params.id,
         invoiceNumber: orderRaw.invoiceNumber,
         message: `You have been assigned order ${orderRaw.invoiceNumber || req.params.id.slice(-6).toUpperCase()}`
       });
     }
+
+    await prisma.notification.create({
+      data: {
+        deliveryPartnerId,
+        role: 'delivery',
+        title: 'New Delivery Assigned',
+        message: `You have been assigned order ${orderRaw.invoiceNumber || req.params.id.slice(-6).toUpperCase()}`,
+        type: 'order_assigned',
+        link: '/delivery/orders'
+      }
+    }).catch(console.error);
 
     res.json({ success: true, message: 'Delivery partner assigned successfully' });
   } catch (error) {
@@ -410,13 +432,24 @@ router.post('/orders/:id/reassign-delivery', async (req, res) => {
 
     const io = req.app?.get('io');
     if (io) {
-      io.emit('delivery_assigned', {
+      io.to(`delivery:${deliveryPartnerId}`).emit('delivery_assigned', {
         partnerId: deliveryPartnerId,
         orderId: req.params.id,
         invoiceNumber: orderRaw.invoiceNumber,
         message: `You have been assigned order ${orderRaw.invoiceNumber || req.params.id.slice(-6).toUpperCase()}`
       });
     }
+
+    await prisma.notification.create({
+      data: {
+        deliveryPartnerId,
+        role: 'delivery',
+        title: 'New Delivery Assigned',
+        message: `You have been reassigned to order ${orderRaw.invoiceNumber || req.params.id.slice(-6).toUpperCase()}`,
+        type: 'order_assigned',
+        link: '/delivery/orders'
+      }
+    }).catch(console.error);
 
     res.json({ success: true, message: 'Delivery partner reassigned successfully' });
   } catch (error) {

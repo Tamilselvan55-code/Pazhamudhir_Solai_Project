@@ -1,8 +1,10 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import helmet from 'helmet';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
+import { notFound, errorHandler } from './middleware/errorHandler.js';
 import authRoutes from './routes/authRoutes.js';
 import productRoutes from './routes/productRoutes.js';
 import orderRoutes from './routes/orderRoutes.js';
@@ -23,6 +25,20 @@ import deliveryRoutes from './routes/deliveryRoutes.js';
 dotenv.config();
 
 const app = express();
+
+// Apply security headers with Helmet
+app.use(helmet());
+app.use(helmet.contentSecurityPolicy({
+  directives: {
+    defaultSrc: ["'self'"],
+    scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+    styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+    fontSrc: ["'self'", "https://fonts.gstatic.com"],
+    imgSrc: ["'self'", "data:", "https://res.cloudinary.com", "blob:", "*"],
+    connectSrc: ["'self'", "ws:", "wss:", "*"],
+    workerSrc: ["'self'", "blob:"],
+  },
+}));
 
 const allowedOrigins = [
   'https://pazhamudhir-solai-project.vercel.app',
@@ -149,24 +165,43 @@ app.get('/api/categories', async (req, res) => {
   }
 });
 
-// Protected invoice download route
-app.get('/api/invoice/download/:id', async (req, res) => {
+// Endpoint to generate a short-lived token for invoice download
+app.get('/api/orders/:id/invoice-token', async (req, res) => {
   try {
     let token;
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
       token = req.headers.authorization.split(' ')[1];
     }
+    if (!token) return res.status(401).json({ message: 'Not authorized, no token' });
+    
+    // Verify user/admin
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await prisma.user.findUnique({ where: { id: decoded.id } }) || await prisma.admin.findUnique({ where: { id: decoded.id } });
+    if (!user) return res.status(403).json({ message: 'Forbidden' });
+
+    // Generate a short-lived 5 minute token
+    const downloadToken = jwt.sign({ orderId: req.params.id, userId: user.id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '5m' });
+    res.json({ success: true, downloadToken });
+  } catch (error) {
+    res.status(403).json({ message: 'Forbidden: Access denied' });
+  }
+});
+
+// Protected invoice download route
+app.get('/api/invoice/download/:id', async (req, res) => {
+  try {
+    const token = req.query.token;
     if (!token) {
       return res.status(401).json({ message: 'Not authorized, no token' });
     }
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const admin = await prisma.admin.findUnique({ where: { id: decoded.id } });
-    if (!admin) {
-      return res.status(403).json({ message: 'Forbidden: Only admins can download invoice PDFs' });
+    if (decoded.orderId !== req.params.id) {
+      return res.status(403).json({ message: 'Forbidden: Invalid token for this order' });
     }
-    res.json({ success: true, message: 'Admin authorized to download invoice' });
+    // Logic for actual PDF generation would happen here. For now, returning success.
+    res.json({ success: true, message: 'Authorized to download invoice', orderId: req.params.id });
   } catch (error) {
-    return res.status(403).json({ message: 'Forbidden: Access denied' });
+    return res.status(403).json({ message: 'Forbidden: Access denied or token expired' });
   }
 });
 
@@ -222,6 +257,10 @@ app.post('/test-email', async (req, res) => {
   }
 });
 
+// Error Handling Middlewares
+app.use(notFound);
+app.use(errorHandler);
+
 const PORT = process.env.PORT || 5000;
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
@@ -240,17 +279,38 @@ const io = new Server(httpServer, {
 io.on('connection', (socket) => {
   console.log(`[Socket.io] Connected client: ${socket.id}`);
   
-  socket.on('join', (data) => {
-    if (data.role === 'admin') {
-      socket.join('admin');
-      console.log(`[Socket.io] Client joined admin room: ${socket.id}`);
-    } else if (data.userId) {
-      const room = `user:${data.userId}`;
-      socket.join(room);
-      console.log(`[Socket.io] Client joined room ${room}: ${socket.id}`);
-    } else if (data.role === 'delivery' || data.partnerId) {
-      socket.join('delivery');
-      console.log(`[Socket.io] Client joined delivery room: ${socket.id}`);
+  socket.on('join', async (data) => {
+    try {
+      if (!data.token) {
+        console.warn(`[Socket.io] Blocked unauthorized join from ${socket.id} (no token)`);
+        return;
+      }
+      const decoded = jwt.verify(data.token, process.env.JWT_SECRET);
+
+      if (data.role === 'admin') {
+        const admin = await prisma.admin.findUnique({ where: { id: decoded.id } });
+        if (admin) {
+          socket.join('admin');
+          console.log(`[Socket.io] Client joined admin room: ${socket.id}`);
+        }
+      } else if (data.userId) {
+        if (decoded.id === data.userId) {
+          const room = `user:${data.userId}`;
+          socket.join(room);
+          console.log(`[Socket.io] Client joined room ${room}: ${socket.id}`);
+        }
+      } else if (data.role === 'delivery' || data.partnerId) {
+        const partner = await prisma.deliveryPartner.findUnique({ where: { id: decoded.id } });
+        if (partner && partner.isActive) {
+          socket.join('delivery');
+          if (data.partnerId) {
+            socket.join(`delivery:${data.partnerId}`);
+          }
+          console.log(`[Socket.io] Client joined delivery room: ${socket.id}`);
+        }
+      }
+    } catch (err) {
+      console.error('[Socket.io] Unauthorized join attempt:', err.message);
     }
   });
 

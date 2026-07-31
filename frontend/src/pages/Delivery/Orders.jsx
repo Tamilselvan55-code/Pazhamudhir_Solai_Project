@@ -6,7 +6,7 @@ import { io } from 'socket.io-client';
 import useModal from '../../hooks/useModal';
 import { 
   Package, MapPin, Navigation, Phone, Search, 
-  MessageCircle, Clock, AlertCircle, X, Check, ShieldCheck 
+  MessageCircle, Clock, AlertCircle, X, Check, ShieldCheck, Truck 
 } from 'lucide-react';
 
 const DeliveryOrders = () => {
@@ -99,7 +99,8 @@ const DeliveryOrders = () => {
     const socket = io(API_URL, { transports: ['websocket', 'polling'] });
     
     socket.on('connect', () => {
-      socket.emit('join', { role: 'delivery' });
+      const partnerInfo = JSON.parse(localStorage.getItem('deliveryPartnerInfo'));
+      socket.emit('join', { role: 'delivery', partnerId: partnerInfo?._id || partnerInfo?.id, token: partnerInfo?.token });
     });
 
     socket.on('delivery_assigned', (data) => {
@@ -317,51 +318,123 @@ const DeliveryOrders = () => {
               const mapsUrl = addr?.lat && addr?.lon 
                 ? `https://www.google.com/maps/dir/?api=1&destination=${addr.lat},${addr.lon}`
                 : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([addr?.doorNo, addr?.street, addr?.area, addr?.city].join(', '))}`;
+              const totalItems = order.orderItems?.reduce((sum, item) => sum + item.quantity, 0) || order.orderItems?.length || 0;
 
+              // Workflow Timeline Steps
+              const steps = ['Assigned', 'Accepted', 'Picked Up', 'Out For Delivery', 'Delivered'];
+              let currentStepIdx = 0;
+              if (order.status === 'Delivered') currentStepIdx = 4;
+              else if (order.status === 'Out For Delivery') currentStepIdx = 3;
+              else if (order.pickedUpAt) currentStepIdx = 2;
+              else if (order.deliveryPartnerId && order.status !== 'Pending') currentStepIdx = 1;
+              
               return (
-                <div key={order.id} className="bg-white dark:bg-gray-800 rounded-[24px] border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden transition-colors">
+                <div key={order.id} className="bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden transition-colors relative mb-6">
+                  {/* Status Banner */}
+                  <div className={`px-5 py-2.5 flex justify-between items-center border-b border-gray-50 dark:border-gray-700 ${activeTab === 'Completed' ? 'bg-green-50 dark:bg-green-900/20' : 'bg-gray-50 dark:bg-gray-800/50'}`}>
+                    <span className="text-xs font-bold text-gray-500 dark:text-gray-400">Order #{order.invoiceNumber || order.id?.slice(-6).toUpperCase()}</span>
+                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                      activeTab === 'Assigned' ? 'bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-400' :
+                      activeTab === 'Completed' ? 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400' :
+                      'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400'
+                    }`}>
+                      {order.status}
+                    </span>
+                  </div>
+
                   <div className="p-5 border-b border-gray-50 dark:border-gray-700 transition-colors">
-                    <div className="flex justify-between items-center mb-4">
-                      <span className="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400 rounded-full text-xs font-extrabold uppercase tracking-wide">
-                        {order.status}
-                      </span>
-                      <span className="font-black text-gray-900 dark:text-white">₹{order.totalPrice} <span className={`text-[10px] px-1.5 py-0.5 rounded ${order.paymentMethod === 'COD' ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400' : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'}`}>{order.paymentMethod}</span></span>
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <h3 className="text-lg font-black text-gray-900 dark:text-white leading-tight">{customerName}</h3>
+                        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-1">
+                          <Phone className="w-3 h-3" /> +91 {phone || 'N/A'}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <span className="block font-black text-xl text-gray-900 dark:text-white">₹{order.totalPrice}</span>
+                        <span className={`inline-block mt-1 text-[10px] px-2 py-0.5 rounded font-bold ${order.paymentMethod === 'COD' ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400' : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'}`}>
+                          {order.paymentMethod}
+                        </span>
+                      </div>
                     </div>
                     
-                    <h3 className="text-lg font-black text-gray-900 dark:text-white mb-1">{customerName}</h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 flex items-start gap-2 leading-relaxed">
-                      <MapPin className="w-4 h-4 text-gray-400 dark:text-gray-500 shrink-0 mt-1" />
-                      <span>{addr?.doorNo ? `${addr.doorNo}, ` : ''}{addr?.street}, {addr?.area}</span>
-                    </p>
+                    <div className="bg-gray-50 dark:bg-gray-900 rounded-2xl p-4 flex gap-3 items-start mb-4">
+                      <div className="w-8 h-8 rounded-full bg-orange-100 dark:bg-orange-900/40 flex items-center justify-center shrink-0 mt-1">
+                        <MapPin className="w-4 h-4 text-orange-600 dark:text-orange-400" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Delivery Address</p>
+                        <p className="text-sm font-medium text-gray-800 dark:text-gray-200 leading-snug">
+                          {addr?.doorNo ? `${addr.doorNo}, ` : ''}{addr?.street}, {addr?.area}
+                        </p>
+                        <p className="text-xs font-bold text-indigo-600 dark:text-indigo-400 mt-2 flex items-center gap-1">
+                          <Navigation className="w-3 h-3" /> {addr?.distanceFromStore || 'N/A'} km from store
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-between items-center text-sm font-semibold text-gray-600 dark:text-gray-300">
+                      <span>Total Items: {totalItems}</span>
+                    </div>
                   </div>
+
+                  {/* Workflow Timeline Indicator */}
+                  {activeTab !== 'Completed' && (
+                    <div className="px-5 py-4 border-b border-gray-50 dark:border-gray-700 bg-white dark:bg-gray-800">
+                      <div className="relative flex justify-between items-center">
+                        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-gray-100 dark:bg-gray-700 -z-10 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-green-500 transition-all duration-500 ease-out" 
+                            style={{ width: `${(currentStepIdx / (steps.length - 1)) * 100}%` }}
+                          />
+                        </div>
+                        {steps.map((step, idx) => (
+                          <div key={step} className="flex flex-col items-center gap-1 bg-white dark:bg-gray-800 px-1">
+                            <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center z-10 transition-colors ${
+                              idx < currentStepIdx ? 'bg-green-500 border-green-500 text-white' :
+                              idx === currentStepIdx ? 'bg-white dark:bg-gray-800 border-green-500' :
+                              'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600'
+                            }`}>
+                              {idx < currentStepIdx && <Check className="w-2 h-2" strokeWidth={4} />}
+                              {idx === currentStepIdx && <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />}
+                            </div>
+                            {/* Hide text on very small screens to avoid overlap, show on active */}
+                            <span className={`text-[9px] font-bold ${idx === currentStepIdx ? 'text-green-600 dark:text-green-400 opacity-100' : 'text-gray-400 dark:text-gray-500 opacity-0 sm:opacity-100'}`}>
+                              {step}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                   
-                  <div className="p-2 bg-gray-50 dark:bg-gray-800/50 flex gap-2 transition-colors">
+                  <div className="p-3 bg-gray-50 dark:bg-gray-800/50 transition-colors">
                     {/* Actions */}
                     {activeTab === 'Assigned' && (
-                      <div className="flex w-full gap-2 px-2 pb-2 pt-1">
-                        <button
-                          disabled={actionLoading === order.id}
-                          onClick={() => handleAction(order.id, 'Accept Order')}
-                          className="flex-1 bg-green-600 active:bg-green-700 text-white py-3.5 rounded-xl font-bold text-sm shadow-sm transition-transform active:scale-95 flex justify-center items-center gap-2"
-                        >
-                          <Check className="w-4 h-4" /> Accept
-                        </button>
+                      <div className="flex w-full gap-3 px-2">
                         <button
                           disabled={actionLoading === order.id}
                           onClick={() => handleReject(order.id)}
-                          className="px-5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 py-3.5 rounded-xl font-bold text-sm active:bg-gray-100 dark:active:bg-gray-700 transition-colors"
+                          className="flex-1 bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 py-3.5 rounded-2xl font-bold text-sm active:scale-95 transition-all duration-200"
                         >
                           Reject
+                        </button>
+                        <button
+                          disabled={actionLoading === order.id}
+                          onClick={() => handleAction(order.id, 'Accept Order')}
+                          className="flex-[2] bg-green-600 hover:bg-green-700 text-white py-3.5 rounded-2xl font-bold text-sm shadow-md shadow-green-600/20 active:scale-95 transition-all duration-200 flex justify-center items-center gap-2"
+                        >
+                          <Check className="w-4 h-4" /> Accept Order
                         </button>
                       </div>
                     )}
                     
                     {activeTab === 'Active' && !order.pickedUpAt && (
-                      <div className="w-full px-2 pb-2 pt-1">
+                      <div className="w-full px-2">
                          <button
                           disabled={actionLoading === order.id}
                           onClick={() => handleAction(order.id, 'Pick Up Order')}
-                          className="w-full bg-orange-500 active:bg-orange-600 text-white py-4 rounded-2xl font-bold text-sm shadow-md shadow-orange-500/20 transition-transform active:scale-95"
+                          className="w-full bg-orange-500 hover:bg-orange-600 text-white py-4 rounded-2xl font-bold text-sm shadow-md shadow-orange-500/20 active:scale-95 transition-all duration-200"
                         >
                           Confirm Pick Up at Store
                         </button>
@@ -369,33 +442,30 @@ const DeliveryOrders = () => {
                     )}
 
                     {activeTab === 'Active' && order.pickedUpAt && (
-                      <div className="w-full px-2 pb-2 pt-1 space-y-3">
-                        <div className="grid grid-cols-3 gap-2">
-                          <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="col-span-1 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-900/50 rounded-xl py-3 flex flex-col items-center justify-center gap-1 active:bg-blue-100 dark:active:bg-blue-900/50 transition-colors">
+                      <div className="w-full px-2 space-y-3">
+                        <div className="grid grid-cols-2 gap-3">
+                          <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="col-span-1 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-900/50 rounded-2xl py-3.5 flex flex-col items-center justify-center gap-1 active:scale-95 transition-all duration-200 shadow-sm">
                             <Navigation className="w-5 h-5" />
-                            <span className="text-[10px] font-bold">Navigate</span>
+                            <span className="text-[11px] font-extrabold uppercase tracking-wide mt-1">Navigate</span>
                           </a>
-                          <a href={`tel:+91${phone}`} className="col-span-1 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-900/50 rounded-xl py-3 flex flex-col items-center justify-center gap-1 active:bg-green-100 dark:active:bg-green-900/50 transition-colors">
+                          <a href={`tel:+91${phone}`} className="col-span-1 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-900/50 rounded-2xl py-3.5 flex flex-col items-center justify-center gap-1 active:scale-95 transition-all duration-200 shadow-sm">
                             <Phone className="w-5 h-5" />
-                            <span className="text-[10px] font-bold">Call</span>
-                          </a>
-                          <a href={`sms:+91${phone}`} className="col-span-1 bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-900/50 rounded-xl py-3 flex flex-col items-center justify-center gap-1 active:bg-purple-100 dark:active:bg-purple-900/50 transition-colors">
-                            <MessageCircle className="w-5 h-5" />
-                            <span className="text-[10px] font-bold">Chat</span>
+                            <span className="text-[11px] font-extrabold uppercase tracking-wide mt-1">Call Customer</span>
                           </a>
                         </div>
+                        
                         {order.status !== 'Out For Delivery' ? (
                           <button
                             disabled={actionLoading === order.id}
                             onClick={() => handleAction(order.id, 'Out For Delivery')}
-                            className="w-full bg-gray-900 active:bg-black text-white py-4 rounded-2xl font-bold text-sm shadow-md transition-transform active:scale-95"
+                            className="w-full bg-gray-900 hover:bg-black dark:bg-gray-100 dark:hover:bg-white dark:text-gray-900 text-white py-4 rounded-2xl font-bold text-sm shadow-md active:scale-95 transition-all duration-200 flex items-center justify-center gap-2"
                           >
-                            Mark Out For Delivery
+                            <Truck className="w-4 h-4" /> Mark Out For Delivery
                           </button>
                         ) : (
                           <button
                             onClick={() => setOtpModalData({ isOpen: true, orderId: order.id, otp: '' })}
-                            className="w-full bg-green-600 active:bg-green-700 text-white py-4 rounded-2xl font-bold text-sm shadow-lg shadow-green-600/30 transition-transform active:scale-95 flex items-center justify-center gap-2"
+                            className="w-full bg-green-600 hover:bg-green-700 text-white py-4 rounded-2xl font-extrabold text-sm shadow-lg shadow-green-600/30 active:scale-95 transition-all duration-200 flex items-center justify-center gap-2 uppercase tracking-wide"
                           >
                             <ShieldCheck className="w-5 h-5" /> Enter Delivery OTP
                           </button>

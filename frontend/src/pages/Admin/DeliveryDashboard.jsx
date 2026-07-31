@@ -31,7 +31,7 @@ const DeliveryDashboard = () => {
 
   useEffect(() => {
     const socket = io(API_URL, { transports: ['websocket', 'polling'] });
-    socket.emit('join', { role: 'admin' });
+    socket.emit('join', { role: 'admin', token: adminInfo?.token });
 
     socket.on('partner_location_changed', (data) => {
       if (data?.partnerId) {

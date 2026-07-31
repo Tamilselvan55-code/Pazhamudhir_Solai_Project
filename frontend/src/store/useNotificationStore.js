@@ -198,7 +198,8 @@ const useNotificationStore = create((set, get) => ({
 
       socket.on('connect', () => {
         console.log('[Socket.io Notifications] Connected as user:', userId);
-        socket.emit('join', { userId });
+        const token = useAuthStore.getState().userInfo?.token;
+        socket.emit('join', { userId, token });
       });
 
       socket.on('customer_notification', (notif) => {

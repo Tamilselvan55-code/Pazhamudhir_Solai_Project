@@ -207,12 +207,14 @@ model OrderItem {
 }
 
 model Notification {
-  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId        String?  @db.Uuid
-  user          User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  title         String
-  message       String
-  type          String
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId            String?  @db.Uuid
+  user              User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deliveryPartnerId String?  @db.Uuid
+  deliveryPartner   DeliveryPartner? @relation(fields: [deliveryPartnerId], references: [id], onDelete: Cascade)
+  title             String
+  message           String
+  type              String
   isRead        Boolean  @default(false)
   link          String?  @default("")
   role          String   @default("customer")
@@ -441,6 +443,7 @@ model DeliveryPartner {
   orders           Order[]  // Relation to assigned orders
   earnings         DeliveryEarnings[]
   settlements      Settlement[]
+  notifications    Notification[]
   documents        DeliveryPartnerDocument?
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt

@@ -13,10 +13,23 @@ const DeliveryLayout = () => {
   const location = useLocation();
   const [partner, setPartner] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const { theme, notifications, unreadCount, setNotifications, addNotification, markAsRead, markAllAsRead } = useDeliveryStore();
   const { openModal } = useModal();
 
   // Authenticate and fetch profile on layout load
   useEffect(() => {
+    const fetchNotifications = async (token) => {
+      try {
+        const { data } = await axios.get(`${API_BASE}/delivery/notifications`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setNotifications(data);
+      } catch (error) {
+        console.error('Failed to fetch notifications', error);
+      }
+    };
+
     const fetchProfile = async () => {
       const stored = localStorage.getItem('deliveryPartnerInfo');
       if (!stored) {
@@ -30,6 +43,7 @@ const DeliveryLayout = () => {
           headers: { Authorization: `Bearer ${parsedInfo.token}` }
         });
         setPartner(data);
+        fetchNotifications(parsedInfo.token);
       } catch (error) {
         console.error('Failed to fetch profile', error);
         localStorage.removeItem('deliveryPartnerInfo');
@@ -42,7 +56,61 @@ const DeliveryLayout = () => {
     fetchProfile();
   }, [navigate]);
 
-  const { theme, unreadCount } = useDeliveryStore();
+  useEffect(() => {
+    // Setup socket connection for notifications
+    const stored = localStorage.getItem('deliveryPartnerInfo');
+    if (stored) {
+      const parsedInfo = JSON.parse(stored);
+      const socket = io(API_URL);
+      
+      socket.emit('join', {
+        token: parsedInfo.token,
+        role: 'delivery',
+        partnerId: parsedInfo.id || parsedInfo._id
+      });
+
+      socket.on('delivery_assigned', (data) => {
+        const newNotif = {
+          id: data.orderId + Date.now(), // temp id until refreshed
+          title: 'New Delivery Assigned',
+          message: data.message,
+          type: 'order_assigned',
+          isRead: false,
+          createdAt: new Date().toISOString()
+        };
+        addNotification(newNotif);
+        // Play notification sound if needed
+      });
+
+      return () => socket.disconnect();
+    }
+  }, []);
+
+  const handleMarkAsRead = async (id) => {
+    markAsRead(id);
+    try {
+      const stored = localStorage.getItem('deliveryPartnerInfo');
+      const parsedInfo = JSON.parse(stored);
+      await axios.put(`${API_BASE}/delivery/notifications/${id}/read`, {}, {
+        headers: { Authorization: `Bearer ${parsedInfo.token}` }
+      });
+    } catch (error) {
+      console.error('Failed to mark as read', error);
+    }
+  };
+
+  const handleMarkAllAsRead = async () => {
+    markAllAsRead();
+    try {
+      const stored = localStorage.getItem('deliveryPartnerInfo');
+      const parsedInfo = JSON.parse(stored);
+      await axios.put(`${API_BASE}/delivery/notifications/read-all`, {}, {
+        headers: { Authorization: `Bearer ${parsedInfo.token}` }
+      });
+    } catch (error) {
+      console.error('Failed to mark all as read', error);
+    }
+  };
 
   useEffect(() => {
     // Apply theme
@@ -83,12 +151,53 @@ const DeliveryLayout = () => {
               <p className="text-xs text-gray-500 dark:text-gray-400">{partner?.status}</p>
             </div>
           </div>
-          <button onClick={() => openModal('Info', 'Notifications system for delivery partners will be available in the next release.', 'info')} className="relative p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer outline-none">
-            <Bell className="w-5 h-5 text-gray-600 dark:text-gray-300" />
-            {unreadCount > 0 && (
-              <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white dark:border-gray-800"></span>
+          <div className="relative">
+            <button 
+              onClick={() => setIsNotificationsOpen(!isNotificationsOpen)} 
+              className="relative p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer outline-none"
+            >
+              <Bell className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+              {unreadCount > 0 && (
+                <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white dark:border-gray-800"></span>
+              )}
+            </button>
+
+            {isNotificationsOpen && (
+              <div className="absolute top-12 left-0 md:left-auto md:right-0 w-80 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 z-50 overflow-hidden transform transition-all">
+                <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
+                  <h3 className="font-bold text-gray-900 dark:text-white">Notifications</h3>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/30 px-2 py-1 rounded-full">{unreadCount} New</span>
+                    {unreadCount > 0 && (
+                      <button onClick={handleMarkAllAsRead} className="text-xs text-gray-500 hover:text-gray-900 dark:hover:text-white underline">
+                        Read All
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <div className="max-h-80 overflow-y-auto">
+                  {notifications.length > 0 ? (
+                    notifications.map(notif => (
+                      <div 
+                        key={notif.id} 
+                        onClick={() => !notif.isRead && handleMarkAsRead(notif.id)}
+                        className={`p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors border-b border-gray-50 dark:border-gray-700 cursor-pointer ${notif.isRead ? 'opacity-60' : 'bg-orange-50/30 dark:bg-orange-900/10'}`}
+                      >
+                        <p className={`text-sm font-semibold text-gray-900 dark:text-white ${!notif.isRead ? 'font-bold' : ''}`}>{notif.title}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{notif.message}</p>
+                        <p className="text-[10px] text-gray-400 mt-2">{new Date(notif.createdAt).toLocaleString()}</p>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="p-4 text-center text-gray-500 dark:text-gray-400 text-sm">No notifications yet.</div>
+                  )}
+                </div>
+                <div className="p-3 text-center border-t border-gray-100 dark:border-gray-700">
+                  <button onClick={() => setIsNotificationsOpen(false)} className="text-xs font-bold text-orange-600 dark:text-orange-400 hover:underline">Close</button>
+                </div>
+              </div>
             )}
-          </button>
+          </div>
         </div>
         <nav className="flex-1 p-4 space-y-2">
           {navItems.map((item) => {

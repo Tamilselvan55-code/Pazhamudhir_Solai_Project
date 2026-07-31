@@ -13,6 +13,7 @@ import { ModalProvider } from './components/Modal/ModalProvider';
 import GuestToastProvider from './components/Layout/GuestToastProvider';
 import useSettingsStore from './store/useSettingsStore';
 import useNotificationStore from './store/useNotificationStore';
+import ProtectedRoute from './components/ProtectedRoute';
 
 // Lazy Loaded Customer Pages
 const Home = lazy(() => import('./pages/Home'));
@@ -56,14 +57,7 @@ const DeliveryEarnings = lazy(() => import('./pages/Delivery/Earnings'));
 const DeliveryDocuments = lazy(() => import('./pages/Delivery/Documents'));
 
 const AdminRedirectHandler = () => {
-  const { adminInfo, userInfo } = useAuthStore();
-  if (userInfo && (!adminInfo || !adminInfo.token)) {
-    return <Navigate to="/login?error=access_denied" replace />;
-  }
-  if (adminInfo && adminInfo.token) {
-    return <Navigate to="/admin/dashboard" replace />;
-  }
-  return <Navigate to="/admin/login" replace />;
+  return <Navigate to="/admin/dashboard" replace />;
 };
 
 function App() {
@@ -200,45 +194,45 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/cart" element={<Home />} />
             <Route path="/admin" element={<AdminRedirectHandler />} />
-            <Route path="/checkout" element={<Checkout />} />
+            <Route path="/checkout" element={<ProtectedRoute role="customer"><Checkout /></ProtectedRoute>} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/verify-email" element={<VerifyEmail />} />
             <Route path="/categories" element={<UserCategories />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/dashboard" element={<Profile />} />
+            <Route path="/profile" element={<ProtectedRoute role="customer"><Profile /></ProtectedRoute>} />
+            <Route path="/dashboard" element={<ProtectedRoute role="customer"><Profile /></ProtectedRoute>} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password/:token" element={<ResetPassword />} />
-            <Route path="/notifications" element={<CustomerNotifications />} />
+            <Route path="/notifications" element={<ProtectedRoute role="customer"><CustomerNotifications /></ProtectedRoute>} />
             <Route path="/legal" element={<Legal />} />
             
             <Route path="/delivery/login" element={<DeliveryLogin />} />
             <Route element={<DeliveryLayout />}>
               <Route path="/delivery/dashboard" element={<Navigate to="/delivery/home" replace />} />
-              <Route path="/delivery/home" element={<DeliveryHome />} />
-              <Route path="/delivery/orders" element={<DeliveryOrders />} />
-              <Route path="/delivery/earnings" element={<DeliveryEarnings />} />
-              <Route path="/delivery/profile" element={<DeliveryProfile />} />
-              <Route path="/delivery/documents" element={<DeliveryDocuments />} />
+              <Route path="/delivery/home" element={<ProtectedRoute role="delivery"><DeliveryHome /></ProtectedRoute>} />
+              <Route path="/delivery/orders" element={<ProtectedRoute role="delivery"><DeliveryOrders /></ProtectedRoute>} />
+              <Route path="/delivery/earnings" element={<ProtectedRoute role="delivery"><DeliveryEarnings /></ProtectedRoute>} />
+              <Route path="/delivery/profile" element={<ProtectedRoute role="delivery"><DeliveryProfile /></ProtectedRoute>} />
+              <Route path="/delivery/documents" element={<ProtectedRoute role="delivery"><DeliveryDocuments /></ProtectedRoute>} />
             </Route>
             
             <Route path="/admin/login" element={<AdminLogin />} />
-            <Route path="/admin/dashboard" element={<AdminDashboard />} />
-            <Route path="/admin/users" element={<Users />} />
-            <Route path="/admin/products" element={<Products />} />
-            <Route path="/admin/orders" element={<Orders />} />
-            <Route path="/admin/reports" element={<Reports />} />
-            <Route path="/admin/settings" element={<Settings />} />
-            <Route path="/admin/categories" element={<Categories />} />
-            <Route path="/admin/offers" element={<Offers />} />
-            <Route path="/admin/payments" element={<Payments />} />
-            <Route path="/admin/notifications" element={<Notifications />} />
-            <Route path="/admin/staff" element={<Staff />} />
-            <Route path="/admin/database" element={<DatabaseController />} />
-            <Route path="/admin/system-logs" element={<SystemLogs />} />
-            <Route path="/admin/delivery-partners" element={<DeliveryPartners />} />
-            <Route path="/admin/delivery-dashboard" element={<AdminDeliveryDashboard />} />
-            <Route path="/admin/delivery-earnings" element={<AdminDeliveryEarnings />} />
+            <Route path="/admin/dashboard" element={<ProtectedRoute role="admin"><AdminDashboard /></ProtectedRoute>} />
+            <Route path="/admin/users" element={<ProtectedRoute role="admin"><Users /></ProtectedRoute>} />
+            <Route path="/admin/products" element={<ProtectedRoute role="admin"><Products /></ProtectedRoute>} />
+            <Route path="/admin/orders" element={<ProtectedRoute role="admin"><Orders /></ProtectedRoute>} />
+            <Route path="/admin/reports" element={<ProtectedRoute role="admin"><Reports /></ProtectedRoute>} />
+            <Route path="/admin/settings" element={<ProtectedRoute role="admin"><Settings /></ProtectedRoute>} />
+            <Route path="/admin/categories" element={<ProtectedRoute role="admin"><Categories /></ProtectedRoute>} />
+            <Route path="/admin/offers" element={<ProtectedRoute role="admin"><Offers /></ProtectedRoute>} />
+            <Route path="/admin/payments" element={<ProtectedRoute role="admin"><Payments /></ProtectedRoute>} />
+            <Route path="/admin/notifications" element={<ProtectedRoute role="admin"><Notifications /></ProtectedRoute>} />
+            <Route path="/admin/staff" element={<ProtectedRoute role="admin"><Staff /></ProtectedRoute>} />
+            <Route path="/admin/database" element={<ProtectedRoute role="admin"><DatabaseController /></ProtectedRoute>} />
+            <Route path="/admin/system-logs" element={<ProtectedRoute role="admin"><SystemLogs /></ProtectedRoute>} />
+            <Route path="/admin/delivery-partners" element={<ProtectedRoute role="admin"><DeliveryPartners /></ProtectedRoute>} />
+            <Route path="/admin/delivery-dashboard" element={<ProtectedRoute role="admin"><AdminDeliveryDashboard /></ProtectedRoute>} />
+            <Route path="/admin/delivery-earnings" element={<ProtectedRoute role="admin"><AdminDeliveryEarnings /></ProtectedRoute>} />
 
             <Route path="*" element={<Home />} />
           </Routes>

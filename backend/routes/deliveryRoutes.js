@@ -9,7 +9,10 @@ import {
   updateDeliveryLocation,
   getDeliveryEarnings,
   getDeliveryDocuments,
-  uploadDeliveryDocuments
+  uploadDeliveryDocuments,
+  getDeliveryNotifications,
+  markDeliveryNotificationRead,
+  markAllDeliveryNotificationsRead
 } from '../controllers/deliveryController.js';
 import { getAssignedOrders, updateOrderStatus, rejectOrder, verifyDeliveryOtp } from '../controllers/deliveryOrdersController.js';
 import { protectDelivery } from '../middleware/deliveryAuthMiddleware.js';
@@ -38,6 +41,11 @@ router.post('/orders/:id/reject', protectDelivery, rejectOrder);
 
 // Phase 14: Delivery OTP Verification
 router.post('/orders/:id/verify-otp', protectDelivery, verifyDeliveryOtp);
+
+// Notifications
+router.get('/notifications', protectDelivery, getDeliveryNotifications);
+router.put('/notifications/read-all', protectDelivery, markAllDeliveryNotificationsRead);
+router.put('/notifications/:id/read', protectDelivery, markDeliveryNotificationRead);
 
 export default router;
 

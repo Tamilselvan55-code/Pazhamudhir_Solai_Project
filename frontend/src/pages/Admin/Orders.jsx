@@ -139,7 +139,7 @@ const OrderRow = ({ order, token, onUpdated }) => {
                 <td style="text-align: right;"><strong>Phone:</strong> +91 ${order.user?.phoneNumber || order.recipient?.phone || '—'}</td>
               </tr>
               <tr>
-                <td colspan="2"><strong>Delivery Location:</strong> ${formatDisplayAddress(order.shippingAddress, order.notes)}</td>
+                <td colspan="2" style="word-break: break-word; white-space: pre-wrap; overflow-wrap: break-word;"><strong>Delivery Location:</strong> ${formatDisplayAddress(order.shippingAddress, order.notes)}</td>
               </tr>
               <tr>
                 <td colspan="2"><strong>Distance from Store:</strong> ${order.shippingAddress?.distanceFromStore || '—'} km</td>

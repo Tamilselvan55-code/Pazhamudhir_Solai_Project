@@ -430,7 +430,7 @@ const Notifications = () => {
     socketRef.current = socket;
 
     socket.on('connect', () => {
-      socket.emit('join', { role: 'admin' });
+      socket.emit('join', { role: 'admin', token: adminInfo?.token });
     });
 
     socket.on('admin_notification', (notif) => {

@@ -273,7 +273,9 @@ export const generateInvoicePDF = async (order, userInfo) => {
     doc.setFontSize(7);
     doc.setTextColor(...darkText);
     lines.forEach((ln, i) => {
-      const ly = y + 9.5 + i * 3.8;
+      // Increase line spacing slightly for readability if it's the delivery address (ln.isAddress is passed)
+      const lineSpacing = ln.isAddress ? 4.2 : 3.8;
+      const ly = y + 9.5 + i * lineSpacing;
       if (ln.badge) {
         doc.setTextColor(100, 116, 139); // Slate 500 for labels
         doc.text(ln.label, x + 3, ly);
@@ -322,22 +324,36 @@ export const generateInvoicePDF = async (order, userInfo) => {
 
   const deliveryLines = [];
   const deliveryName = order.recipient?.name || userInfo?.fullName || 'Customer';
-  deliveryLines.push({ text: capitalizeAddressLine(deliveryName) });
-
+  
   const addrLines = formatDisplayAddressLines(order.shippingAddress, order.notes);
-  addrLines.forEach(line => {
-    // Filter out raw GPS coordinates for cleaner presentation
-    if (/^-?\d+\.\d+,\s*-?\d+\.\d+$/.test(line.trim())) return;
-    if (line.toLowerCase().includes('lat:') || line.toLowerCase().includes('lng:')) return;
-    
-    const capLine = capitalizeAddressLine(line);
-    const splitLine = doc.splitTextToSize(capLine, cardW - 6);
-    splitLine.forEach(sub => {
-      deliveryLines.push({ text: sub });
-    });
+  const cleanAddrLines = addrLines.filter(line => {
+    if (/^-?\d+\.\d+,\s*-?\d+\.\d+$/.test(line.trim())) return false;
+    if (line.toLowerCase().includes('lat:') || line.toLowerCase().includes('lng:')) return false;
+    return true;
+  }).map(line => capitalizeAddressLine(line));
+
+  const fullAddrStr = [capitalizeAddressLine(deliveryName), ...cleanAddrLines].join(', ');
+
+  // Break very long words safely (approx max 35 chars per line)
+  const maxLineLength = 35;
+  const chunkString = (str, len) => str.match(new RegExp(`.{1,${len}}`, 'g')) || [];
+  const safeAddrStr = fullAddrStr.split(/\s+/).map(w => w.length > maxLineLength ? chunkString(w, maxLineLength).join(' ') : w).join(' ');
+
+  let splitLine = doc.splitTextToSize(safeAddrStr, cardW - 6);
+  
+  // Max 4 lines to fit inside cardH = 24 with 4.2 line spacing safely
+  if (splitLine.length > 4) {
+    splitLine = splitLine.slice(0, 4);
+    const lastLine = splitLine[3];
+    // Add ellipsis gracefully
+    splitLine[3] = lastLine.length > 3 ? lastLine.substring(0, lastLine.length - 3) + '...' : lastLine + '...';
+  }
+
+  splitLine.forEach(sub => {
+    deliveryLines.push({ text: sub, isAddress: true });
   });
 
-  drawCard(c3X, curY, cardW, "DELIVERY ADDRESS", deliveryLines.slice(0, 5));
+  drawCard(c3X, curY, cardW, "DELIVERY ADDRESS", deliveryLines);
 
   curY += cardH + 3;
 

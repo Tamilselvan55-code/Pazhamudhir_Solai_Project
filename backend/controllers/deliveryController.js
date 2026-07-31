@@ -347,3 +347,51 @@ export const uploadDeliveryDocuments = async (req, res) => {
     res.status(500).json({ message: 'Server Error' });
   }
 };
+
+// ─── Notification Endpoints ───────────────────────────────────────────────
+
+export const getDeliveryNotifications = async (req, res) => {
+  try {
+    const notifications = await prisma.notification.findMany({
+      where: { deliveryPartnerId: req.partner.id },
+      orderBy: { createdAt: 'desc' },
+      take: 50
+    });
+    res.json(notifications);
+  } catch (error) {
+    console.error('Get notifications error:', error);
+    res.status(500).json({ message: 'Server error fetching notifications' });
+  }
+};
+
+export const markDeliveryNotificationRead = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const notification = await prisma.notification.findUnique({ where: { id } });
+    if (!notification || notification.deliveryPartnerId !== req.partner.id) {
+      return res.status(404).json({ message: 'Notification not found' });
+    }
+    
+    await prisma.notification.update({
+      where: { id },
+      data: { isRead: true }
+    });
+    res.json({ success: true, message: 'Notification marked as read' });
+  } catch (error) {
+    console.error('Mark notification read error:', error);
+    res.status(500).json({ message: 'Server error marking notification as read' });
+  }
+};
+
+export const markAllDeliveryNotificationsRead = async (req, res) => {
+  try {
+    await prisma.notification.updateMany({
+      where: { deliveryPartnerId: req.partner.id, isRead: false },
+      data: { isRead: true }
+    });
+    res.json({ success: true, message: 'All notifications marked as read' });
+  } catch (error) {
+    console.error('Mark all notifications read error:', error);
+    res.status(500).json({ message: 'Server error marking all as read' });
+  }
+};

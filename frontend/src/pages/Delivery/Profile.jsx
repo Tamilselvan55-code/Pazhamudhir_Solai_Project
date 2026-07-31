@@ -59,26 +59,29 @@ const DeliveryProfile = () => {
 
       <div className="flex-1 p-4 sm:p-6 pb-24 overflow-y-auto">
         {/* Profile Card */}
-        <div className="bg-white dark:bg-gray-800 rounded-[2rem] p-6 shadow-sm border border-gray-100 dark:border-gray-700 mb-6 flex flex-col items-center text-center transition-colors">
-          <div className="relative mb-4">
+        {/* Profile Card */}
+        <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 mb-6 flex flex-col items-center text-center transition-colors relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-r from-orange-400 to-orange-600"></div>
+          
+          <div className="relative mb-4 mt-6">
             {partner?.profileImage ? (
-              <img src={partner?.profileImage} alt={partner?.name} className="w-24 h-24 rounded-full object-cover shadow-lg ring-4 ring-green-50 dark:ring-green-900/20" />
+              <img src={partner?.profileImage} alt={partner?.name} className="w-24 h-24 rounded-full object-cover shadow-xl ring-4 ring-white dark:ring-gray-800" />
             ) : (
-              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center text-white font-black text-4xl shadow-lg ring-4 ring-green-50 dark:ring-green-900/20">
+              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center text-white font-black text-4xl shadow-xl ring-4 ring-white dark:ring-gray-800">
                 {partner?.name?.charAt(0).toUpperCase() || 'D'}
               </div>
             )}
             {partner?.isVerified && (
-              <div className="absolute bottom-0 right-0 w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center border-4 border-white dark:border-gray-800 shadow-sm transition-colors" title="Verified">
+              <div className="absolute bottom-0 right-0 w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center border-4 border-white dark:border-gray-800 shadow-sm" title="Verified">
                 <Shield className="w-4 h-4" />
               </div>
             )}
           </div>
-          <h2 className="text-xl font-black text-gray-900 dark:text-white">{partner?.name}</h2>
+          <h2 className="text-2xl font-black text-gray-900 dark:text-white mt-2">{partner?.name}</h2>
           <p className="text-sm font-semibold text-gray-500 dark:text-gray-400 mt-1">{partner?.mobile}</p>
-          <div className="flex items-center gap-2 mt-3">
-            <span className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-lg text-xs font-bold uppercase tracking-wide">ID: {partner?.employeeId || 'N/A'}</span>
-            <span className={`px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wide ${partner?.isVerified ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'}`}>
+          <div className="flex items-center gap-2 mt-4">
+            <span className="px-4 py-1.5 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-xl text-xs font-bold uppercase tracking-wide shadow-sm">ID: {partner?.employeeId || 'N/A'}</span>
+            <span className={`px-4 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wide shadow-sm ${partner?.isVerified ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'}`}>
               {partner?.isVerified ? 'Verified' : 'Pending'}
             </span>
           </div>
@@ -144,35 +147,33 @@ const DeliveryProfile = () => {
               </button>
               <button 
                 onClick={() => setTheme('dark')} 
-                className={`p-2 rounded-lg transition-all ${theme === 'dark' ? 'bg-white dark:bg-gray-600 shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'}`}
+                className={`p-2 rounded-lg transition-all ${theme === 'dark' ? 'bg-white dark:bg-gray-600 shadow-sm text-orange-600 dark:text-orange-400' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'}`}
               >
                 <Moon className="w-4 h-4" />
               </button>
               <button 
                 onClick={() => setTheme('system')} 
-                className={`p-2 rounded-lg transition-all ${theme === 'system' ? 'bg-white dark:bg-gray-600 shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'}`}
+                className={`p-2 rounded-lg transition-all ${theme === 'system' ? 'bg-white dark:bg-gray-600 shadow-sm text-orange-600 dark:text-orange-400' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'}`}
               >
                 <Monitor className="w-4 h-4" />
               </button>
             </div>
           </div>
-          <button 
-            onClick={() => userAlert('Support Center', 'The integrated Help & Support center is currently being upgraded.\n\nFor immediate assistance, please call your Hub Manager directly.', { iconType: 'info' })} 
-            className="w-full flex items-center justify-between p-5 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors text-left"
-          >
+          <Link to="/delivery/support" className="flex items-center justify-between p-5 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
             <div className="flex items-center gap-4">
-              <div className="w-10 h-10 bg-teal-50 dark:bg-teal-900/30 rounded-full flex items-center justify-center">
-                <HelpCircle className="w-5 h-5 text-teal-600 dark:text-teal-400" />
+              <div className="w-10 h-10 bg-purple-50 dark:bg-purple-900/30 rounded-full flex items-center justify-center">
+                <HelpCircle className="w-5 h-5 text-purple-600 dark:text-purple-400" />
               </div>
               <span className="font-bold text-gray-900 dark:text-white">Help & Support</span>
             </div>
             <ChevronRight className="w-5 h-5 text-gray-400 dark:text-gray-500" />
-          </button>
+          </Link>
         </div>
 
+        {/* Logout Button */}
         <button 
           onClick={handleLogout}
-          className="w-full bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 font-bold py-4 rounded-2xl flex items-center justify-center gap-2 active:bg-red-100 dark:active:bg-red-900/50 transition-colors"
+          className="w-full bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 font-black py-4 rounded-2xl flex items-center justify-center gap-2 transition-colors border border-red-100 dark:border-red-900/30"
         >
           <LogOut className="w-5 h-5" /> Logout
         </button>
