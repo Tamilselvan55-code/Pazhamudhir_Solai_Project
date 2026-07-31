@@ -5,7 +5,7 @@ import { API_BASE, API_URL } from '../../config/api';
 import axios from 'axios';
 import { io } from 'socket.io-client';
 import useDeliveryStore from '../../store/useDeliveryStore';
-import { Bell } from 'lucide-react';
+import { Bell, X } from 'lucide-react';
 import useModal from '../../hooks/useModal';
 
 const DeliveryLayout = () => {
@@ -153,7 +153,7 @@ const DeliveryLayout = () => {
           </div>
           <div className="relative">
             <button 
-              onClick={() => setIsNotificationsOpen(!isNotificationsOpen)} 
+              onClick={() => setIsNotificationsOpen(true)} 
               className="relative p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer outline-none"
             >
               <Bell className="w-5 h-5 text-gray-600 dark:text-gray-300" />
@@ -161,44 +161,74 @@ const DeliveryLayout = () => {
                 <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white dark:border-gray-800"></span>
               )}
             </button>
-
-            {isNotificationsOpen && (
-              <div className="absolute top-12 left-0 md:left-auto md:right-0 w-80 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 z-50 overflow-hidden transform transition-all">
-                <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
-                  <h3 className="font-bold text-gray-900 dark:text-white">Notifications</h3>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/30 px-2 py-1 rounded-full">{unreadCount} New</span>
-                    {unreadCount > 0 && (
-                      <button onClick={handleMarkAllAsRead} className="text-xs text-gray-500 hover:text-gray-900 dark:hover:text-white underline">
-                        Read All
-                      </button>
-                    )}
-                  </div>
-                </div>
-                <div className="max-h-80 overflow-y-auto">
-                  {notifications.length > 0 ? (
-                    notifications.map(notif => (
-                      <div 
-                        key={notif.id} 
-                        onClick={() => !notif.isRead && handleMarkAsRead(notif.id)}
-                        className={`p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors border-b border-gray-50 dark:border-gray-700 cursor-pointer ${notif.isRead ? 'opacity-60' : 'bg-orange-50/30 dark:bg-orange-900/10'}`}
-                      >
-                        <p className={`text-sm font-semibold text-gray-900 dark:text-white ${!notif.isRead ? 'font-bold' : ''}`}>{notif.title}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{notif.message}</p>
-                        <p className="text-[10px] text-gray-400 mt-2">{new Date(notif.createdAt).toLocaleString()}</p>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="p-4 text-center text-gray-500 dark:text-gray-400 text-sm">No notifications yet.</div>
-                  )}
-                </div>
-                <div className="p-3 text-center border-t border-gray-100 dark:border-gray-700">
-                  <button onClick={() => setIsNotificationsOpen(false)} className="text-xs font-bold text-orange-600 dark:text-orange-400 hover:underline">Close</button>
-                </div>
-              </div>
-            )}
           </div>
         </div>
+
+        {/* Notifications Slide Panel Overlay */}
+        {isNotificationsOpen && (
+          <div className="fixed inset-0 z-[200] overflow-hidden" aria-labelledby="slide-over-title" role="dialog" aria-modal="true">
+            <div className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity" onClick={() => setIsNotificationsOpen(false)}></div>
+            <div className="fixed inset-y-0 right-0 max-w-sm w-full flex">
+              <div className="w-screen max-w-sm transform transition-transform duration-300 ease-in-out bg-white dark:bg-gray-800 shadow-2xl flex flex-col animate-in slide-in-from-right h-full">
+                <div className="px-6 py-5 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between bg-white dark:bg-gray-800">
+                  <div className="flex items-center gap-3">
+                    <h2 className="text-xl font-black text-gray-900 dark:text-white tracking-tight" id="slide-over-title">Notifications</h2>
+                    {unreadCount > 0 && (
+                      <span className="bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 py-1 px-2.5 rounded-full text-xs font-black">
+                        {unreadCount} New
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-4">
+                    {unreadCount > 0 && (
+                      <button onClick={handleMarkAllAsRead} className="text-xs font-bold text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors">
+                        Mark All Read
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      className="rounded-full text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 outline-none p-1 bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                      onClick={() => setIsNotificationsOpen(false)}
+                    >
+                      <span className="sr-only">Close panel</span>
+                      <X className="h-5 w-5" />
+                    </button>
+                  </div>
+                </div>
+                <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900">
+                  {notifications.length > 0 ? (
+                    <div className="divide-y divide-gray-100 dark:divide-gray-800">
+                      {notifications.map(notif => (
+                        <div 
+                          key={notif.id} 
+                          onClick={() => !notif.isRead && handleMarkAsRead(notif.id)}
+                          className={`p-5 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer relative ${notif.isRead ? 'bg-white dark:bg-gray-800/50' : 'bg-orange-50/50 dark:bg-orange-900/10'}`}
+                        >
+                          {!notif.isRead && (
+                            <div className="absolute top-5 left-2 w-2 h-2 bg-orange-500 rounded-full"></div>
+                          )}
+                          <div className={`${!notif.isRead ? 'pl-2' : ''}`}>
+                            <p className={`text-sm ${!notif.isRead ? 'font-black text-gray-900 dark:text-white' : 'font-semibold text-gray-700 dark:text-gray-300'}`}>{notif.title}</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">{notif.message}</p>
+                            <p className="text-[10px] font-bold text-gray-400 mt-3 uppercase tracking-wider">{new Date(notif.createdAt).toLocaleString()}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center h-full text-gray-400 dark:text-gray-500 p-8 text-center space-y-4">
+                      <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-2">
+                        <Bell className="w-8 h-8 text-gray-300 dark:text-gray-600" />
+                      </div>
+                      <p className="text-sm font-semibold">You're all caught up!</p>
+                      <p className="text-xs">Check back later for updates on your deliveries.</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
         <nav className="flex-1 p-4 space-y-2">
           {navItems.map((item) => {
             const Icon = item.icon;

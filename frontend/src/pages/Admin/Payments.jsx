@@ -96,19 +96,19 @@ const Payments = () => {
   };
 
   const getStatusBadge = (status) => {
-    const baseClass = "inline-flex items-center justify-center gap-1.5 w-[100px] py-1.5 rounded-full text-[11px] font-bold whitespace-nowrap";
+    const baseClass = "inline-flex items-center justify-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold whitespace-nowrap min-w-[85px]";
     switch (status) {
       case 'Paid':
-        return <span className={`${baseClass} bg-[#22C55E]/20 text-[#22C55E] border border-[#22C55E]/30`}><CheckCircle className="w-3.5 h-3.5 shrink-0" /> Paid</span>;
+        return <span className={`${baseClass} bg-[#22C55E]/20 text-[#22C55E] border border-[#22C55E]/30`}><CheckCircle className="w-3 h-3 shrink-0" /> Paid</span>;
       case 'Failed':
-        return <span className={`${baseClass} bg-[#EF4444]/20 text-[#EF4444] border border-[#EF4444]/30`}><XCircle className="w-3.5 h-3.5 shrink-0" /> Failed</span>;
+        return <span className={`${baseClass} bg-[#EF4444]/20 text-[#EF4444] border border-[#EF4444]/30`}><XCircle className="w-3 h-3 shrink-0" /> Failed</span>;
       case 'Refunded':
-        return <span className={`${baseClass} bg-[#A855F7]/20 text-[#A855F7] border border-[#A855F7]/30`}><RefreshCw className="w-3.5 h-3.5 shrink-0" /> Refunded</span>;
+        return <span className={`${baseClass} bg-[#A855F7]/20 text-[#A855F7] border border-[#A855F7]/30`}><RefreshCw className="w-3 h-3 shrink-0" /> Refunded</span>;
       case 'Cash on Delivery (COD)':
       case 'COD':
-        return <span className={`${baseClass} bg-[#3B82F6]/20 text-[#3B82F6] border border-[#3B82F6]/30`}><Clock className="w-3.5 h-3.5 shrink-0" /> COD</span>;
+        return <span className={`${baseClass} bg-[#3B82F6]/20 text-[#3B82F6] border border-[#3B82F6]/30`}><Clock className="w-3 h-3 shrink-0" /> COD</span>;
       default:
-        return <span className={`${baseClass} bg-[#F59E0B]/20 text-[#F59E0B] border border-[#F59E0B]/30`}><Clock className="w-3.5 h-3.5 shrink-0" /> Pending</span>;
+        return <span className={`${baseClass} bg-[#F59E0B]/20 text-[#F59E0B] border border-[#F59E0B]/30`}><Clock className="w-3 h-3 shrink-0" /> Pending</span>;
     }
   };
 
@@ -131,14 +131,14 @@ const Payments = () => {
           </div>
         </div>
 
-        {/* Filters and Search Bar (55px) */}
-        <div className="admin-card flex flex-col lg:flex-row items-center justify-between gap-4">
-          <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+        {/* Filters and Search Bar */}
+        <div className="admin-card flex flex-col lg:flex-row items-center justify-between gap-3 p-3">
+          <div className="flex flex-wrap items-center gap-1.5 w-full lg:w-auto">
             {['All', 'Pending', 'Paid', 'Failed', 'Refunded', 'COD'].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setFilterStatus(tab)}
-                className={`px-5 py-2.5 h-[42px] flex items-center justify-center rounded-xl text-xs font-bold transition-all duration-300 hover:-translate-y-0.5 ${
+                className={`px-3 py-1.5 h-[32px] flex items-center justify-center rounded-[8px] text-[11px] font-bold transition-all duration-300 hover:-translate-y-0.5 ${
                   filterStatus === tab
                     ? 'admin-btn-primary shadow-lg shadow-[#22C55E]/20'
                     : 'bg-white/4 hover:bg-white/10 text-[#94A3B8] hover:text-white border border-white/8 hover:border-white/20'
@@ -149,14 +149,14 @@ const Payments = () => {
             ))}
           </div>
 
-          <form onSubmit={handleSearch} className="relative w-full lg:w-[400px]">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#94A3B8]" />
+          <form onSubmit={handleSearch} className="relative w-full lg:w-[280px]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search Order ID, Name, Phone..."
-              className="admin-search-bar pl-12 h-[42px] w-full"
+              className="admin-search-bar pl-9 h-[32px] text-xs w-full rounded-[8px]"
             />
             {searchQuery && (
               <button
@@ -177,71 +177,71 @@ const Payments = () => {
         )}
 
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-24 admin-card">
-            <Loader2 className="w-10 h-10 text-[#22C55E] animate-spin mb-4" />
-            <p className="text-sm font-semibold text-[#94A3B8]">Loading payment records...</p>
+          <div className="flex flex-col items-center justify-center py-16 admin-card">
+            <Loader2 className="w-8 h-8 text-[#22C55E] animate-spin mb-3" />
+            <p className="text-xs font-semibold text-[#94A3B8]">Loading payment records...</p>
           </div>
         ) : (
-          <div className="admin-table-container">
-            <div className="overflow-x-auto max-h-[70vh] admin-scroll">
-              <table className="w-full text-left border-collapse relative">
-                <thead className="sticky top-0 z-10">
-                  <tr className="admin-table-header text-xs font-bold text-[#94A3B8] uppercase tracking-wider border-b border-white/8 whitespace-nowrap">
-                    <th className="px-6 py-4 align-middle">Order ID</th>
-                    <th className="px-6 py-4 align-middle">Customer Name</th>
-                    <th className="px-6 py-4 align-middle">Phone Number</th>
-                    <th className="px-6 py-4 align-middle">Payment Method</th>
-                    <th className="px-6 py-4 align-middle text-right">Amount</th>
-                    <th className="px-6 py-4 align-middle text-center">Payment Status</th>
-                    <th className="px-6 py-4 align-middle">Payment Date</th>
-                    <th className="px-6 py-4 align-middle">Updated By</th>
-                    <th className="px-6 py-4 align-middle text-right">Actions</th>
+          <div className="admin-table-container !p-0">
+            <div className="overflow-x-auto max-h-[75vh] admin-scroll">
+              <table className="w-full text-left border-collapse relative whitespace-nowrap">
+                <thead className="sticky top-0 z-10 bg-[#0A1A30]">
+                  <tr className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider border-b border-white/10">
+                    <th className="px-3 py-2.5 align-middle">Order ID</th>
+                    <th className="px-3 py-2.5 align-middle">Customer Name</th>
+                    <th className="px-3 py-2.5 align-middle">Phone Number</th>
+                    <th className="px-3 py-2.5 align-middle text-center">Payment Method</th>
+                    <th className="px-3 py-2.5 align-middle text-right">Amount</th>
+                    <th className="px-3 py-2.5 align-middle text-center">Payment Status</th>
+                    <th className="px-3 py-2.5 align-middle text-center">Payment Date</th>
+                    <th className="px-3 py-2.5 align-middle text-center">Updated By</th>
+                    <th className="px-3 py-2.5 align-middle text-center">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/6 text-xs">
+                <tbody className="divide-y divide-white/5 text-xs">
                   {payments.length === 0 ? (
                     <tr>
-                      <td colSpan={9} className="px-6 py-20 text-center">
-                        <div className="w-16 h-16 rounded-[20px] bg-white/4 border border-white/8 flex items-center justify-center mx-auto mb-4 shadow-sm">
-                          <CreditCard className="w-8 h-8 text-[#94A3B8]" />
+                      <td colSpan={9} className="px-3 py-16 text-center">
+                        <div className="w-12 h-12 rounded-[16px] bg-white/4 border border-white/8 flex items-center justify-center mx-auto mb-3 shadow-sm">
+                          <CreditCard className="w-6 h-6 text-[#94A3B8]" />
                         </div>
-                        <p className="text-base font-bold text-white">No payments found</p>
-                        <p className="text-xs text-[#94A3B8] mt-1">Try adjusting your status filter or search term</p>
+                        <p className="text-sm font-bold text-white">No payments found</p>
+                        <p className="text-[10px] text-[#94A3B8] mt-1">Try adjusting your status filter or search term</p>
                       </td>
                     </tr>
                   ) : (
                     payments.map((p) => (
-                      <tr key={p._id} className="hover:bg-white/4 transition-colors group whitespace-nowrap">
-                        <td className="px-6 py-4 align-middle font-bold text-white text-sm">{p.orderId}</td>
-                        <td className="px-6 py-4 align-middle font-semibold text-gray-200">{p.customerName}</td>
-                        <td className="px-6 py-4 align-middle text-[#94A3B8]">+91 {p.phoneNumber}</td>
-                        <td className="px-6 py-4 align-middle">
-                          <span className="inline-flex items-center justify-center font-bold bg-white/6 border border-white/8 px-3 py-1.5 rounded-lg text-gray-300 text-xs">{p.paymentMethod}</span>
+                      <tr key={p._id} className="hover:bg-white/5 transition-colors group">
+                        <td className="px-3 py-2 align-middle font-bold text-white text-xs">{p.orderId}</td>
+                        <td className="px-3 py-2 align-middle font-semibold text-gray-200">{p.customerName}</td>
+                        <td className="px-3 py-2 align-middle text-[#94A3B8]">+91 {p.phoneNumber}</td>
+                        <td className="px-3 py-2 align-middle text-center">
+                          <span className="inline-flex items-center justify-center font-bold bg-white/5 border border-white/10 px-2 py-1 rounded-[6px] text-gray-300 text-[10px]">{p.paymentMethod}</span>
                         </td>
-                        <td className="px-6 py-4 align-middle text-right font-black text-[#22C55E] text-sm">{formatCurrencyDecimal(p.amount)}</td>
-                        <td className="px-6 py-4 align-middle text-center">{getStatusBadge(p.paymentStatus)}</td>
-                        <td className="px-6 py-4 align-middle text-[#94A3B8]">{new Date(p.date).toLocaleDateString('en-IN')}</td>
-                        <td className="px-6 py-4 align-middle font-medium text-gray-300">
-                          <div className="flex items-center gap-1.5">
-                            <UserCheck className="w-4 h-4 text-[#22C55E]" />
-                            <span>{p.updatedBy || 'System'}</span>
+                        <td className="px-3 py-2 align-middle text-right font-black text-[#22C55E] text-xs">{formatCurrencyDecimal(p.amount)}</td>
+                        <td className="px-3 py-2 align-middle text-center">{getStatusBadge(p.paymentStatus)}</td>
+                        <td className="px-3 py-2 align-middle text-center text-[#94A3B8] text-[11px]">{new Date(p.date).toLocaleDateString('en-IN')}</td>
+                        <td className="px-3 py-2 align-middle font-medium text-gray-300">
+                          <div className="flex items-center justify-center gap-1">
+                            <UserCheck className="w-3 h-3 text-[#22C55E]" />
+                            <span className="text-[11px]">{p.updatedBy || 'System'}</span>
                           </div>
                         </td>
-                        <td className="px-6 py-4 align-middle text-right">
-                          <div className="flex items-center justify-end gap-3 opacity-80 group-hover:opacity-100 transition-opacity">
+                        <td className="px-3 py-2 align-middle">
+                          <div className="flex items-center justify-center gap-2 opacity-80 group-hover:opacity-100 transition-opacity">
                             <button
                               onClick={() => openActionModal(p, 'status')}
-                              className="px-3 py-1.5 bg-[#22C55E]/20 hover:bg-[#22C55E]/30 text-[#22C55E] font-bold rounded-xl transition-colors flex items-center gap-1.5 border border-[#22C55E]/30"
+                              className="px-2 py-1 bg-[#22C55E]/20 hover:bg-[#22C55E]/30 text-[#22C55E] font-bold rounded-lg transition-colors flex items-center gap-1 border border-[#22C55E]/30 text-[10px]"
                               title="Update payment status"
                             >
-                              <Edit3 className="w-3.5 h-3.5" /> Status
+                              <Edit3 className="w-3 h-3" /> Status
                             </button>
                             <button
                               onClick={() => openActionModal(p, 'history')}
-                              className="p-2 bg-white/4 hover:bg-white/10 text-[#94A3B8] hover:text-white font-bold rounded-xl transition-colors border border-white/8"
+                              className="p-1.5 bg-white/4 hover:bg-white/10 text-[#94A3B8] hover:text-white font-bold rounded-lg transition-colors border border-white/8"
                               title="View Audit History"
                             >
-                              <Eye className="w-4 h-4" />
+                              <Eye className="w-3.5 h-3.5" />
                             </button>
                           </div>
                         </td>

@@ -8,6 +8,8 @@ import Navbar from './components/Layout/Navbar';
 import BottomNav from './components/Layout/BottomNav';
 import LocationBanner from './components/Location/LocationBanner';
 import CartDrawer from './components/Cart/CartDrawer';
+import AddToCartAnimation from './components/AddToCartAnimation';
+import MaintenancePage from './pages/MaintenancePage';
 import InstallPrompt from './components/Layout/InstallPrompt';
 import { ModalProvider } from './components/Modal/ModalProvider';
 import GuestToastProvider from './components/Layout/GuestToastProvider';
@@ -153,20 +155,7 @@ function App() {
   }, [location]);
 
   if (settings?.maintenanceMode && !hideCustomerLayout) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[#f7fdf7] p-6 text-center select-none">
-        <div className="w-20 h-20 rounded-[28px] bg-green-500/10 border border-green-500/20 flex items-center justify-center text-3xl mb-5 animate-bounce">
-          🛠️
-        </div>
-        <h1 className="text-xl font-extrabold text-gray-800">Under Maintenance</h1>
-        <p className="text-xs text-gray-500 mt-2 max-w-xs leading-relaxed">
-          We're currently performing maintenance. Please check back shortly.
-        </p>
-        <p className="text-[10px] text-gray-400 mt-8">
-          © {new Date().getFullYear()} {settings?.websiteName || 'Tiruchendur Murugan Pazhamudhir Solai'}
-        </p>
-      </div>
-    );
+    return <MaintenancePage />;
   }
 
   return (
