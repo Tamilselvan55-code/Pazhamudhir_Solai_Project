@@ -11,7 +11,8 @@ import {
   Leaf, 
   ShieldCheck,
   Bell,
-  CheckCircle2
+  CheckCircle2,
+  Clock
 } from 'lucide-react';
 
 const MaintenancePage = () => {
