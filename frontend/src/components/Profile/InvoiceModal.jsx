@@ -4,7 +4,7 @@ import { generateInvoicePDF } from '../../utils/pdfGenerator';
 import { formatDisplayAddressLines } from '../../utils/addressFormatter';
 import useSettingsStore from '../../store/useSettingsStore';
 
-const InvoiceModal = ({ order, isOpen, onClose }) => {
+const InvoiceModal = ({ order, userInfo, isOpen = true, onClose }) => {
   const settings = useSettingsStore(s => s.settings);
 
   if (!isOpen || !order) return null;
@@ -36,7 +36,7 @@ const InvoiceModal = ({ order, isOpen, onClose }) => {
               <Printer className="w-4 h-4" /> Print
             </button>
             <button
-              onClick={() => generateInvoicePDF(order, settings)}
+              onClick={() => generateInvoicePDF(order, userInfo)}
               className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 shadow-md transition-colors"
               title="Download Supermarket Bill PDF"
             >
