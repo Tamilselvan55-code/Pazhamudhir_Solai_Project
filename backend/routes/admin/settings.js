@@ -47,7 +47,8 @@ router.put('/settings', async (req, res) => {
       'smtpHost', 'smtpPort', 'smtpUsername', 'smtpPassword', 'senderName', 'senderEmail',
       'dashboardRefreshInterval', 'enableSalesCharts', 'enableRevenueReports', 'enableTopProducts', 'enableCustomerStats',
       'offersBanner', 'aboutUs', 'contactUs', 'privacyPolicy', 'termsAndConditions',
-      'tagline', 'gstNumber', 'whatsappNumber', 'websiteUrl', 'city', 'district', 'state', 'pincode', 'country', 'businessHours', 'googleMapLink', 'socialMediaLinks', 'qrCode'
+      'tagline', 'gstNumber', 'whatsappNumber', 'websiteUrl', 'city', 'district', 'state', 'pincode', 'country', 'businessHours', 'googleMapLink', 'socialMediaLinks', 'qrCode',
+      'deliverySettings'
     ];
 
     const updateData = {};
